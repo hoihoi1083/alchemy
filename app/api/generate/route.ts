@@ -317,7 +317,7 @@ async function runReferenceVideoViaH3(input: {
       referenceVideoCount: videoUrls.length,
       tokensCharged: h3Cost,
       creditBalance: charged.balanceAfter,
-      note: "Reference-reel video — MiniMax H3 (reference motion clip + product still).",
+      note: "Reference-reel video — your motion clip + product still.",
     });
   } catch (e: unknown) {
     await refundTokens(input.clerkId, h3Cost, {

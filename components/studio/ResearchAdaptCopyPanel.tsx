@@ -23,7 +23,7 @@ export function ResearchAdaptCopyPanel({
   promoteTarget,
   isConcept,
 }: Props) {
-  const { m } = useLocale();
+  const { m, locale } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
   const cr = m.contentResearch;
@@ -99,6 +99,7 @@ export function ResearchAdaptCopyPanel({
           promotionMode: isConcept ? "concept" : "physical",
           productOrConcept: promote,
           market: wizard.promptMarket,
+          uiLocale: locale,
           referenceTitle: angle.title,
           referenceHook: angle.hook,
           referenceBullets: angle.bulletPoints,

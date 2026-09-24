@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import { isContentPlatform, planContentResearch } from "@/lib/content-research-plan";
+import { promptMarketFromUiLocaleOrMarket } from "@/lib/copy-locale";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
-import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
+import type { PromptMarket } from "@/lib/prompt-variables";
 import { researchUiPlatforms } from "@/lib/wizard-intake-contract";
 import type { ContentPlatform } from "@/lib/content-research-types";
 
@@ -14,6 +15,8 @@ type ResearchBody = {
   topic?: string;
   platform?: string;
   market?: PromptMarket;
+  /** Page UI language — preferred SSOT for research analysis copy. */
+  uiLocale?: string;
   promotionMode?: "physical" | "concept";
   product?: string;
   business?: string;
@@ -45,7 +48,12 @@ export async function POST(request: Request) {
   if (!isContentPlatform(platform)) {
     return NextResponse.json({ error: "Pick a supported platform." }, { status: 400 });
   }
-  const workflowMode = body.mediaFilter === "video" ? "video-only" : "image-only";
+  const workflowMode =
+    body.mediaFilter === "video"
+      ? "video-only"
+      : body.mediaFilter === "image"
+        ? "image-only"
+        : "combined";
   const allowed = researchUiPlatforms(workflowMode);
   if (!allowed.includes(platform as ContentPlatform)) {
     return NextResponse.json({ error: "Pick a supported platform." }, { status: 400 });
@@ -56,7 +64,7 @@ export async function POST(request: Request) {
     const plan = await planContentResearch({
       topic,
       platform,
-      market: asPromptMarket(body.market) ?? "hk",
+      market: promptMarketFromUiLocaleOrMarket(body.uiLocale, body.market, "hk"),
       promotionMode:
         body.promotionMode === "physical" || body.promotionMode === "concept"
           ? body.promotionMode
@@ -70,7 +78,7 @@ export async function POST(request: Request) {
       plan.researchMode === "live-web"
         ? plan.searchProvider === "justoneapi"
           ? `${plan.platformLabel} post search (live)`
-          : `Live web research (${plan.searchProvider})`
+          : "Live web research"
         : "AI playbook suggestions (no web search)";
     return NextResponse.json({
       plan,
@@ -85,6 +93,10 @@ export async function POST(request: Request) {
       message.includes("balance")
         ? 503
         : 400;
-    return NextResponse.json({ error: message }, { status });
+    const safe =
+      /JUSTONE|TAVILY|SERPER|DEEPSEEK|\.env|API[_ ]?KEY|Just One|justoneapi/i.test(message)
+        ? "Content research is temporarily unavailable. Try again in a few minutes."
+        : message;
+    return NextResponse.json({ error: safe }, { status });
   }
 }

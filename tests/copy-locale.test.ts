@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   coerceCopyScript,
+  copyNeedsLocaleRewrite,
   preserveUserOnImageCopy,
   promptMarketFromLocale,
+  promptMarketFromUiLocaleOrMarket,
   resolveCopyLocale,
   voiceoverLocaleFromUiLocale,
   plannerOutputLanguageRule,
@@ -15,6 +17,23 @@ describe("UI locale → output language", () => {
     assert.equal(promptMarketFromLocale("zh-cn"), "cn");
     assert.equal(promptMarketFromLocale("zh"), "hk");
     assert.equal(promptMarketFromLocale("zh-tw"), "tw");
+  });
+
+  it("UI locale wins over a stale market field", () => {
+    assert.equal(promptMarketFromUiLocaleOrMarket("en", "hk"), "en");
+    assert.equal(promptMarketFromUiLocaleOrMarket("zh-cn", "en"), "cn");
+    assert.equal(promptMarketFromUiLocaleOrMarket("zh", "en"), "hk");
+    assert.equal(promptMarketFromUiLocaleOrMarket("zh-tw", "cn"), "tw");
+    assert.equal(promptMarketFromUiLocaleOrMarket(undefined, "en"), "en");
+    assert.equal(promptMarketFromUiLocaleOrMarket("", "hk"), "hk");
+    assert.equal(promptMarketFromUiLocaleOrMarket(null, undefined, "cn"), "cn");
+  });
+
+  it("detects EN↔CJK script leaks for rewrite", () => {
+    assert.equal(copyNeedsLocaleRewrite("星座話題自帶流量", "en"), true);
+    assert.equal(copyNeedsLocaleRewrite("Zodiac hooks drive saves", "en"), false);
+    assert.equal(copyNeedsLocaleRewrite("High-engagement post", "zh-hant"), true);
+    assert.equal(copyNeedsLocaleRewrite("高互動貼文", "zh-hant"), false);
   });
 
   it("maps website language to voiceover locale", () => {

@@ -59,4 +59,66 @@ describe("content research plan JSON repair wiring", () => {
     assert.match(src, /plan JSON invalid — running DeepSeek repair pass/);
     assert.match(src, /Content research plan \(repaired\)/);
   });
+
+  it("aligns plan copy to market after live and playbook research", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/content-research-plan.ts"),
+      "utf8",
+    );
+    assert.match(src, /alignResearchPlanCopy\(plan, input\.market\)/);
+    assert.match(src, /rewriteCopyToScript/);
+  });
+});
+
+describe("research APIs prefer page UI locale for display copy", () => {
+  it("content-angles and direct-post route market through uiLocale SSOT", () => {
+    for (const file of [
+      "app/api/research-content-angles/route.ts",
+      "app/api/research-direct-post/route.ts",
+      "app/api/remap-research-copy/route.ts",
+    ]) {
+      const src = readFileSync(join(process.cwd(), file), "utf8");
+      assert.match(src, /promptMarketFromUiLocaleOrMarket/);
+      assert.match(src, /uiLocale/);
+    }
+  });
+
+  it("ContentResearchPanel sends uiLocale with research requests", () => {
+    const src = readFileSync(
+      join(process.cwd(), "components/content-research/ContentResearchPanel.tsx"),
+      "utf8",
+    );
+    assert.match(src, /uiLocale:\s*locale/);
+  });
+
+  it("ContentResearchPanel sets plan after keyword AND direct-post success", () => {
+    const src = readFileSync(
+      join(process.cwd(), "components/content-research/ContentResearchPanel.tsx"),
+      "utf8",
+    );
+    const keywordFn = src.slice(
+      src.indexOf("async function runResearch()"),
+      src.indexOf("async function runDirectPost()"),
+    );
+    const directFn = src.slice(
+      src.indexOf("async function runDirectPost()"),
+      src.indexOf("async function pickAngle("),
+    );
+    assert.match(keywordFn, /setPlan\(data\.plan as ContentResearchPlan\)/);
+    assert.match(keywordFn, /researchSourceNote\([\s\S]*"keyword"\)/);
+    assert.match(directFn, /setPlan\(nextPlan\)/);
+    assert.match(directFn, /researchSourceNote\(nextPlan, cr, "direct-post"\)/);
+  });
+
+  it("research-content-angles allowlist keeps TikTok for combined (no mediaFilter)", () => {
+    const src = readFileSync(
+      join(process.cwd(), "app/api/research-content-angles/route.ts"),
+      "utf8",
+    );
+    assert.match(src, /: "combined"/);
+    assert.doesNotMatch(
+      src,
+      /mediaFilter === "video" \? "video-only" : "image-only"/,
+    );
+  });
 });

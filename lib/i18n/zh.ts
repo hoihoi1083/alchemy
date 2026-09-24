@@ -4528,7 +4528,7 @@ export const zh = {
 		socialFrameNeedMotionRef:
 			"缺少彈出動作參考片。請重新整理再試。",
 		socialFrameKeepNativeAudioNote:
-			"保留 MiniMax H3 原生音訊／配樂（唔覆蓋圖書館 BGM）。",
+			"保留原生音訊／配樂（唔覆蓋圖書館 BGM）。",
 		wetGlassHint:
 			"濕玻璃揭示 — 起霧濕玻璃 → 水珠劃痕／指抹清晰 → Logo 變銳。~6–8秒 · 水珠劃痕／指抹清晰／黑白微距。Logo 來自上傳圖透過玻璃顯現。",
 		wetGlassDialectTitle: "濕玻璃風格",
@@ -4555,9 +4555,9 @@ export const zh = {
 		wetGlassNeedKeyframe:
 			"請先上傳產品圖（概念用人像／品牌靜圖，且需有清晰標籤／標誌 — 單靠文字唔夠）。",
 		tornPaperHint:
-			"撕紙揭示 — 乾燥雪梨紙蓋住產品 → 纖維撕口沿產品方向展開（自動橫／豎／斜）→ Logo 清晰。~6–8秒 · 細條撕／掀捲／闊撕。不是濕玻璃。保留 H3 撕紙音效 — 需要配樂可稍後喺字幕頁加。",
+			"撕紙揭示 — 乾燥雪梨紙蓋住產品 → 纖維撕口沿產品方向展開（自動橫／豎／斜）→ Logo 清晰。~6–8秒 · 細條撕／掀捲／闊撕。不是濕玻璃。保留撕紙音效 — 需要配樂可稍後喺字幕頁加。",
 		tornPaperKeepNativeAudioNote:
-			"已保留 MiniMax 原聲音效（撕紙）。需要配樂請稍後喺字幕頁添加。",
+			"已保留原聲音效（撕紙）。需要配樂請稍後喺字幕頁添加。",
 		tornPaperDialectTitle: "撕紙風格",
 		tornPaperDialectHint:
 			"同一揭示 — 細條撕（纖維撕口，方向按產品自動橫／豎）、掀捲（常斜向掀開）、或闊撕（更寬鋸齒撕口）。",
@@ -4582,9 +4582,9 @@ export const zh = {
 		tornPaperNeedKeyframe:
 			"請先上傳產品圖（概念用人像／品牌靜圖，且需有清晰標籤／標誌 — 單靠文字唔夠）。",
 		swiftChromaHint:
-			"疾行幻彩 — 人物喺濕潤城市奔跑 + 霓虹幾何拼貼（粉／橙／黃）。~8–10秒 · 街追／騰躍衝擊／圖形定格。產品：跑者手持 SKU 且產品要大、清晰。保留 H3 原聲 — 需要配樂可稍後喺字幕頁加。",
+			"疾行幻彩 — 人物喺濕潤城市奔跑 + 霓虹幾何拼貼（粉／橙／黃）。~8–10秒 · 街追／騰躍衝擊／圖形定格。產品：跑者手持 SKU 且產品要大、清晰。保留原聲 — 需要配樂可稍後喺字幕頁加。",
 		swiftChromaKeepNativeAudioNote:
-			"已保留 MiniMax 原聲音效。需要配樂請稍後喺字幕頁添加。",
+			"已保留原聲音效。需要配樂請稍後喺字幕頁添加。",
 		swiftChromaDialectTitle: "疾行風格",
 		swiftChromaDialectHint:
 			"同一能量 — 街追（連續奔跑）、騰躍衝擊（躍起衝擊）、或圖形定格（海報拼貼收尾）。",
@@ -6704,23 +6704,23 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		liveBadge: "即時網頁研究",
 		playbookBadge: "AI 建議（無搜尋）",
 		sourceNoteJustOneLive: (platform: string) => `${platform} 貼文搜尋（即時）`,
-		sourceNoteWebLive: (provider: string) => `即時網頁研究（${provider}）`,
+		sourceNoteWebLive: "即時網頁研究",
 		sourceNotePlaybook: "AI 建議（無網頁搜尋）",
 		sourceNoteDirectPost: "已釘選參考貼文（即時）",
 		sourceNoteDirectPostImage: "已釘選參考貼文（即時）· 圖文／輪播",
 		sourceNoteDirectPostVideo: "已釘選參考貼文（即時）· 影片／Reels",
 		justOneFallbackGateway:
-			"Just One API 伺服器暫時故障（HTTP 502）— 已改用公開網頁搜尋（無貼文封面）。請等 10–30 分鐘再試，或聯繫 Just One API 客服。",
+			"平台貼文搜尋暫時唔可用。已改用公開網頁結果（無貼文封面）— 等幾分鐘再試。",
 		justOneFallbackPermission: (platform: string) =>
-			`Just One API 未開通 ${platform} 搜尋權限（code 600）— 請到 dashboard 開通對應 endpoint。已改用公開網頁搜尋，無貼文封面。`,
+			`${platform} 貼文搜尋暫時受限。已改用公開網頁結果（無貼文封面）— 稍後再試，或貼上帖子連結。`,
 		justOneFallbackBalance:
-			"Just One API 餘額不足（code 601）— 請到 dashboard 充值。已改用公開網頁搜尋，無貼文封面。",
+			"平台貼文搜尋暫時受限。已改用公開網頁結果（無貼文封面）— 稍後再試。",
 		justOneFallbackBudget:
-			"Just One API token 用量上限已滿（code 602）— 請在 dashboard 提高 token 預算。已改用公開網頁搜尋，無貼文封面。",
+			"平台貼文搜尋暫時受限。已改用公開網頁結果（無貼文封面）— 稍後再試。",
 		justOneFallbackRateLimit: () =>
-			"Instagram hashtag 搜尋喺 Just One 失敗（COLLECT FAILED）— 多數係間歇。等約 30 秒再試、貼 /p/ 連結，或改用小紅書。已改用公開網頁搜尋，無封面。",
+			"Instagram 搜尋依家比較繁忙。等約 30 秒再試、貼 /p/ 連結，或改用小紅書。已改用公開網頁結果（無封面）。",
 		justOneFallbackGeneric: () =>
-			"Just One API 失敗 — 已改用公開網頁搜尋，無貼文封面。",
+			"平台貼文搜尋失敗 — 已改用公開網頁結果（無貼文封面）。",
 		categoryBroadened:
 			"精確匹配較少 — 已補充同品類相關帖，方便你參考唔同版式風格。",
 		sourceLabel: "參考來源",
@@ -8007,7 +8007,7 @@ stylePickerModelLabel: "模特兒佩戴／使用",
 		},
 		videoProControls: {
 			title: "影片專業控制",
-			engine: "AI 模型",
+			engine: "影片模式",
 			engineMinimaxH3: "單鏡出片（預設）",
 			engineSeedance: "參考片模式",
 			engineHint:

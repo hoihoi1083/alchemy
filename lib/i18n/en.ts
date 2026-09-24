@@ -4682,11 +4682,11 @@ export const en = {
 					"Feet jump onto white Instagram UI",
 					"Product SKU is held prop only — never the lone frame-breaker",
 					"Optional Brand kit logo stamps the balloon",
-					"H3 native audio / score kept (no library BGM overwrite)",
+					"Native audio / score kept (no library BGM overwrite)",
 				],
 				output: [
 					"~8–10s 16:9 social frame-break ad",
-					"H3 reference-to-video: jump-out pop + branded balloon",
+					"Reference-to-video: jump-out pop + branded balloon",
 				],
 			},
 			"wet-glass-reveal": {
@@ -4984,7 +4984,7 @@ export const en = {
 		typeBehindNeedKeyframe:
 			"Upload a product photo first (concept: person / brand figure / mascot still — text alone is not enough).",
 		socialFrameHint:
-			"Social frame break — upload a CHARACTER (person / mascot / figure). Product mode also needs a Product SKU (held prop). Concept: character + optional Brand kit logo. Jump-out from motion DNA · H3 native audio · ~8–10s · 16:9.",
+			"Social frame break — upload a CHARACTER (person / mascot / figure). Product mode also needs a Product SKU (held prop). Concept: character + optional Brand kit logo. Jump-out from motion DNA · native audio · ~8–10s · 16:9.",
 		socialFrameSchemeTitle: "Pop-out wave",
 		socialFrameSchemeHint:
 			"Desktop Instagram layout (Naruto proof DNA): square scenic plate, white caption below, comments sidebar. Character jumps out — feet on white UI.",
@@ -5004,7 +5004,7 @@ export const en = {
 		socialFrameNeedMotionRef:
 			"Pop-out motion reference is missing. Refresh the app and try again.",
 		socialFrameKeepNativeAudioNote:
-			"Keeping MiniMax H3 native audio / score (no library BGM overwrite).",
+			"Keeping native audio / score (no library BGM overwrite).",
 		wetGlassHint:
 			"Wet glass reveal — fogged wet glass → droplet trail / wipe clears → logo sharp. ~6–8s · Droplet / Wipe / Mono macro. Logo comes from your upload through the glass.",
 		wetGlassDialectTitle: "Wet-glass style",
@@ -5031,9 +5031,9 @@ export const en = {
 		wetGlassNeedKeyframe:
 			"Upload a product photo first (concept: person / brand still with a clear label/mark — text alone is not enough).",
 		tornPaperHint:
-			"Torn paper reveal — DRY pear paper covers product → fibrous tear propagates (auto H/V/diagonal for your SKU) → logo sharp. ~6–8s · Strip / Peel / Wide. Not wet glass. Keeps H3 tear audio — add BGM later in Captions if you want.",
+			"Torn paper reveal — DRY pear paper covers product → fibrous tear propagates (auto H/V/diagonal for your SKU) → logo sharp. ~6–8s · Strip / Peel / Wide. Not wet glass. Keeps tear audio — add BGM later in Captions if you want.",
 		tornPaperKeepNativeAudioNote:
-			"Native MiniMax audio kept (tear foley). Add BGM afterward in Captions if needed.",
+			"Native tear audio kept. Add BGM afterward in Captions if needed.",
 		tornPaperDialectTitle: "Torn-paper style",
 		tornPaperDialectHint:
 			"Same reveal — Strip tear (fibrous tear, auto H/V for SKU), Peel curl (often diagonal peel), or Wide rip (wider jagged rip).",
@@ -5058,9 +5058,9 @@ export const en = {
 		tornPaperNeedKeyframe:
 			"Upload a product photo first (concept: person / brand still with a clear label/mark — text alone is not enough).",
 		swiftChromaHint:
-			"Swift chroma run — person running in wet city + neon geometric collage (pink/orange/yellow). ~8–10s · Street chase / Vault punch / Graphic lockup. Product: runner holds your SKU large in frame. Keeps H3 audio — add BGM later in Captions if you want.",
+			"Swift chroma run — person running in wet city + neon geometric collage (pink/orange/yellow). ~8–10s · Street chase / Vault punch / Graphic lockup. Product: runner holds your SKU large in frame. Keeps native audio — add BGM later in Captions if you want.",
 		swiftChromaKeepNativeAudioNote:
-			"Native MiniMax audio kept. Add BGM afterward in Captions if needed.",
+			"Native audio kept. Add BGM afterward in Captions if needed.",
 		swiftChromaDialectTitle: "Chroma-run style",
 		swiftChromaDialectHint:
 			"Same energy — Street chase (continuous run), Vault punch (leap impact), or Graphic lockup (poster collage end).",
@@ -6788,7 +6788,7 @@ export const en = {
 		expandHow:
 			"Not a free resize. AI invents new background pixels so the plate fits 1:1 / 9:16 / etc. Layers stay; only the plate grows.",
 		expandCostHint: (n: number) =>
-			`Costs ~${n} tokens (fal outpaint). Skip if the ratio is already fine — empty padding would be free, but we don’t do that here.`,
+			`Costs ~${n} tokens (outpaint). Skip if the ratio is already fine — empty padding would be free, but we don’t do that here.`,
 		expandSquare: (n: number) => `1:1 · ${n} tok`,
 		expandStory: (n: number) => `9:16 · ${n} tok`,
 		expandLandscape: (n: number) => `16:9 · ${n} tok`,
@@ -7350,23 +7350,23 @@ export const en = {
 		liveBadge: "Live web research",
 		playbookBadge: "AI playbook (no web)",
 		sourceNoteJustOneLive: (platform: string) => `${platform} post search (live)`,
-		sourceNoteWebLive: (provider: string) => `Live web research (${provider})`,
+		sourceNoteWebLive: "Live web research",
 		sourceNotePlaybook: "AI playbook suggestions (no web search)",
 		sourceNoteDirectPost: "Pinned reference post (live)",
 		sourceNoteDirectPostImage: "Pinned reference post (live) · image/carousel",
 		sourceNoteDirectPostVideo: "Pinned reference post (live) · video/reel",
 		justOneFallbackGateway:
-			"Just One API is temporarily down (HTTP 502). Switched to public web search (no post cover cards). Wait 10–30 minutes or contact Just One support.",
+			"Platform post search is temporarily unavailable. Showing public web results without cover cards — try again in a few minutes.",
 		justOneFallbackPermission: (platform: string) =>
-			`Just One API does not have ${platform} search enabled (code 600). Enable the endpoint in your dashboard. Using public web search without cover cards.`,
+			`${platform} post search is temporarily limited. Showing public web results without cover cards — try again later or paste a post link.`,
 		justOneFallbackBalance:
-			"Just One API balance is low (code 601). Top up in your dashboard. Using public web search without cover cards.",
+			"Platform post search is temporarily limited. Showing public web results without cover cards — try again later.",
 		justOneFallbackBudget:
-			"Just One API token budget limit reached (code 602). Raise the limit in your dashboard. Using public web search without cover cards.",
+			"Platform post search is temporarily limited. Showing public web results without cover cards — try again later.",
 		justOneFallbackRateLimit: () =>
-			"Instagram hashtag search failed at Just One (COLLECT FAILED) — often intermittent. Wait ~30s and retry, paste an Instagram /p/ URL, or use RedNote. Using public web search without cover cards.",
+			"Instagram search is busy right now. Wait about 30 seconds and retry, paste an Instagram /p/ URL, or try RedNote. Showing public web results without cover cards.",
 		justOneFallbackGeneric: () =>
-			"Just One API failed — switched to public web search without post cover cards.",
+			"Platform post search failed — switched to public web results without cover cards.",
 		categoryBroadened:
 			"Few exact matches — also showing related category posts so you still get distinct style references.",
 		sourceLabel: "Inspired by",
@@ -8819,7 +8819,7 @@ export const en = {
     },
     videoProControls: {
       title: "Video pro controls",
-      engine: "AI model",
+      engine: "Video mode",
       engineMinimaxH3: "Single-clip video (default)",
       engineSeedance: "Reference reel",
       engineHint:

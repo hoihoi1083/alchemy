@@ -188,7 +188,7 @@ export async function fetchPlatformWebResearch(
       const msg = e instanceof Error ? e.message : String(e);
       if (mediaFilter === "video") {
         throw new Error(
-          `Video search failed (${msg}). Try again — video mode needs the platform API for MP4; web fallback cannot download reels.`,
+          "Video search failed. Try again — video mode needs a working platform post search for MP4; web fallback cannot download reels.",
         );
       }
       if (!webSearchApiKey()) throw e;
@@ -202,7 +202,7 @@ export async function fetchPlatformWebResearch(
   }
   if (mediaFilter === "video") {
     throw new Error(
-      "Video research needs JUSTONEAPI_TOKEN — web search cannot download reference MP4.",
+      "Video research is temporarily unavailable — web search cannot download reference MP4. Try again later or paste a post link.",
     );
   }
   return fetchTavilyResearch(searchTopic, platform);

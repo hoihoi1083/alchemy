@@ -4055,9 +4055,9 @@ socialDripHint:
 		wetGlassNeedKeyframe:
 			"请先上传产品图（概念用人像／品牌静图，且需有清晰标签／标志 — 单靠文字不够）。",
 		tornPaperHint:
-			"撕纸揭示 — 干燥雪梨纸盖住产品 → 纤维撕口沿产品方向展开（自动横／竖／斜）→ Logo 清晰。~6–8秒 · 细条撕／掀卷／阔撕。不是湿玻璃。保留 H3 撕纸音效 — 需要配乐可稍后在字幕页加。",
+			"撕纸揭示 — 干燥雪梨纸盖住产品 → 纤维撕口沿产品方向展开（自动横／竖／斜）→ Logo 清晰。~6–8秒 · 细条撕／掀卷／阔撕。不是湿玻璃。保留撕纸音效 — 需要配乐可稍后在字幕页加。",
 		tornPaperKeepNativeAudioNote:
-			"已保留 MiniMax 原声音效（撕纸）。需要配乐请稍后在字幕页添加。",
+			"已保留原声音效（撕纸）。需要配乐请稍后在字幕页添加。",
 		tornPaperDialectTitle: "撕纸风格",
 		tornPaperDialectHint:
 			"同一揭示 — 细条撕（纤维撕口，方向按产品自动横／竖）、掀卷（常斜向掀开）、或阔撕（更宽锯齿撕口）。",
@@ -4082,9 +4082,9 @@ socialDripHint:
 		tornPaperNeedKeyframe:
 			"请先上传产品图（概念用人像／品牌静图，且需有清晰标签／标志 — 单靠文字不够）。",
 		swiftChromaHint:
-			"疾行幻彩 — 人物在湿润城市奔跑 + 霓虹几何拼贴（粉／橙／黄）。~8–10秒 · 街追／腾跃冲击／图形定格。产品：跑者手持 SKU 且产品要大、清晰。保留 H3 原声 — 需要配乐可稍后在字幕页加。",
+			"疾行幻彩 — 人物在湿润城市奔跑 + 霓虹几何拼贴（粉／橙／黄）。~8–10秒 · 街追／腾跃冲击／图形定格。产品：跑者手持 SKU 且产品要大、清晰。保留原声 — 需要配乐可稍后在字幕页加。",
 		swiftChromaKeepNativeAudioNote:
-			"已保留 MiniMax 原声音效。需要配乐请稍后在字幕页添加。",
+			"已保留原声音效。需要配乐请稍后在字幕页添加。",
 		swiftChromaDialectTitle: "疾行风格",
 		swiftChromaDialectHint:
 			"同一能量 — 街追（连续奔跑）、腾跃冲击（跃起冲击）、或图形定格（海报拼贴收尾）。",
@@ -6100,23 +6100,23 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     liveBadge: "即时网页研究",
     playbookBadge: "AI 建议（无搜索）",
     sourceNoteJustOneLive: (platform: string) => `${platform} 帖子搜索（实时）`,
-    sourceNoteWebLive: (provider: string) => `即时网页研究（${provider}）`,
+    sourceNoteWebLive: "即时网页研究",
     sourceNotePlaybook: "AI 建议（无网页搜索）",
     sourceNoteDirectPost: "已固定参考帖子（实时）",
     sourceNoteDirectPostImage: "已固定参考帖子（实时）· 图文／轮播",
     sourceNoteDirectPostVideo: "已固定参考帖子（实时）· 视频／Reels",
     justOneFallbackGateway:
-      "Just One API 服务器暂时故障（HTTP 502）— 已改用公开网页搜索（无帖子封面）。请等 10–30 分钟再试，或联系 Just One API 客服。",
+      "平台帖子搜索暂时不可用。已改用公开网页结果（无帖子封面）— 请过几分钟再试。",
     justOneFallbackPermission: (platform: string) =>
-      `Just One API 未开通 ${platform} 搜索权限（code 600）— 请到 dashboard 开通对应 endpoint。已改用公开网页搜索，无帖子封面。`,
+      `${platform} 帖子搜索暂时受限。已改用公开网页结果（无帖子封面）— 请稍后再试，或粘贴帖子链接。`,
     justOneFallbackBalance:
-      "Just One API 余额不足（code 601）— 请到 dashboard 充值。已改用公开网页搜索，无帖子封面。",
+      "平台帖子搜索暂时受限。已改用公开网页结果（无帖子封面）— 请稍后再试。",
     justOneFallbackBudget:
-      "Just One API token 用量上限已满（code 602）— 请在 dashboard 提高 token 预算。已改用公开网页搜索，无帖子封面。",
+      "平台帖子搜索暂时受限。已改用公开网页结果（无帖子封面）— 请稍后再试。",
     justOneFallbackRateLimit: () =>
-      "Instagram hashtag 搜索在 Just One 失败（COLLECT FAILED）— 多数是间歇。等约 30 秒再试、粘贴 /p/ 链接，或改用小红书。已改用公开网页搜索，无封面。",
+      "Instagram 搜索现在比较繁忙。等约 30 秒再试、粘贴 /p/ 链接，或改用小红书。已改用公开网页结果（无封面）。",
     justOneFallbackGeneric: () =>
-      "Just One API 失败 — 已改用公开网页搜索，无帖子封面。",
+      "平台帖子搜索失败 — 已改用公开网页结果（无帖子封面）。",
     categoryBroadened:
       "精确匹配较少 — 已补充同品类相关帖，方便你参考不同版式风格。",
     sourceLabel: "参考来源",
@@ -7317,7 +7317,7 @@ stylePickerModelLabel: "模特佩戴／使用",
     },
     videoProControls: {
       title: "视频专业控制",
-      engine: "AI 模型",
+      engine: "视频模式",
       engineMinimaxH3: "单镜出片（默认）",
       engineSeedance: "参考片模式",
       engineHint:

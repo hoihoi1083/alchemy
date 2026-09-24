@@ -1,3 +1,4 @@
+import { messageHasVendorName } from "@/lib/api/errors";
 import type { ContentResearchPlan } from "@/lib/content-research-types";
 
 /** Prefix stored in plan.researchWarning — localized on the client. */
@@ -28,7 +29,8 @@ export function parseResearchWarningCode(
 export type ContentResearchUiCopy = {
   platforms: Record<string, string>;
   sourceNoteJustOneLive: (platform: string) => string;
-  sourceNoteWebLive: (provider: string) => string;
+  /** Live web fallback note — never include a provider/vendor name. */
+  sourceNoteWebLive: string;
   sourceNotePlaybook: string;
   sourceNoteDirectPost: string;
   sourceNoteDirectPostImage: string;
@@ -40,7 +42,24 @@ export type ContentResearchUiCopy = {
   justOneFallbackRateLimit: (detail: string) => string;
   justOneFallbackGeneric: (detail: string) => string;
   categoryBroadened: string;
+  failed: string;
 };
+
+/** Drop env keys / vendor names from API errors before showing them. */
+export function sanitizeResearchUserMessage(
+  raw: string | null | undefined,
+  fallback: string,
+): string {
+  const t = String(raw ?? "").trim();
+  if (!t) return fallback;
+  if (
+    messageHasVendorName(t) ||
+    /JUSTONE|TAVILY|SERPER|DEEPSEEK|\.env|API[_ ]?KEY|token budget|code\s*60[0-2]/i.test(t)
+  ) {
+    return fallback;
+  }
+  return t;
+}
 
 export function researchSourceNote(
   plan: ContentResearchPlan,
@@ -60,7 +79,7 @@ export function researchSourceNote(
     if (plan.searchProvider === "justoneapi") {
       return cr.sourceNoteJustOneLive(platformLabel);
     }
-    return cr.sourceNoteWebLive(plan.searchProvider ?? "web");
+    return cr.sourceNoteWebLive;
   }
 
   return cr.sourceNotePlaybook;
@@ -75,7 +94,9 @@ export function localizeResearchWarning(
   if (!t) return null;
 
   const code = parseResearchWarningCode(t);
-  if (!code) return t;
+  if (!code) {
+    return sanitizeResearchUserMessage(t, cr.justOneFallbackGeneric(""));
+  }
 
   const platformLabel = cr.platforms[platform] ?? platform;
   switch (code) {

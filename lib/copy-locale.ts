@@ -12,6 +12,24 @@ export function promptMarketFromLocale(locale: Locale): PromptMarket {
   return "hk";
 }
 
+/**
+ * SSOT for AI display copy: page UI language wins over a stale market field.
+ * Use on research / planner APIs so English pages never show Chinese analysis (and vice versa).
+ */
+export function promptMarketFromUiLocaleOrMarket(
+  uiLocale: string | null | undefined,
+  market: unknown,
+  fallback: PromptMarket = "hk",
+): PromptMarket {
+  const loc = String(uiLocale ?? "").trim();
+  if (loc === "en" || loc === "zh" || loc === "zh-cn" || loc === "zh-tw") {
+    return promptMarketFromLocale(loc);
+  }
+  const m = String(market ?? "").trim();
+  if (m === "hk" || m === "tw" || m === "cn" || m === "en") return m as PromptMarket;
+  return fallback;
+}
+
 export function voiceoverLocaleFromUiLocale(locale: Locale): VoiceoverLocale {
   if (locale === "en") return "en";
   // TW UI uses Mandarin voice (cn); no separate TW voice locale yet.
@@ -479,60 +497,82 @@ export async function rewriteCopyToScript(
   const entries = Object.entries(fields).filter(([, v]) => v.trim());
   if (!entries.length) return fields;
 
-  if (locale === "en") {
-    const needs = entries.some(([, v]) => copyNeedsLocaleRewrite(v, "en"));
-    if (!needs) return fields;
-    if (!deepSeekApiKey()) return fields;
+  const needing = entries.filter(([, v]) => copyNeedsLocaleRewrite(v, locale));
+  if (!needing.length) {
+    return locale === "en" ? fields : coerceFieldsToScript(fields, locale);
+  }
+
+  if (!deepSeekApiKey()) {
+    return locale === "en" ? fields : coerceFieldsToScript(fields, locale);
+  }
+
+  const next: Record<string, string> = {
+    ...(locale === "en" ? fields : coerceFieldsToScript(fields, locale)),
+  };
+
+  const targetLabel =
+    locale === "en"
+      ? "English"
+      : locale === "zh-hans"
+        ? "Simplified Chinese (简体中文)"
+        : "Traditional Chinese (繁體中文)";
+
+  const system =
+    locale === "en"
+      ? "Rewrite JSON string values into English only. Keep keys identical. Output strict JSON only. Keep brand names. Do not leave Chinese characters."
+      : `Rewrite JSON string values into ${targetLabel} only. Keep keys identical. Output strict JSON only. Do not translate English brand names. Do not mix 简繁 or leave English marketing sentences.`;
+
+  // Batch — research plans can have 60+ strings; a single 900-token call truncates and keeps CJK.
+  const BATCH = 12;
+  for (let i = 0; i < needing.length; i += BATCH) {
+    const chunk = needing.slice(i, i + BATCH);
+    try {
+      const output = await callDeepSeekChat(
+        [
+          { role: "system", content: system },
+          { role: "user", content: JSON.stringify(Object.fromEntries(chunk)) },
+        ],
+        { temperature: 0.1, max_tokens: 2500, jsonObject: true },
+      );
+      const parsed = parseLlmJsonObject<Record<string, string>>(output, "Script rewrite");
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string" && v.trim() && k in next) {
+          next[k] = locale === "en" ? v.trim() : coerceCopyScript(v.trim(), locale);
+        }
+      }
+    } catch (err) {
+      console.warn("[copy-locale] script rewrite batch failed:", err);
+    }
+  }
+
+  // Second pass for any fields that still mismatch after batched rewrite.
+  const leftoverPass = Object.entries(next).filter(([, v]) =>
+    copyNeedsLocaleRewrite(v, locale),
+  );
+  for (const [key, value] of leftoverPass) {
     try {
       const output = await callDeepSeekChat(
         [
           {
             role: "system",
             content:
-              "Rewrite JSON string values into English only. Keep keys identical. Output strict JSON only. Keep brand names. Do not leave Chinese characters.",
+              locale === "en"
+                ? "Translate the JSON string value to clear English marketing copy. Keep the key identical. Output strict JSON only. No Chinese characters."
+                : `Translate the JSON string value into ${targetLabel} only. Keep the key identical. Output strict JSON only.`,
           },
-          {
-            role: "user",
-            content: JSON.stringify(Object.fromEntries(entries)),
-          },
+          { role: "user", content: JSON.stringify({ [key]: value }) },
         ],
-        { temperature: 0.1, max_tokens: 900, jsonObject: true },
+        { temperature: 0.1, max_tokens: 400, jsonObject: true },
       );
-      const parsed = parseLlmJsonObject<Record<string, string>>(output, "Script rewrite");
-      const next: Record<string, string> = { ...fields };
-      for (const [k, v] of Object.entries(parsed)) {
-        if (typeof v === "string" && v.trim() && k in next) next[k] = v.trim();
+      const parsed = parseLlmJsonObject<Record<string, string>>(output, "Script rewrite field");
+      const v = parsed[key];
+      if (typeof v === "string" && v.trim()) {
+        next[key] = locale === "en" ? v.trim() : coerceCopyScript(v.trim(), locale);
       }
-      return next;
-    } catch {
-      return fields;
+    } catch (err) {
+      console.warn("[copy-locale] script rewrite field failed:", key, err);
     }
   }
 
-  let next = coerceFieldsToScript(fields, locale);
-  if (!deepSeekApiKey()) return next;
-  const target =
-    locale === "zh-hans" ? "Simplified Chinese (简体中文)" : "Traditional Chinese (繁體中文)";
-  try {
-    const output = await callDeepSeekChat(
-      [
-        {
-          role: "system",
-          content: `Rewrite JSON string values into ${target} only. Keep keys identical. Output strict JSON only. Do not translate English brand names. Do not mix 简繁 or leave English marketing sentences.`,
-        },
-        {
-          role: "user",
-          content: JSON.stringify(Object.fromEntries(entries)),
-        },
-      ],
-      { temperature: 0.1, max_tokens: 900, jsonObject: true },
-    );
-    const parsed = parseLlmJsonObject<Record<string, string>>(output, "Script rewrite");
-    for (const [k, v] of Object.entries(parsed)) {
-      if (typeof v === "string" && v.trim() && k in next) next[k] = v.trim();
-    }
-    return coerceFieldsToScript(next, locale);
-  } catch {
-    return next;
-  }
+  return next;
 }

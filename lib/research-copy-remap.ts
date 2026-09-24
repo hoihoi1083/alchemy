@@ -1,7 +1,9 @@
 import {
   coerceFieldsToScript,
+  copyNeedsLocaleRewrite,
   plannerOutputLanguageRule,
   resolveCopyLocale,
+  rewriteCopyToScript,
 } from "@/lib/copy-locale";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
@@ -58,6 +60,7 @@ export async function remapResearchCopyToSubject(
   input: RemapInput,
 ): Promise<ResearchCopyRemapDraft> {
   const market = input.market ?? "hk";
+  const locale = resolveCopyLocale(market);
 
   const subjectLabel =
     input.promotionMode === "concept" ? "concept / service" : "product";
@@ -105,5 +108,27 @@ export async function remapResearchCopyToSubject(
     raw,
     "Research copy remap",
   );
-  return normalizeDraft(parsed ?? {}, market);
+  const draft = normalizeDraft(parsed ?? {}, market);
+  const needsRewrite = Object.values(draft).some((v) =>
+    copyNeedsLocaleRewrite(v, locale),
+  );
+  if (!needsRewrite) return draft;
+
+  const rewritten = await rewriteCopyToScript(
+    {
+      headline: draft.headline,
+      subline: draft.subline,
+      offer: draft.offer,
+      audience: draft.audience,
+      topic: draft.topic,
+    },
+    locale,
+  );
+  return {
+    headline: rewritten.headline ?? draft.headline,
+    subline: rewritten.subline ?? draft.subline,
+    offer: rewritten.offer ?? draft.offer,
+    audience: rewritten.audience ?? draft.audience,
+    topic: rewritten.topic ?? draft.topic,
+  };
 }

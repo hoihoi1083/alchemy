@@ -821,6 +821,33 @@ export async function translateKeywordToIgReelKeywords(keyword: string): Promise
 }
 
 /**
+ * English keyword phrases for TikTok post search.
+ * Soft-fail: returns [] if DeepSeek is unavailable.
+ */
+export async function translateKeywordToTiktokKeywords(keyword: string): Promise<string[]> {
+  const { callDeepSeekChat, deepSeekApiKey } = await import("@/lib/deepseek-client");
+  if (!deepSeekApiKey()) return [];
+  try {
+    const raw = await callDeepSeekChat(
+      [
+        {
+          role: "system",
+          content:
+            'Translate this product/search phrase into short English TikTok search keywords. Reply JSON only: {"keywords":["phrase1","phrase2"]}. Keep each phrase 1–4 words, lowercase, no hashtags. Reflect the specific product (not a generic category). Max 2 keywords.',
+        },
+        { role: "user", content: keyword.trim().slice(0, 80) },
+      ],
+      { temperature: 0.2, max_tokens: 80, jsonObject: true },
+    );
+    const parsed = JSON.parse(raw) as { keywords?: unknown };
+    return dedupeSearchPhrases(parsed.keywords, { englishOnly: true });
+  } catch (err) {
+    console.warn("[justoneapi] TikTok keyword translate failed:", err);
+    return [];
+  }
+}
+
+/**
  * English → Simplified Chinese phrases for RedNote / XHS keyword search.
  * Soft-fail: returns [] if DeepSeek is unavailable.
  */
@@ -1072,6 +1099,78 @@ export type PlatformKeywordSearchResult = {
   categoryKeywords?: string[];
 };
 
+async function searchTiktokPosts(
+  keyword: string,
+  options?: { market?: PromptMarket; mediaFilter?: ContentResearchMediaFilter },
+): Promise<{ body: Record<string, unknown>; endpoint: string }> {
+  const endpoint = "/api/tiktok/search-post/v1";
+  const region = tiktokRegionForMarket(options?.market);
+  const tried = new Set<string>();
+  let lastBody: Record<string, unknown> | undefined;
+  let lastError: Error | undefined;
+
+  const tryKeywords = async (list: string[]) => {
+    for (const raw of list) {
+      const k = normalizeSearchPhrase(raw);
+      if (!k) continue;
+      const key = k.toLowerCase();
+      if (tried.has(key)) continue;
+      tried.add(key);
+      try {
+        const body = await fetchJustOneApi(
+          endpoint,
+          {
+            keyword: k,
+            offset: "0",
+            sortType: "MOST_LIKED",
+            publishTime: "ALL",
+            region,
+          },
+          "TikTok post search",
+        );
+        lastBody = body;
+        const items = flattenSearchItems(body);
+        if (mapItems("tiktok", items, RESEARCH_POSTS_FETCH_LIMIT, options?.mediaFilter).length > 0) {
+          return body;
+        }
+        console.info(
+          `[justoneapi] TikTok "${k}" (${region}) returned no posts, trying next`,
+        );
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e));
+        if (isJustOneRateLimitError(lastError)) throw lastError;
+        console.warn(
+          `[justoneapi] TikTok "${k}" failed, trying next candidate:`,
+          lastError.message,
+        );
+      }
+    }
+    return null;
+  };
+
+  // Pass 1: keyword as typed (region from UI market).
+  const hit = await tryKeywords([keyword]);
+  if (hit) return { body: hit, endpoint };
+
+  // Pass 2: CJK → English (TikTok US/HK catalogs index English better).
+  if (classifyInputLanguage(keyword) === "en") {
+    if (lastBody) return { body: lastBody, endpoint };
+    throw lastError ?? new Error("TikTok post search failed.");
+  }
+  const translated = await translateKeywordToTiktokKeywords(keyword);
+  const fresh = translated.filter((t) => t.toLowerCase() !== keyword.toLowerCase());
+  if (fresh.length) {
+    console.info(
+      `[justoneapi] TikTok empty — translated "${keyword}" → ${fresh.join(", ")}`,
+    );
+    const translatedHit = await tryKeywords(fresh);
+    if (translatedHit) return { body: translatedHit, endpoint };
+  }
+
+  if (lastBody) return { body: lastBody, endpoint };
+  throw lastError ?? new Error("TikTok post search failed.");
+}
+
 async function searchPlatformPostsByKeywordOnce(
   platform: ContentPlatform,
   keyword: string,
@@ -1096,20 +1195,15 @@ async function searchPlatformPostsByKeywordOnce(
       endpoint = ig.endpoint;
       break;
     }
-    case "tiktok":
-      endpoint = "/api/tiktok/search-post/v1";
-      body = await fetchJustOneApi(
-        endpoint,
-        {
-          keyword,
-          offset: "0",
-          sortType: "MOST_LIKED",
-          publishTime: "ALL",
-          region: tiktokRegionForMarket(options?.market),
-        },
-        "TikTok post search",
-      );
+    case "tiktok": {
+      const tt = await searchTiktokPosts(keyword, {
+        market: options?.market,
+        mediaFilter,
+      });
+      body = tt.body;
+      endpoint = tt.endpoint;
       break;
+    }
     case "facebook":
       endpoint = "/api/facebook/search-post/v1";
       body = await fetchJustOneApi(
@@ -1184,10 +1278,12 @@ export async function searchPlatformPostsByKeyword(
     });
   } catch (e) {
     if (isJustOneRateLimitError(e)) throw e;
-    // Empty/hard fail — allow category broaden to recover for IG / XHS.
+    // Empty/hard fail — allow category broaden to recover for IG / XHS / TikTok.
     if (
       !options?.skipCategoryFill &&
-      (platform === "xiaohongshu" || platform === "instagram")
+      (platform === "xiaohongshu" ||
+        platform === "instagram" ||
+        platform === "tiktok")
     ) {
       console.warn(
         `[justoneapi] ${platform} primary keyword failed, trying category:`,
@@ -1209,7 +1305,9 @@ export async function searchPlatformPostsByKeyword(
 
   const needsCategory =
     !options?.skipCategoryFill &&
-    (platform === "xiaohongshu" || platform === "instagram") &&
+    (platform === "xiaohongshu" ||
+      platform === "instagram" ||
+      platform === "tiktok") &&
     posts.length < RESEARCH_THIN_POSTS_THRESHOLD;
 
   if (needsCategory) {

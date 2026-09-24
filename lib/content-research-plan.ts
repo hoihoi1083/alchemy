@@ -297,8 +297,8 @@ export async function alignResearchPlanCopy(
   const locale = resolveCopyLocale(market);
   const fields: Record<string, string> = {};
   if (plan.summary.trim()) fields.summary = plan.summary;
+  // Only candidates — topPicks are a subset; rewriting both duplicates payload and truncates EN rewrites.
   plan.candidates.forEach((c, i) => mapAngleCopyFields(c, `c${i}`, fields));
-  plan.topPicks.forEach((c, i) => mapAngleCopyFields(c, `t${i}`, fields));
 
   const needs = Object.values(fields).some((v) => copyNeedsLocaleRewrite(v, locale));
 
@@ -307,16 +307,18 @@ export async function alignResearchPlanCopy(
       ? await rewriteCopyToScript(fields, locale)
       : fields;
 
+  const candidates = plan.candidates.map((c, i) =>
+    applyMappedCopyFields(c, `c${i}`, rewritten, locale),
+  );
+  const byId = new Map(candidates.map((c) => [c.id, c]));
+  const topPicks = plan.topPicks.map((t) => byId.get(t.id) ?? t).filter(Boolean);
+
   return {
     ...plan,
     market,
     summary: coerceCopyScript(rewritten.summary ?? plan.summary, locale),
-    candidates: plan.candidates.map((c, i) =>
-      applyMappedCopyFields(c, `c${i}`, rewritten, locale),
-    ),
-    topPicks: plan.topPicks.map((c, i) =>
-      applyMappedCopyFields(c, `t${i}`, rewritten, locale),
-    ),
+    candidates,
+    topPicks: topPicks.length >= 1 ? topPicks : candidates.slice(0, RESEARCH_ANGLES_PER_PAGE),
   };
 }
 
@@ -365,8 +367,9 @@ function buildPlaybookPrompt(input: {
     "- topPicks: best 3 from candidates (copy full objects, highest score)",
     "- format: teaching-carousel | single-image | campaign | reel | model-wear",
     `- Copy language: ${plannerOutputLanguageRule(input.market)}`,
-    "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta to Copy language",
-    "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline MUST follow Copy language only — no EN+中文 mix",
+    "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta/whyItWorks/scriptOutline/formatLabel/summary to Copy language",
+    "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline/whyItWorks/formatLabel/summary MUST follow Copy language only — no EN+中文 mix",
+    "- Research result cards are shown in the website UI language — if Copy language is English, every analysis field must be English even when the reference post is Chinese (and vice versa)",
     `- Platform playbook: ${platformPlaybook(input.platform)}`,
     input.promotionMode === "physical"
       ? "- User sells a PHYSICAL product — prefer model-wear, product hero angles when relevant."
@@ -414,8 +417,9 @@ function buildLiveWebPrompt(input: {
     "- Do NOT invent viral claims without snippet evidence",
     "- format: teaching-carousel | single-image | campaign | reel | model-wear",
     `- Copy language: ${plannerOutputLanguageRule(input.market)}`,
-    "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta to Copy language",
-    "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline MUST follow Copy language only — no EN+中文 mix",
+    "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta/whyItWorks/scriptOutline/formatLabel/summary to Copy language",
+    "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline/whyItWorks/formatLabel/summary MUST follow Copy language only — no EN+中文 mix",
+    "- Research result cards are shown in the website UI language — if Copy language is English, every analysis field must be English even when the reference post is Chinese (and vice versa)",
     `- Platform: ${PLATFORM_LABELS[input.platform]}`,
     ...researchProductPromptLines(input.topic, input.product),
     input.business ? `Business: ${input.business}` : "",
@@ -637,7 +641,7 @@ export async function planContentResearch(input: {
 
   if (!hasLiveContentResearchConfigured(input.platform)) {
     throw new Error(
-      "Live content research needs JUSTONEAPI_TOKEN or TAVILY_API_KEY in .env.local (see docs/XHS_NOTE_SEARCH_SETUP.md).",
+      "Live content research is not configured. Try again later or use playbook suggestions.",
     );
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
+import { promptMarketFromUiLocaleOrMarket } from "@/lib/copy-locale";
 import { remapResearchCopyToSubject } from "@/lib/research-copy-remap";
 import { asPromptMarket } from "@/lib/prompts";
 
@@ -33,7 +34,10 @@ export async function POST(request: Request) {
 
   const promotionMode =
     body.promotionMode === "concept" ? "concept" : "physical";
-  const market = asPromptMarket(body.market);
+  const market = promptMarketFromUiLocaleOrMarket(
+    typeof body.uiLocale === "string" ? body.uiLocale : undefined,
+    asPromptMarket(body.market),
+  );
 
   const bullets = Array.isArray(body.referenceBullets)
     ? body.referenceBullets.map((b) => String(b).trim()).filter(Boolean)

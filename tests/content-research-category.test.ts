@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
-  heuristicCategoryKeywords,
   liveResearchAngleCount,
   mergeResearchPosts,
   researchPostDedupeKey,
@@ -19,19 +20,13 @@ function post(
 }
 
 describe("content-research-category", () => {
-  it("heuristically broadens Chinese product phrases to parent category", () => {
-    const cats = heuristicCategoryKeywords("上海鮮肉月餅");
-    assert.ok(cats.includes("月餅"), `expected 月餅 in ${cats.join(",")}`);
-  });
-
-  it("heuristically broadens English multi-word phrases to last token", () => {
-    const cats = heuristicCategoryKeywords("shanghai meat mooncake");
-    assert.ok(cats.includes("mooncake"), `expected mooncake in ${cats.join(",")}`);
-  });
-
-  it("does not broaden single short keywords", () => {
-    assert.deepEqual(heuristicCategoryKeywords("月餅"), []);
-    assert.deepEqual(heuristicCategoryKeywords("serum"), []);
+  it("uses DeepSeek only for category phrases — no offline char-slice heuristic", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/content-research-category.ts"),
+      "utf8",
+    );
+    assert.doesNotMatch(src, /heuristicCategoryKeywords/);
+    assert.match(src, /DeepSeek only/);
   });
 
   it("merges category posts without duplicating ids/urls", () => {
@@ -85,5 +80,19 @@ describe("content-research-category", () => {
     assert.equal(liveResearchAngleCount(2), 2);
     assert.equal(liveResearchAngleCount(4), 4);
     assert.equal(liveResearchAngleCount(12), 9);
+  });
+});
+
+describe("TikTok search keyword nets", () => {
+  it("translates CJK → English and runs category fill like IG/XHS", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/justoneapi-platform-search.ts"),
+      "utf8",
+    );
+    assert.match(src, /translateKeywordToTiktokKeywords/);
+    assert.match(src, /searchTiktokPosts/);
+    assert.match(src, /TikTok empty — translated/);
+    const needs = src.slice(src.indexOf("const needsCategory"));
+    assert.match(needs, /platform === "tiktok"/);
   });
 });

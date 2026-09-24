@@ -3,7 +3,8 @@ import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-res
 import { planContentResearchFromDirectPost } from "@/lib/content-research-direct-post";
 import { normalizePostUrlInput } from "@/lib/content-research-post-url";
 import { requireAppUser } from "@/lib/require-app-user";
-import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
+import { promptMarketFromUiLocaleOrMarket } from "@/lib/copy-locale";
+import type { PromptMarket } from "@/lib/prompt-variables";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -14,6 +15,8 @@ type DirectPostBody = {
   product?: string;
   platform?: string;
   market?: PromptMarket;
+  /** Page UI language — preferred SSOT for research analysis copy. */
+  uiLocale?: string;
   promotionMode?: "physical" | "concept";
   mediaFilter?: "image" | "video";
 };
@@ -41,7 +44,7 @@ export async function POST(request: Request) {
       postUrl,
       topic: body.topic?.trim() || body.product?.trim(),
       product: body.product?.trim(),
-      market: asPromptMarket(body.market) ?? "hk",
+      market: promptMarketFromUiLocaleOrMarket(body.uiLocale, body.market, "hk"),
       promotionMode:
         body.promotionMode === "physical" || body.promotionMode === "concept"
           ? body.promotionMode
@@ -59,11 +62,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       plan,
-      sourceNote: `Pinned reference post (Just One API)${filterNote}`,
+      sourceNote: `Pinned reference post (live)${filterNote}`,
       researchWarning: plan.researchWarning ?? null,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Could not load this post.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const safe =
+      /JUSTONE|TAVILY|SERPER|DEEPSEEK|\.env|API[_ ]?KEY|Just One|justoneapi/i.test(message)
+        ? "Could not load this post. Try again or paste a different link."
+        : message;
+    return NextResponse.json({ error: safe }, { status: 400 });
   }
 }

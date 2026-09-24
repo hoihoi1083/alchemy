@@ -27,18 +27,32 @@ function basePlan(
 }
 
 describe("content-research-ui-messages", () => {
-  it("builds English source note for JustOne live search", () => {
+  it("builds English source note for live platform search", () => {
     assert.equal(
       researchSourceNote(basePlan(), cr, "keyword"),
       "Instagram post search (live)",
     );
   });
 
-  it("localizes JustOne fallback warning codes", () => {
-    assert.match(
-      localizeResearchWarning(researchWarningCode("justone_gateway"), cr, "instagram"),
-      /temporarily down/i,
+  it("omits provider names from web fallback source notes", () => {
+    assert.equal(
+      researchSourceNote(
+        basePlan({ searchProvider: "tavily" }),
+        cr,
+        "keyword",
+      ),
+      "Live web research",
     );
+  });
+
+  it("localizes platform-search fallback warning codes without vendor names", () => {
+    const msg = localizeResearchWarning(
+      researchWarningCode("justone_gateway"),
+      cr,
+      "instagram",
+    );
+    assert.match(msg ?? "", /temporarily unavailable/i);
+    assert.doesNotMatch(msg ?? "", /Just One|Tavily|DeepSeek/i);
   });
 
   it("localizes category broaden warning", () => {
@@ -48,7 +62,14 @@ describe("content-research-ui-messages", () => {
     );
   });
 
-  it("passes through legacy warning strings", () => {
+  it("scrubs legacy warning strings that name vendors", () => {
+    assert.equal(
+      localizeResearchWarning("Just One API failed — use Tavily", cr, "instagram"),
+      cr.justOneFallbackGeneric(""),
+    );
+  });
+
+  it("passes through safe legacy warning strings", () => {
     assert.equal(
       localizeResearchWarning("Legacy message", cr, "instagram"),
       "Legacy message",

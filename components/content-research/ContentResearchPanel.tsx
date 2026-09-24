@@ -27,6 +27,7 @@ import { contentResearchSearchHint } from "@/lib/content-research-search-hints";
 import {
   localizeResearchWarning,
   researchSourceNote,
+  sanitizeResearchUserMessage,
 } from "@/lib/content-research-ui-messages";
 import { detectPlatformFromPostUrl } from "@/lib/content-research-post-url";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
@@ -94,7 +95,7 @@ export function ContentResearchPanel({
   deferApply = false,
   onPendingPickChange,
 }: ContentResearchPanelProps) {
-  const { m } = useLocale();
+  const { m, locale } = useLocale();
   const cr = m.contentResearch;
   const violet = tone === "violet";
   const [promotionMode, setPromotionMode] = useState<PromotionMode>(initialPromotionMode);
@@ -187,6 +188,7 @@ export function ContentResearchPanel({
           product: promoteProduct.trim() || undefined,
           platform,
           market,
+          uiLocale: locale,
           promotionMode,
           mediaFilter,
         }),
@@ -194,7 +196,9 @@ export function ContentResearchPanel({
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) throw new Error(cr.signInRequired);
-        throw new Error(data.error ?? cr.failed);
+        throw new Error(
+          sanitizeResearchUserMessage(String(data.error ?? ""), cr.failed),
+        );
       }
       setPlan(data.plan as ContentResearchPlan);
       setNote(
@@ -245,13 +249,16 @@ export function ContentResearchPanel({
           topic: topic.trim() || promoteProduct.trim() || undefined,
           product: promoteProduct.trim() || undefined,
           market,
+          uiLocale: locale,
           promotionMode,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) throw new Error(cr.signInRequired);
-        throw new Error(data.error ?? cr.directPostFailed);
+        throw new Error(
+          sanitizeResearchUserMessage(String(data.error ?? ""), cr.directPostFailed),
+        );
       }
       const nextPlan = data.plan as ContentResearchPlan;
       setPlan(nextPlan);
