@@ -6526,7 +6526,7 @@ export const en = {
 		phaseHowToPicture:
 			"Optional AI edit: pick a job chip, drop a reference photo, generate. Or skip to Structure.",
 		phaseHowToStructure:
-			"CapCut-style timeline: drag clips to trim/reorder, split at the playhead, add clips — then continue.",
+			"Magnetic timeline: drag clips to trim/reorder, split at the playhead, add clips — then continue.",
 		phaseHowToCaptions:
 			"Pure = write lines. From speech = auto captions. AI plan = topic → captions + VO script.",
 		phaseHowToFinish:
@@ -6624,14 +6624,17 @@ export const en = {
 		nleSplitNeedInterior: "Move the playhead inside a clip (not on an edge) to split.",
 		nleKeepOne: "Keep at least one video clip on the timeline.",
 		bgmDragHint:
-			"Drag the BGM block to move it; use the green edge handles to trim length. Re-click Add BGM to bake the new placement.",
+			"Drag the BGM block to move it; use the green edge handles to trim length. Then click Add BGM once to bake. After bake, the lane clears so you don’t double-mix.",
 		bgmStartNote: (s: number) => `BGM starts at ${s.toFixed(1)}s on the mix`,
-		exportPlate: "Export timeline",
+		exportPlate: "Bake timeline",
 		exportingPlate: "Baking timeline…",
-		exportDone: "Timeline exported — download or burn captions next.",
+		exportDone: "Timeline baked — download the file, or burn captions next.",
+		pictureClear: "Clear",
+		pictureUploadFailed: "Upload failed",
+		signInToUse: "Sign in to upload and edit videos.",
 		burnNeedLines: "Add caption text to burn, or export the timeline alone.",
 		burnNeedCleanPlate:
-			"Missing clean plate for re-burn. Export timeline (structure only), then burn again.",
+			"Missing clean plate for re-burn. Bake timeline (structure only), then burn again.",
 		modePure: "Pure captions",
 		modeSpeech: "From speech",
 		modeAi: "AI script",
@@ -6718,23 +6721,23 @@ export const en = {
 		detecting: (tokens: number) => `Splitting layers… (${tokens} tok)`,
 		splittingLayers: "Finding text & objects, cutting cleanly…",
 		suggestingText: "Finding text lines…",
-		sandwichSplitting: "Hybrid split — text, then hero, then Qwen…",
+		sandwichSplitting: "Hybrid split — text, then hero, then extras…",
 		sandwichReady:
-			"Ready — Florence text on top, BiRefNet hero, Qwen props + filled background. Drag freely.",
+			"Ready — text on top, hero subject, props + filled background. Drag freely.",
 		sandwichReadyPartial: (n: number) =>
 			`Ready — ${n} layers (text + hero). Plate punched under them — select a layer and drag. Extra props were not split; use Box lift for leftovers.`,
 		sandwichPartialTokens:
-			"Text + subject ready, but Qwen did not run (need more tokens). Try Hybrid again when you have balance, or use Box lift.",
+			"Text + subject ready, but extras did not run (need more tokens). Try Hybrid again when you have balance, or use Box lift.",
 		sandwichNoObjects:
-			"Text + subject ready; Qwen returned no extra pieces. Logos may still be on the plate — use Box lift or Qwen region.",
+			"Text + subject ready; no extra pieces returned. Logos may still be on the plate — use Box lift or Split selection.",
 		sandwichHow:
-			"Hybrid: Florence words → BiRefNet hero → Qwen fills the rest (no Florence heal plate).",
+			"Hybrid: lift words → hero subject → fill the rest (no ghost heal plate).",
 		sandwichAdvanced: "Hybrid split",
 		sandwichAdvancedHow:
-			"Florence text + BiRefNet hero + Qwen remainder. Prefer this over Florence-only or Qwen-only on hard ads.",
+			"Text + hero + remainder. Prefer this over text-only or one-shot split on hard ads.",
 		hybridSplit: (n: number) => `Hybrid split ${n}`,
 		hybridSplitHow:
-			"Best for posters: Florence cuts editable words, BiRefNet cuts the hero, Qwen rebuilds background + leftover graphics (e.g. SMASH). No bad Florence heal.",
+			"Best for posters: editable words, clean hero cutout, rebuilt background + leftover graphics. No ghost heal artifacts.",
 		liftTools: "Lift & edit",
 		liftToolsHint:
 			"Box / grab / brush one piece — we cut it cleanly and fill the hole. Keeps the rest of the image.",
@@ -6743,17 +6746,17 @@ export const en = {
 		matteSkippedFallback:
 			"Clean cut failed — kept box crop. Try Matte on the layer.",
 		florenceSamReady: (layers: number, sam: number) =>
-			`Ready — ${layers} layers (${sam} SAM cutouts). Text + components lifted; background healed.`,
+			`Ready — ${layers} layers (${sam} cutouts). Text + components lifted; background healed.`,
 		florenceMatchReady: (layers: number) =>
 			`Ready — ${layers} layers. Board matches the input; move a piece to clear its hole.`,
 		florenceSamMatchReady: (layers: number, sam: number) =>
-			`Ready — ${layers} layers (${sam} SAM cutouts). Board matches the input; move a piece to clear its hole.`,
+			`Ready — ${layers} layers (${sam} cutouts). Board matches the input; move a piece to clear its hole.`,
 		florenceSubjectReady: (layers: number, sam: number) =>
-			`Ready — ${layers} layers (BiRefNet subject${sam ? ` + ${sam} SAM` : ""}). Hero is one clean cutout; board matches input until you move.`,
+			`Ready — ${layers} layers (hero subject${sam ? ` + ${sam} cutouts` : ""}). Hero is one clean cutout; board matches input until you move.`,
 		florenceSplitHow:
-			"Aug-style: text via Florence, hero via BiRefNet, icons via SAM. Board stays identical until you move a piece.",
+			"Text + hero + icons lifted cleanly. Board stays identical until you move a piece.",
 		qwenSplitHow:
-			"Spike: one Qwen model → RGBA layers + filled background (no Florence heal). Compare with Florence Split on hard ads.",
+			"One-shot split → RGBA layers + filled background. Compare with the primary Split on hard ads.",
 		seedreamSplitting: "Splitting into layers…",
 		seedreamSplitHow:
 			"Turn this poster into movable pieces — text, product, people. Then drag or AI-edit each one.",
@@ -6764,7 +6767,7 @@ export const en = {
 		seedreamFullReady: (layers: number) =>
 			`Ready — ${layers} layers. Select one to move, hide, or AI-edit.`,
 		qwenFullReady: (layers: number) =>
-			`Qwen ready — ${layers} layers + filled plate. Drag freely; no ghost heal needed.`,
+			`Ready — ${layers} layers + filled plate. Drag freely; no ghost heal needed.`,
 		changeWordsOneTap: (n: number) => `Change words ${n}`,
 		changeWordsHint:
 			"Type exact new copy → one tap. Keeps style; wording must match what you typed.",
@@ -6831,9 +6834,9 @@ export const en = {
 		boxLiftOn: "Box lift on",
 		boxLiftHint: "Drag a box to lift one piece — clean cut + hole fill",
 		detectAll: "Split layers",
-		detectAllQwen: (n: number) => `Florence split ${n}`,
-		detectAllFlorence: (n: number) => `Florence split ${n}`,
-		qwenFullSplit: (n: number) => `Qwen split ${n}`,
+		detectAllQwen: (n: number) => `Split layers ${n}`,
+		detectAllFlorence: (n: number) => `Split layers ${n}`,
+		qwenFullSplit: (n: number) => `Split layers ${n}`,
 		suggestText: (n: number) => `Suggest text ${n}`,
 		qwenBox: (n: number) => `Split selection ${n}`,
 		qwenBoxOn: "Split selection on",
@@ -6953,7 +6956,13 @@ export const en = {
 		chargedAiRewrite: (n: number) => `AI rewrite · ${n} tokens`,
 		newText: "New text",
 		seedreamCopyrightBlocked:
-			"Seedream refused this image (copyright / brand / likeness filter). Tokens refunded. Both uploads and our AI posters can trip it when logos or characters are visible. Use Box lift / Clean plate, or try another image.",
+			"This image was blocked by a copyright / brand / likeness filter. Tokens refunded. Uploads and AI posters can trip this when logos or characters are visible. Use Box lift / Clean plate, or try another image.",
+		healFallbackBlur:
+			"Background fill used a quick blur fallback (AI fill unavailable). Check the hole before export — Undo or try Matte if edges look soft.",
+		imageUnprocessable:
+			"Could not split this image into layers. Try another image, or use Box lift / Clean plate.",
+		envNotReady:
+			"Image split is temporarily unavailable. Try again later, or use Box lift on one piece.",
 		seedreamNoLayersRefunded: (n: number) =>
 			`No liftable layers · ${n} tokens refunded`,
 		chargedErase: (n: number) => `Cleaned hole (AI) · ${n} tokens`,
@@ -7251,8 +7260,13 @@ export const en = {
 		failed: "Content research failed. Try again.",
 		signInRequired:
 			"Sign in required for platform research (Standard plan or higher).",
+		planRequiredStandard:
+			"Platform research needs the Standard plan or above.",
+		tiktokPasteUnsupported:
+			"TikTok paste-link is not supported yet. Use keyword search with TikTok selected (Video or Combined workflow), or paste a RedNote / Instagram / Facebook link.",
+		noRelatedPosts: "No related posts found.",
 		searchCooldown:
-			"XHS API needs a short cooldown — wait {seconds}s before searching again.",
+			"Please wait {seconds}s before searching again.",
 		topicRequired: "Enter a search keyword first.",
 		topPicksTitle: "Top 3 picks — inspired by trending posts",
 		sendToUltraCanvas: "Send research to Ultra canvas →",

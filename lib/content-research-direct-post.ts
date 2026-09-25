@@ -27,10 +27,17 @@ function pinnedAngleFromPost(
   post: ContentResearchPost,
   topic: string,
   product?: string,
+  market?: PromptMarket,
 ): ContentAngleCandidate {
   const format = inferFormatFromPost(post);
   const imageCount = post.imageUrls?.length ?? (post.coverImageUrl ? 1 : 0);
   const productLabel = promoteProductName(product, topic);
+  const cjk = market === "hk" || market === "tw" || market === "cn";
+  const whyItWorks = cjk
+    ? market === "cn"
+      ? `你的置顶参考帖 — 借其版式、节奏与钩子结构来推广「${productLabel}」。不要照抄原帖主题。`
+      : `你嘅置頂參考帖 — 借佢版式、節奏同鉤子結構嚟推「${productLabel}」。唔好照抄原帖主題。`
+    : `Your pinned reference — borrow slide layout, pacing, and hook structure for ${productLabel}. Do not copy the reference topic verbatim.`;
 
   return {
     id: `pinned-${post.id}`,
@@ -39,7 +46,7 @@ function pinnedAngleFromPost(
     scriptOutline: post.snippet,
     format,
     formatLabel: formatLabelForAngleFormat(format, imageCount),
-    whyItWorks: `Your pinned reference — borrow slide layout, pacing, and hook structure for ${productLabel}. Do not copy the reference topic verbatim.`,
+    whyItWorks,
     bulletPoints: [],
     cta: "",
     score: 100,
@@ -68,14 +75,20 @@ export async function planContentResearchFromDirectPost(input: {
 
   const post = await fetchResearchPostByUrl(postUrl, { mediaFilter: input.mediaFilter });
   const topic = input.topic?.trim() || input.product?.trim() || "";
-
-  const pinned = pinnedAngleFromPost(post, topic, input.product);
   const market = input.market ?? "hk";
+
+  const pinned = pinnedAngleFromPost(post, topic, input.product, market);
+  const summary =
+    market === "cn"
+      ? `置顶参考帖：${post.title}`
+      : market === "hk" || market === "tw"
+        ? `置頂參考帖：${post.title}`
+        : `Pinned reference post: ${post.title}`;
   const basePlan: ContentResearchPlan = {
     platform: post.platform,
     platformLabel: PLATFORM_LABELS[post.platform],
     topic,
-    summary: `Pinned reference post: ${post.title}`,
+    summary,
     researchMode: "live-web",
     searchProvider: "justoneapi",
     posts: [post],
@@ -88,7 +101,12 @@ export async function planContentResearchFromDirectPost(input: {
   const enriched = attachSourcePostsToPlan(basePlan);
   const platformFromUrl = detectPlatformFromPostUrl(postUrl);
   if (platformFromUrl && platformFromUrl !== post.platform) {
-    enriched.researchWarning = `Link host suggests ${platformFromUrl}; loaded as ${post.platform}.`;
+    enriched.researchWarning =
+      market === "cn"
+        ? `链接域名像是 ${platformFromUrl}，实际按 ${post.platform} 加载。`
+        : market === "hk" || market === "tw"
+          ? `連結域名似係 ${platformFromUrl}，實際以 ${post.platform} 載入。`
+          : `Link host suggests ${platformFromUrl}; loaded as ${post.platform}.`;
   }
 
   return alignResearchPlanCopy(

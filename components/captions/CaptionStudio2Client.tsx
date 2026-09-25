@@ -14,6 +14,15 @@ import { CaptionPicturePhase } from "@/components/captions/CaptionPicturePhase";
 import { CaptionProgramMonitor } from "@/components/captions/CaptionProgramMonitor";
 import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
 import { useLocale } from "@/components/LocaleProvider";
+import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
+import { useUserPlanEntitlements } from "@/components/UserPlanProvider";
+import { useAuth } from "@clerk/nextjs";
+import { mapApiError } from "@/lib/api/errors";
+import {
+  messageFromBillingFailure,
+  parseBillingFailure,
+  precheckTokensOrNull,
+} from "@/lib/client-billing-ui";
 import type { MusicMood, VoiceoverLocale } from "@/lib/ad-pack-preferences";
 import type {
   AiMusicTrack,
@@ -63,7 +72,7 @@ import {
   trimClipEdge,
   type TimelineClip,
 } from "@/lib/captions/timeline-project";
-import { TOKEN_COST } from "@/lib/billing/token-costs";
+import { TOKEN_COST, estimateCaptionVideoEditTokens } from "@/lib/billing/token-costs";
 import { uploadFileViaLibraryPresign } from "@/lib/library-presign-upload-client";
 
 async function readApiJson(res: Response): Promise<Record<string, unknown>> {
@@ -74,6 +83,22 @@ async function readApiJson(res: Response): Promise<Record<string, unknown>> {
   } catch {
     return { error: text.slice(0, 160) || "Request failed." };
   }
+}
+
+function throwIfBillingFailed(
+  res: Response,
+  data: Record<string, unknown>,
+  fallback: string,
+  insufficientTokens: string,
+): void {
+  if (res.ok) return;
+  const fail = parseBillingFailure(res, data, fallback);
+  throw new Error(
+    messageFromBillingFailure(fail, {
+      default: fallback,
+      insufficientTokens,
+    }),
+  );
 }
 
 async function downloadVideoBlob(url: string, filename: string) {
@@ -136,7 +161,30 @@ export function CaptionStudio2Client() {
   const { m, locale } = useLocale();
   const t = m.captions;
   const t2 = m.captions2;
+  const { isSignedIn } = useAuth();
+  const { creditBalance } = useUserPlanEntitlements();
   const searchParams = useSearchParams();
+
+  function blockIfCannotAfford(required: number): boolean {
+    const msg = precheckTokensOrNull(
+      creditBalance,
+      required,
+      m.errors.insufficientTokens,
+    );
+    if (!msg) return false;
+    setError(msg);
+    return true;
+  }
+
+  function safeErr(e: unknown, fallback: string): string {
+    return mapApiError(e, {
+      default: fallback,
+      insufficientTokens: m.errors.insufficientTokens,
+      missingFalKey: fallback,
+      network: m.errors.network ?? fallback,
+      timeout: m.errors.timeout ?? fallback,
+    });
+  }
 
   const [toolTab, setToolTab] = useState<ToolTab>("edit");
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
@@ -232,6 +280,8 @@ export function CaptionStudio2Client() {
   const mediaAddInputRef = useRef<HTMLInputElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const editAbortRef = useRef<AbortController | null>(null);
+  /** Caption-free plate used as BGM mix base so re-Apply does not double-layer. */
+  const bgmCleanPlateRef = useRef<string | null>(null);
   const handoffDone = useRef(false);
   const packLoadDone = useRef(false);
   const blobPreviewRef = useRef<string | null>(null);
@@ -950,6 +1000,8 @@ export function CaptionStudio2Client() {
       setError(t2.needRefOrNote);
       return;
     }
+    const clipDur = Math.max(0.2, target.sourceOutSec - target.sourceInSec);
+    if (blockIfCannotAfford(estimateCaptionVideoEditTokens(clipDur))) return;
     editAbortRef.current?.abort();
     const ac = new AbortController();
     editAbortRef.current = ac;
@@ -959,7 +1011,6 @@ export function CaptionStudio2Client() {
     try {
       // CapCut flow: trim on timeline first, then Seedance that segment only.
       let editUrl = target.url;
-      const clipDur = Math.max(0.2, target.sourceOutSec - target.sourceInSec);
       const needsTrim =
         target.sourceInSec > 0.05 ||
         target.sourceOutSec < target.sourceDurationSec - 0.05;
@@ -1001,9 +1052,13 @@ export function CaptionStudio2Client() {
       });
       const data = await readApiJson(res);
       if (!res.ok || typeof data.videoUrl !== "string") {
-        throw new Error(
-          typeof data.error === "string" ? data.error : t2.editFailed,
+        throwIfBillingFailed(
+          res,
+          data,
+          t2.editFailed,
+          m.errors.insufficientTokens,
         );
+        throw new Error(t2.editFailed);
       }
       const next = withCacheBust(toRelativePipelineUrl(data.videoUrl));
       const dur = await probeVideoDuration(next);
@@ -1031,7 +1086,7 @@ export function CaptionStudio2Client() {
       if (e instanceof DOMException && e.name === "AbortError") {
         setNote(t2.editCancel);
       } else {
-        setError(e instanceof Error ? e.message : t2.editFailed);
+        setError(safeErr(e, t2.editFailed));
       }
     } finally {
       setEditBusy(false);
@@ -1109,6 +1164,7 @@ export function CaptionStudio2Client() {
       setError(t2.needVideo);
       return;
     }
+    if (blockIfCannotAfford(TOKEN_COST.plan)) return;
     setTranscribeBusy(true);
     setError(null);
     setNote(null);
@@ -1132,9 +1188,13 @@ export function CaptionStudio2Client() {
       });
       const data = await readApiJson(res);
       if (!res.ok) {
-        throw new Error(
-          typeof data.error === "string" ? data.error : t2.transcribeFailed,
+        throwIfBillingFailed(
+          res,
+          data,
+          t2.transcribeFailed,
+          m.errors.insufficientTokens,
         );
+        throw new Error(t2.transcribeFailed);
       }
       const lines = Array.isArray(data.lines) ? (data.lines as CaptionLine[]) : [];
       if (lines.length === 0 || data.emptySpeech) {
@@ -1157,13 +1217,14 @@ export function CaptionStudio2Client() {
         `${t2.transcribeDone(lines.length)} · ${asr}${tok ? ` · ${tok}` : ""}${splitNote}`,
       );
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t2.transcribeFailed);
+      setError(safeErr(e, t2.transcribeFailed));
     } finally {
       setTranscribeBusy(false);
     }
   }
 
   async function generateAiMusicTracks() {
+    if (blockIfCannotAfford(TOKEN_COST.music)) return;
     setMusicGenerateBusy(true);
     setError(null);
     setAudioNote(null);
@@ -1556,6 +1617,10 @@ export function CaptionStudio2Client() {
       setError(t2.needVideo);
       return;
     }
+    const voCost =
+      TOKEN_COST.voiceover *
+      Math.max(1, timelineVos.length || (selectedPreview || script ? 1 : 1));
+    if (blockIfCannotAfford(voCost)) return;
 
     setAudioBusy(true);
     setError(null);
@@ -1583,7 +1648,10 @@ export function CaptionStudio2Client() {
         }
       }
 
-      let videoUrl = await bakeTimelinePlate();
+      let videoUrl =
+        captionsBurnedInPlate && originalSourceUrl
+          ? toRelativePipelineUrl(originalSourceUrl)
+          : await bakeTimelinePlate();
       const mixLines = captionLinesForMix.filter((l) => l.text.trim());
 
       const dubOnce = async (body: Record<string, unknown>) => {
@@ -1595,9 +1663,13 @@ export function CaptionStudio2Client() {
         });
         const data = await readApiJson(res);
         if (!res.ok || typeof data.videoUrl !== "string") {
-          throw new Error(
-            typeof data.error === "string" ? data.error : t.burnFailed,
+          throwIfBillingFailed(
+            res,
+            data,
+            t.burnFailed,
+            m.errors.insufficientTokens,
           );
+          throw new Error(t.burnFailed);
         }
         return toRelativePipelineUrl(data.videoUrl);
       };
@@ -1605,7 +1677,9 @@ export function CaptionStudio2Client() {
       let speechStartSec = 0;
       if (timelineVos.length > 0) {
         // Mix every VO clip onto the plate in start order (keeps multi-section VO).
-        for (const vo of timelineVos) {
+        // After the first mix, do not re-duck prior VO (under_voice = 1).
+        for (let i = 0; i < timelineVos.length; i++) {
+          const vo = timelineVos[i]!;
           if (!isHttpOrLibraryMediaUrl(vo.audioUrl)) {
             throw new Error(m.errors.voiceoverFailed);
           }
@@ -1617,7 +1691,7 @@ export function CaptionStudio2Client() {
             speech_start_sec: vo.startSec,
             speech_url: vo.audioUrl,
             voice_volume: voiceVolume,
-            under_voice_bgm_volume: underVoiceBgmVolume,
+            under_voice_bgm_volume: i === 0 ? underVoiceBgmVolume : 1,
             mix_mode: "continuous",
           });
         }
@@ -1668,6 +1742,9 @@ export function CaptionStudio2Client() {
       // VO is baked into the plate — clear lane so re-mix does not double-charge.
       setVoClips([]);
       setSelectedVoId(null);
+      setOriginalSourceUrl(toRelativePipelineUrl(videoUrl));
+      if (captionsBurnedInPlate) setCaptionsBurnedInPlate(false);
+      bgmCleanPlateRef.current = null;
 
       const doneNote =
         speechStartSec > 0.05
@@ -1684,13 +1761,14 @@ export function CaptionStudio2Client() {
       setAudioNote(msg);
       setNote(msg);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t.burnFailed);
+      setError(safeErr(e, t.burnFailed));
     } finally {
       setAudioBusy(false);
     }
   }
 
   async function applyBgm() {
+    if (blockIfCannotAfford(TOKEN_COST.bgm)) return;
     setAudioBusy(true);
     setError(null);
     setAudioNote(null);
@@ -1704,7 +1782,17 @@ export function CaptionStudio2Client() {
           throw new Error(t.aiMusicSelectTrack);
         }
       }
-      const plate = await bakeTimelinePlate();
+      // Always mix from a caption-free base so re-Apply / burn→BGM→re-burn keep audio.
+      let plate: string;
+      if (captionsBurnedInPlate && originalSourceUrl) {
+        plate = toRelativePipelineUrl(originalSourceUrl);
+        bgmCleanPlateRef.current = plate;
+      } else if (bgmCleanPlateRef.current) {
+        plate = bgmCleanPlateRef.current;
+      } else {
+        plate = await bakeTimelinePlate();
+        bgmCleanPlateRef.current = plate;
+      }
       const body: Record<string, unknown> = {
         video_url: plate,
         replace_source_audio: replaceSourceAudio,
@@ -1725,12 +1813,24 @@ export function CaptionStudio2Client() {
       });
       const data = await readApiJson(res);
       if (!res.ok || typeof data.videoUrl !== "string") {
-        throw new Error(
-          typeof data.error === "string" ? data.error : t.burnFailed,
+        throwIfBillingFailed(
+          res,
+          data,
+          t.burnFailed,
+          m.errors.insufficientTokens,
         );
+        throw new Error(t.burnFailed);
       }
-      await commitPlateToTimeline(data.videoUrl, sourceLabel || "BGM mix");
-      setBgmDurationSec(effectiveBgmDuration);
+      const mixed = toRelativePipelineUrl(data.videoUrl);
+      // Caption-free plate with BGM — next burn keeps the music.
+      setOriginalSourceUrl(mixed);
+      if (captionsBurnedInPlate) {
+        setCaptionsBurnedInPlate(false);
+      }
+      await commitPlateToTimeline(mixed, sourceLabel || "BGM mix");
+      // Reset lane so UI does not imply another bake is still pending on the same mix.
+      setBgmStartSec(0);
+      setBgmDurationSec(projectDur);
       const placeNote =
         bgmStartSec > 0.05 || effectiveBgmDuration < projectDur - 0.15
           ? ` · ${bgmStartSec.toFixed(1)}s–${(bgmStartSec + effectiveBgmDuration).toFixed(1)}s`
@@ -1741,7 +1841,7 @@ export function CaptionStudio2Client() {
       setAudioNote(msg);
       setNote(msg);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t.burnFailed);
+      setError(safeErr(e, t.burnFailed));
     } finally {
       setAudioBusy(false);
     }
@@ -1766,6 +1866,7 @@ export function CaptionStudio2Client() {
       setError(t2.burnNeedLines);
       return;
     }
+    if (blockIfCannotAfford(TOKEN_COST.caption_burn)) return;
     setBusy(true);
     setError(null);
     try {
@@ -1784,18 +1885,23 @@ export function CaptionStudio2Client() {
       });
       const data = await readApiJson(res);
       if (!res.ok || typeof data.videoUrl !== "string") {
-        throw new Error(
-          typeof data.error === "string" ? data.error : t.burnFailed,
+        throwIfBillingFailed(
+          res,
+          data,
+          t.burnFailed,
+          m.errors.insufficientTokens,
         );
+        throw new Error(t.burnFailed);
       }
       // Clean plate stays the re-burn / export base; timeline becomes the finished plate.
       setOriginalSourceUrl(toRelativePipelineUrl(burnUrl));
+      bgmCleanPlateRef.current = toRelativePipelineUrl(burnUrl);
       await commitPlateToTimeline(data.videoUrl, sourceLabel || "Burned");
       setCaptionsBurnedInPlate(true);
       setShowOriginal(false);
       setNote(t.appliedNote);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t.burnFailed);
+      setError(safeErr(e, t.burnFailed));
     } finally {
       setBusy(false);
     }
@@ -1825,7 +1931,16 @@ export function CaptionStudio2Client() {
     // Keep burned flag; force original plate so live overlay does not double on burned pixels.
     beginCaptionEditAgainstCleanPlate();
     setCaptionLines((prev) =>
-      prev.map((line, i) => (i === index ? { ...line, ...patch } : line)),
+      prev.map((line, i) => {
+        if (i !== index) return line;
+        const next = { ...line, ...patch };
+        // Position preset must win over a prior free-drag (xPct/yPct).
+        if (patch.position != null) {
+          delete next.xPct;
+          delete next.yPct;
+        }
+        return next;
+      }),
     );
   }
 
@@ -2043,7 +2158,15 @@ export function CaptionStudio2Client() {
         }
       `}</style>
     <div className={hasWorkspace ? "flex h-full min-h-0 flex-col gap-2" : "space-y-3"}>
-      {error ? (
+      {error &&
+      (error === m.errors.insufficientTokens ||
+        /not enough tokens|insufficient_tokens|token 不足/i.test(error)) ? (
+        <WizardErrorBanner
+          message={error}
+          variant="dark"
+          onDismiss={() => setError(null)}
+        />
+      ) : error ? (
         <div className="rounded-lg border border-rose-500/40 bg-rose-950/50 px-3 py-2 text-sm text-rose-100">
           {error}
         </div>
@@ -2075,10 +2198,15 @@ export function CaptionStudio2Client() {
         <section className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
           <h2 className="text-lg font-semibold text-white">{t.uploadTitle}</h2>
           <p className="mt-1 text-sm text-slate-400">{t2.importHint}</p>
+          {!isSignedIn ? (
+            <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-sm text-amber-100">
+              {t2.signInToUse}
+            </p>
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !isSignedIn}
               onClick={() => fileInputRef.current?.click()}
               className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50"
             >
@@ -2086,7 +2214,7 @@ export function CaptionStudio2Client() {
             </button>
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !isSignedIn}
               onClick={() => {
                 setLibraryPickMode("replace");
                 setLibraryOpen(true);
@@ -2333,13 +2461,15 @@ export function CaptionStudio2Client() {
                     notePlaceholder: t2.editNotePlaceholder,
                     generate: t2.editGenerate,
                     generating: t2.editGenerating,
-                    skipPicture: t2.tabCaptions,
+                    skipPicture: t2.skipPicture,
                     costHint: t2.editCostHint,
                     needRefOrNote: t2.needRefOrNote,
                     downloadEdited: t2.downloadEdited,
                     downloadingEdited: t2.downloadingEdited,
-                    continueStructure: t2.tabCaptions,
+                    continueStructure: t2.continueCaptions,
                     cancelEdit: t2.editCancel,
+                    clearRef: t2.pictureClear,
+                    uploadFailed: t2.pictureUploadFailed,
                   }}
                   disabled={busy}
                   busy={editBusy}

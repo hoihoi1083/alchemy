@@ -69,6 +69,14 @@ import {
 import { isLibraryAssetUrl, libraryMediaUrlForBoard } from "@/lib/storage/library-asset-url";
 import { uploadEditImageFile } from "@/lib/upload-edit-image-client";
 import { useLocale } from "@/components/LocaleProvider";
+import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
+import { useUserPlanEntitlements } from "@/components/UserPlanProvider";
+import { mapApiError } from "@/lib/api/errors";
+import {
+  messageFromBillingFailure,
+  parseBillingFailure,
+  precheckTokensOrNull,
+} from "@/lib/client-billing-ui";
 
 type ShapeKind = "rect" | "capsule" | "circle";
 
@@ -360,8 +368,9 @@ function LayerSprite({
   const y = (layer.yPct / 100) * stageH;
   const w = (layer.wPct / 100) * stageW;
   const h = (layer.hPct / 100) * stageH;
-  // Select first, then drag — overlapping Seedream crops otherwise steal the gesture.
-  const draggable = interactive && !layer.locked && selected;
+  // Drag with a small threshold: click selects; move a few px starts drag.
+  // (Select-only-then-drag felt “broken” for first-time users.)
+  const draggable = interactive && !layer.locked;
   const fontSize = layer.fontSize ?? Math.max(12, h * 0.72);
   const fill = layer.fill ?? (layer.kind === "shape" ? "#8b5cf6" : "#111827");
   const keepRatio = layer.kind === "object" || layer.kind === "logo";
@@ -426,6 +435,7 @@ function LayerSprite({
   const common = {
     id: layer.id,
     draggable,
+    dragDistance: 4,
     listening: interactive,
     dragBoundFunc: dragBound,
     // Controlled x/y only when idle — otherwise guide updates reset the drag.
@@ -626,12 +636,34 @@ export function EditImage2Client() {
   const { m } = useLocale();
   const ic = m.imageCanvas;
   const t = m.editImage2;
+  const { creditBalance } = useUserPlanEntitlements();
   const searchParams = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<StageType>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [bootSnap] = useState<SessionSnap | null>(() => loadSession());
   const handoffBootKeyRef = useRef<string | null>(null);
+
+  function blockIfCannotAfford(required: number): boolean {
+    const msg = precheckTokensOrNull(
+      creditBalance,
+      required,
+      m.errors.insufficientTokens,
+    );
+    if (!msg) return false;
+    setError(msg);
+    return true;
+  }
+
+  function safeErr(e: unknown, fallback: string): string {
+    return mapApiError(e, {
+      default: fallback,
+      insufficientTokens: m.errors.insufficientTokens,
+      missingFalKey: t.envNotReady ?? fallback,
+      network: m.errors.network ?? fallback,
+      timeout: m.errors.timeout ?? fallback,
+    });
+  }
 
   const [sourceUrl, setSourceUrl] = useState<string | null>(bootSnap?.sourceUrl ?? null);
   const [returnTo, setReturnTo] = useState<string | null>(null);
@@ -1434,7 +1466,7 @@ export function EditImage2Client() {
             : t.blurPunchFallback,
       );
     } else if (healed.mode === "blur") {
-      setNotice(t.blurPunchFallback);
+      setNotice(t.healFallbackBlur ?? t.blurPunchFallback);
     }
   }
   applyHealedBackgroundRef.current = applyHealedBackground;
@@ -1942,6 +1974,7 @@ export function EditImage2Client() {
 
   /** Primary: Seedream Layerize via BytePlus (product CTA hides model name). */
   async function runSeedreamSplit(imageUrl: string) {
+    if (blockIfCannotAfford(SPLIT_TOKENS)) return;
     setBusy("decompose");
     setError(null);
     setNotice(t.seedreamSplitting);
@@ -1965,7 +1998,20 @@ export function EditImage2Client() {
       if (decJson.errorCode === "copyright_restricted") {
         throw new Error(t.seedreamCopyrightBlocked);
       }
-      throw new Error(decJson.error || t.decomposeFailed);
+      if (decJson.errorCode === "image_unprocessable") {
+        throw new Error(t.imageUnprocessable);
+      }
+      if (dec.status === 503) {
+        throw new Error(t.envNotReady);
+      }
+      const fail = parseBillingFailure(dec, decJson, t.decomposeFailed);
+      throw new Error(
+        messageFromBillingFailure(fail, {
+          default: t.decomposeFailed,
+          insufficientTokens: m.errors.insufficientTokens,
+          missingFalKey: t.envNotReady,
+        }),
+      );
     }
 
     if (typeof decJson.tokensCharged === "number") {
@@ -2013,7 +2059,7 @@ export function EditImage2Client() {
     try {
       await runSeedreamSplit(url);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t.somethingFailed);
+      setError(safeErr(e, t.somethingFailed));
     } finally {
       setBusy(null);
     }
@@ -3420,8 +3466,8 @@ export function EditImage2Client() {
     setBusy("export");
     setError(null);
     try {
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const ready = await waitForExportImagesReady();
+      if (!ready) throw new Error(t.exportFailedLoading);
       const uri = stageToPngDataUrl();
       if (!uri || uri.length < 100) {
         throw new Error(t.exportFailedLoading);
@@ -3432,14 +3478,54 @@ export function EditImage2Client() {
       a.click();
       setNotice(t.downloaded);
     } catch (e: unknown) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : t.exportFailedGeneric,
-      );
+      setError(safeErr(e, t.exportFailedGeneric));
     } finally {
       setBusy(null);
     }
+  }
+
+  async function waitForExportImagesReady(timeoutMs = 8000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+    const urls = new Set<string>();
+    const bg =
+      result?.backgroundUrl ||
+      result?.backgroundDataUrl ||
+      sourceUrl;
+    if (bg) {
+      const u = canvasDisplayUrl(bg) || bg;
+      if (u) urls.add(u);
+    }
+    for (const layer of layers) {
+      if (layer.visible === false) continue;
+      const src = layer.cropUrl || layer.cropDataUrl;
+      if (!src || layer.useLiveText) continue;
+      const u = canvasDisplayUrl(src) || src;
+      if (u) urls.add(u);
+    }
+    if (urls.size === 0) return true;
+
+    const loadOne = (src: string) =>
+      new Promise<boolean>((resolve) => {
+        if (src.startsWith("data:")) {
+          resolve(true);
+          return;
+        }
+        const img = new window.Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+
+    while (Date.now() < deadline) {
+      const results = await Promise.all([...urls].map(loadOne));
+      if (results.every(Boolean)) {
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+        return true;
+      }
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    return false;
   }
 
   /** Download only the selected piece (crop PNG) — not the full board. */
@@ -3650,11 +3736,19 @@ export function EditImage2Client() {
               {notice}
             </p>
           )}
-      {error && (
+          {error &&
+          (error === m.errors.insufficientTokens ||
+            /not enough tokens|insufficient_tokens|token 不足/i.test(error)) ? (
+            <WizardErrorBanner
+              message={error}
+              variant="dark"
+              onDismiss={() => setError(null)}
+            />
+          ) : error ? (
             <p className="mt-1 rounded-lg border border-red-500/35 bg-red-950/40 px-3 py-1.5 text-center text-xs text-red-200">
-          {error}
-        </p>
-          )}
+              {error}
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -3854,6 +3948,12 @@ export function EditImage2Client() {
                     setGuides([]);
                 }}
                 onTouchStart={(e: Konva.KonvaEventObject<TouchEvent>) => {
+                    if (grabMode) {
+                      e.evt.preventDefault();
+                      const pos = brushPointerPos(e.target.getStage());
+                      if (pos) void grabAtStagePoint(pos);
+                      return;
+                    }
                     if (boxMode) {
                       e.evt.preventDefault();
                       const pos = brushPointerPos(e.target.getStage());
@@ -4519,6 +4619,32 @@ export function EditImage2Client() {
               />
               <ToolBtn
                 label={
+                  brushMode && brushIntent === "erase" && eraseTarget === "plate"
+                    ? t.brushErasePlateOn
+                    : t.brushErasePlate
+                }
+                active={
+                  brushMode && brushIntent === "erase" && eraseTarget === "plate"
+                }
+                disabled={!canEdit || brushBusy || !!busy}
+                onClick={() => {
+                  const next = !(
+                    brushMode &&
+                    brushIntent === "erase" &&
+                    eraseTarget === "plate"
+                  );
+                  setEraseTarget("plate");
+                  setBrushIntent("erase");
+                  setBrushMode(next);
+                  setGrabMode(false);
+                  setBoxMode(false);
+                  setBoxDrag(null);
+                  if (!next) setBrushLines([]);
+                  setSelectedId(null);
+                }}
+              />
+              <ToolBtn
+                label={
                   boxMode && boxIntent === "erase" && eraseTarget === "plate"
                     ? t.erasePlateOn
                     : t.erasePlate
@@ -4587,8 +4713,13 @@ export function EditImage2Client() {
               </>
             ) : brushMode && brushIntent === "lift" ? (
               <p className="text-[10px] text-slate-500">{t.makeLayerHint}</p>
+            ) : brushMode && brushIntent === "erase" && eraseTarget === "plate" ? (
+              <>
+                <p className="text-[10px] text-slate-500">{t.brushErasePlateHint}</p>
+                <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
+              </>
             ) : null}
-            {brushMode && brushIntent === "lift" ? (
+            {brushMode && (brushIntent === "lift" || brushIntent === "erase") ? (
                 <>
                   <label className="flex items-center gap-2 text-[11px] text-slate-300">
                   {t.size}
@@ -4613,7 +4744,15 @@ export function EditImage2Client() {
                       onClick={() => setBrushLines([])}
                     />
                     <ToolBtn
-                    label={brushBusy ? t.lifting : t.makeLayer}
+                    label={
+                      brushBusy
+                        ? t.lifting
+                        : brushIntent === "erase"
+                          ? eraseTarget === "layer"
+                            ? t.eraseLayerPainted
+                            : t.erasePainted
+                          : t.makeLayer
+                    }
                     disabled={brushBusy}
                       active
                       onClick={() => void createLayerFromBrush()}
@@ -4621,7 +4760,7 @@ export function EditImage2Client() {
                   </div>
                 <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
                 </>
-              ) : null}
+            ) : null}
 
             <MagicBoardChat
               disabled={!canEdit || !!busy || brushBusy}

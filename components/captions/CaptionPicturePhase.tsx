@@ -23,6 +23,8 @@ type Labels = {
   downloadingEdited: string;
   continueStructure: string;
   cancelEdit?: string;
+  clearRef?: string;
+  uploadFailed?: string;
 };
 
 export function CaptionPicturePhase(props: {
@@ -118,7 +120,7 @@ export function CaptionPicturePhase(props: {
               className="text-xs text-slate-400 underline"
               onClick={() => onRefImage(null)}
             >
-              Clear
+              {L.clearRef ?? "Clear"}
             </button>
           ) : null}
         </div>
@@ -145,7 +147,9 @@ export function CaptionPicturePhase(props: {
               .then((url) => onRefImage(url, f.name))
               .catch((e: unknown) => {
                 setUploadError(
-                  e instanceof Error ? e.message : "Upload failed",
+                  e instanceof Error
+                    ? e.message
+                    : (L.uploadFailed ?? "Upload failed"),
                 );
               })
               .finally(() => setUploading(false));

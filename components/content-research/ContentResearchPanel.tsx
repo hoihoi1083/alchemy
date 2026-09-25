@@ -27,9 +27,11 @@ import { contentResearchSearchHint } from "@/lib/content-research-search-hints";
 import {
   localizeResearchWarning,
   researchSourceNote,
-  sanitizeResearchUserMessage,
 } from "@/lib/content-research-ui-messages";
-import { detectPlatformFromPostUrl } from "@/lib/content-research-post-url";
+import {
+  detectPlatformFromPostUrl,
+  directPostUrlSupported,
+} from "@/lib/content-research-post-url";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { markAssistantReopenAfterNavigate } from "@/lib/studio-assistant-chat-storage";
 import { studioHref } from "@/lib/promotion-mode";
@@ -38,6 +40,14 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { InputLanguageHintInline } from "@/components/InputLanguageHint";
 import { useUnsupportedLanguageSoftGateFields } from "@/hooks/useInputLanguageGate";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
+import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
+import {
+  isPlanEntitlementFailure,
+  messageFromBillingFailure,
+  parseBillingFailure,
+} from "@/lib/client-billing-ui";
+import type { UserPlan } from "@/lib/billing/plans";
 
 const LAST_RESEARCH_AT_KEY = "alchemy:last-research-at";
 const RESEARCH_CLIENT_COOLDOWN_MS = 3_000;
@@ -108,6 +118,9 @@ export function ContentResearchPanel({
   const [note, setNote] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [plan, setPlan] = useState<ContentResearchPlan | null>(null);
+  const [planGate, setPlanGate] = useState<{
+    requiredPlan: UserPlan;
+  } | null>(null);
   const [applyingAngleId, setApplyingAngleId] = useState<string | null>(null);
   const [selectedAngleId, setSelectedAngleId] = useState<string | null>(null);
   const mediaFilter = mediaFilterFromWorkflowMode(workflowMode);
@@ -123,6 +136,28 @@ export function ContentResearchPanel({
     tiktokVideo: cr.platformSearchHintTiktok,
   });
   const langGate = useUnsupportedLanguageSoftGateFields(topic, promoteProduct);
+
+  function handleResearchHttpError(
+    res: Response,
+    data: unknown,
+    fallback: string,
+  ): never {
+    const fail = parseBillingFailure(res, data, fallback);
+    if (isPlanEntitlementFailure(fail)) {
+      setPlanGate({ requiredPlan: fail.requiredPlan ?? "standard" });
+      throw new Error(cr.planRequiredStandard);
+    }
+    if (res.status === 401) {
+      throw new Error(cr.signInRequired);
+    }
+    throw new Error(
+      messageFromBillingFailure(fail, {
+        default: fallback,
+        insufficientTokens: m.errors.insufficientTokens,
+        planEntitlement: cr.planRequiredStandard,
+      }),
+    );
+  }
 
   useEffect(() => {
     if (!(researchPlatforms as readonly string[]).includes(platform)) {
@@ -195,10 +230,7 @@ export function ContentResearchPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401) throw new Error(cr.signInRequired);
-        throw new Error(
-          sanitizeResearchUserMessage(String(data.error ?? ""), cr.failed),
-        );
+        handleResearchHttpError(res, data, cr.failed);
       }
       setPlan(data.plan as ContentResearchPlan);
       setNote(
@@ -232,6 +264,10 @@ export function ContentResearchPanel({
       return;
     }
     const linkPlatform = detectPlatformFromPostUrl(trimmedUrl);
+    if (linkPlatform === "tiktok" || (linkPlatform && !directPostUrlSupported(linkPlatform))) {
+      setError(cr.tiktokPasteUnsupported);
+      return;
+    }
     if (linkPlatform && (researchPlatforms as readonly string[]).includes(linkPlatform)) {
       setPlatform(linkPlatform);
     }
@@ -255,10 +291,7 @@ export function ContentResearchPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401) throw new Error(cr.signInRequired);
-        throw new Error(
-          sanitizeResearchUserMessage(String(data.error ?? ""), cr.directPostFailed),
-        );
+        handleResearchHttpError(res, data, cr.directPostFailed);
       }
       const nextPlan = data.plan as ContentResearchPlan;
       setPlan(nextPlan);
@@ -409,6 +442,19 @@ export function ContentResearchPanel({
             : "space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3"
       }
     >
+      {planGate ? (
+        <PlanGateDialog
+          open
+          onClose={() => setPlanGate(null)}
+          requiredPlan={planGate.requiredPlan}
+          featureLabel={cr.title}
+        />
+      ) : null}
+      {error &&
+      (error === m.errors.insufficientTokens ||
+        /not enough tokens|insufficient_tokens|token 不足/i.test(error)) ? (
+        <WizardErrorBanner message={error} onDismiss={() => setError(null)} />
+      ) : null}
       {!compact && (
         <p className={`text-sm font-semibold ${violet ? "text-violet-950" : "text-emerald-950"}`}>
           {cr.title}
@@ -635,89 +681,89 @@ export function ContentResearchPanel({
           <p className={`text-xs font-semibold text-slate-800 ${violet ? "sr-only" : ""}`}>
             {cr.topPicksTitle}
           </p>
-          {plan.posts && plan.posts.length > 0 && plan.searchProvider === "justoneapi" ? (
-            <>
-              {(() => {
-                const { angles, hiddenWithoutCover } = displayResearchAngles(plan, {
-                  videoOnly: workflowMode === "video-only",
-                });
-                const platformName = cr.platforms[plan.platform] ?? plan.platformLabel;
-                return (
-                  <>
-                    {hiddenWithoutCover > 0 && (
-                      <p className="text-[11px] text-slate-500">
-                        {cr.researchHiddenNoCover.replace("{count}", String(hiddenWithoutCover))}
-                      </p>
-                    )}
-                    {angles.length === 0 ? (
-                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[13px] text-amber-950">
-                        <p className="font-semibold">
-                          {cr.noResultsTitle.replace("{platform}", platformName)}
-                        </p>
-                        <p className="mt-1 leading-snug text-amber-900/90">
-                          {cr.noResultsBody}
-                        </p>
-                        <p className="mt-1.5 text-[12px] leading-snug text-amber-800">
-                          {plan.platform === "instagram"
-                            ? cr.noResultsHintIg
-                            : plan.platform === "facebook"
-                              ? cr.noResultsHintFb
-                              : plan.platform === "tiktok"
-                                ? cr.noResultsHintTiktok
-                                : cr.noResultsHintXhs}
-                        </p>
-                      </div>
-                    ) : (
-                    <ResearchAngleCards
-                      key={`${plan.topic}-${plan.platform}`}
-                      angles={angles}
-                      platform={plan.platform}
-                      platformLabel={platformName}
-                      videoOnly={workflowMode === "video-only"}
-                      applyingAngleId={applyingAngleId}
-                      selectedAngleId={selectedAngleId}
-                      pickDisabled={promotionMode === "physical" && !promoteProduct.trim()}
-                      pickDisabledHint={cr.promoteProductRequired}
-                      onPick={pickAngle}
-                      variant={violet ? "recommendation" : "classic"}
-                      selectOnly={deferApply}
-                      labels={{
-                        scoreLabel: cr.scoreLabel,
-                        inspiredBy: cr.inspiredBy,
-                        originalPostLabel: cr.originalPostLabel,
-                        yourAngle: cr.yourAngle,
-                        useAngle: deferApply ? cr.selectAngle : cr.useAngle,
-                        applyingAngle: cr.applyingAngle,
-                        openNote: cr.openNote,
-                        sourceLabel: cr.sourceLabel,
-                        likes: cr.likes,
-                        collects: cr.collects,
-                        noCover: cr.noCover,
-                        prevPage: cr.prevPage,
-                        nextPage: cr.nextPage,
-                        pageOf: cr.pageOf,
-                        totalAngles: cr.totalAngles,
-                        carouselSlides: cr.carouselSlides,
-                        videoReadyUrl: cr.videoReadyUrl,
-                        videoReadyResolve: cr.videoReadyResolve,
-                        videoReadyMissing: cr.videoReadyMissing,
-                        resultTitle: cr.resultTitle,
-                        resultSubtitle: cr.resultSubtitleForPlatform(platformName),
-                        styleSummaryLabel: cr.styleSummaryLabel,
-                        toneLabel: cr.toneLabel,
-                        layoutNotesLabel: cr.layoutNotesLabel,
-                        viewMoreExamples: cr.viewMoreExamples,
-                        sourcePlatformsLabel: cr.sourcePlatformLabel,
-                        selectedLabel: cr.selectedLabel,
-                        selectedContinueHint: cr.selectedContinueHint,
-                      }}
-                    />
-                    )}
-                  </>
-                );
-              })()}
-            </>
-          ) : (
+          {(() => {
+            const { angles, hiddenWithoutCover } = displayResearchAngles(plan, {
+              videoOnly: workflowMode === "video-only",
+            });
+            const platformName = cr.platforms[plan.platform] ?? plan.platformLabel;
+            const usePostCards =
+              plan.posts &&
+              plan.posts.length > 0 &&
+              plan.searchProvider === "justoneapi";
+            const empty =
+              (usePostCards && angles.length === 0) ||
+              (!usePostCards && (!plan.topPicks || plan.topPicks.length === 0));
+
+            if (empty) {
+              return (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[13px] text-amber-950">
+                  <p className="font-semibold">{cr.noRelatedPosts}</p>
+                </div>
+              );
+            }
+
+            if (usePostCards) {
+              return (
+                <>
+                  {hiddenWithoutCover > 0 && (
+                    <p className="text-[11px] text-slate-500">
+                      {cr.researchHiddenNoCover.replace(
+                        "{count}",
+                        String(hiddenWithoutCover),
+                      )}
+                    </p>
+                  )}
+                  <ResearchAngleCards
+                    key={`${plan.topic}-${plan.platform}`}
+                    angles={angles}
+                    platform={plan.platform}
+                    platformLabel={platformName}
+                    videoOnly={workflowMode === "video-only"}
+                    applyingAngleId={applyingAngleId}
+                    selectedAngleId={selectedAngleId}
+                    pickDisabled={
+                      promotionMode === "physical" && !promoteProduct.trim()
+                    }
+                    pickDisabledHint={cr.promoteProductRequired}
+                    onPick={pickAngle}
+                    variant={violet ? "recommendation" : "classic"}
+                    selectOnly={deferApply}
+                    labels={{
+                      scoreLabel: cr.scoreLabel,
+                      inspiredBy: cr.inspiredBy,
+                      originalPostLabel: cr.originalPostLabel,
+                      yourAngle: cr.yourAngle,
+                      useAngle: deferApply ? cr.selectAngle : cr.useAngle,
+                      applyingAngle: cr.applyingAngle,
+                      openNote: cr.openNote,
+                      sourceLabel: cr.sourceLabel,
+                      likes: cr.likes,
+                      collects: cr.collects,
+                      noCover: cr.noCover,
+                      prevPage: cr.prevPage,
+                      nextPage: cr.nextPage,
+                      pageOf: cr.pageOf,
+                      totalAngles: cr.totalAngles,
+                      carouselSlides: cr.carouselSlides,
+                      videoReadyUrl: cr.videoReadyUrl,
+                      videoReadyResolve: cr.videoReadyResolve,
+                      videoReadyMissing: cr.videoReadyMissing,
+                      resultTitle: cr.resultTitle,
+                      resultSubtitle: cr.resultSubtitleForPlatform(platformName),
+                      styleSummaryLabel: cr.styleSummaryLabel,
+                      toneLabel: cr.toneLabel,
+                      layoutNotesLabel: cr.layoutNotesLabel,
+                      viewMoreExamples: cr.viewMoreExamples,
+                      sourcePlatformsLabel: cr.sourcePlatformLabel,
+                      selectedLabel: cr.selectedLabel,
+                      selectedContinueHint: cr.selectedContinueHint,
+                    }}
+                  />
+                </>
+              );
+            }
+
+            return (
             <div className={`grid gap-2 ${compact ? "" : "sm:grid-cols-1"}`}>
               {plan.topPicks.map((angle, i) => (
                 <div
@@ -778,7 +824,8 @@ export function ContentResearchPanel({
                 </div>
               ))}
             </div>
-          )}
+            );
+          })()}
           {(note || warning || applyingAngleId) && (
             <div id="content-research-apply-result" className="space-y-2">
               {applyingAngleId ? (
@@ -841,7 +888,15 @@ export function ContentResearchPanel({
             const next = e.target.value;
             setPostUrl(next);
             const linkPlatform = detectPlatformFromPostUrl(next);
-            if (linkPlatform && (researchPlatforms as readonly string[]).includes(linkPlatform)) {
+            if (linkPlatform === "tiktok") {
+              setError(cr.tiktokPasteUnsupported);
+              return;
+            }
+            if (
+              linkPlatform &&
+              directPostUrlSupported(linkPlatform) &&
+              (researchPlatforms as readonly string[]).includes(linkPlatform)
+            ) {
               setPlatform(linkPlatform);
               setError(null);
             }

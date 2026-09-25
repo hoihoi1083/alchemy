@@ -346,7 +346,7 @@ export function CaptionNleTimeline(props: {
         <div className="flex flex-wrap items-center gap-1">
           <button
             type="button"
-            disabled={!cutReady && !selectedClipId && selectedCaptionIndex < 0}
+            disabled={!cutReady}
             onClick={onSplit}
             className={`rounded-md border px-2 py-1 text-[10px] font-semibold disabled:opacity-40 ${
               cutReady

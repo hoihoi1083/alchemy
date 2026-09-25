@@ -71,7 +71,19 @@ export async function POST(request: Request) {
       note: body.note,
       durationSec,
       resolution,
+      signal: request.signal,
     });
+    if (request.signal.aborted) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "video",
+        captionEditJob: job,
+        reason: "client_cancelled",
+      });
+      return NextResponse.json(
+        { error: "Edit cancelled.", code: "CANCELLED" },
+        { status: 499 },
+      );
+    }
     return NextResponse.json({
       videoUrl: out.videoUrl,
       provider: out.provider,
@@ -84,8 +96,14 @@ export async function POST(request: Request) {
     await refundTokens(auth.user.userId, tokenCost, {
       kind: "video",
       captionEditJob: job,
-      reason: "generation_failed",
+      reason: request.signal.aborted ? "client_cancelled" : "generation_failed",
     });
+    if (request.signal.aborted) {
+      return NextResponse.json(
+        { error: "Edit cancelled.", code: "CANCELLED" },
+        { status: 499 },
+      );
+    }
     const message = e instanceof Error ? e.message : "Video edit failed.";
     return NextResponse.json({ error: message }, { status: 502 });
   }

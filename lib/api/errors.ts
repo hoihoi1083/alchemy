@@ -16,7 +16,7 @@ export type ErrorFallbacks = {
 
 /** Named vendors / providers — never show these in product UI. */
 export const USER_FACING_VENDOR_NAME_RE =
-  /fal\.ai|fal-ai|\bfal\b|minimax|\bh3\b|seedance|\bkling\b|heygen|nano banana|nano-banana|deepseek|hailuo|flux\.1|just\s*one(?:api)?|justoneapi|tavily|serper|openai|anthropic|\bclaude\b|\bgpt-?[45]\b/i;
+  /fal\.ai|fal-ai|\bfal\b|minimax|\bh3\b|seedance|seedream|\bkling\b|heygen|nano banana|nano-banana|deepseek|hailuo|flux\.1|just\s*one(?:api)?|justoneapi|tavily|serper|openai|anthropic|\bclaude\b|\bgpt-?[45]\b|qwen|florence|birefnet|\bsam\b|byteplus|modelark|capcut|whisper/i;
 
 export function messageHasVendorName(text: string): boolean {
   return USER_FACING_VENDOR_NAME_RE.test(text);
