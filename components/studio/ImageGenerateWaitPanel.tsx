@@ -88,6 +88,11 @@ export function ImageGenerateWaitPanel({
 }: Props) {
   const { m } = useLocale();
   const mw = m.microWizard;
+  const phaseIndex = generateWaitPhaseIndex(workflowMode, waitKind);
+  const stepEyebrow = mw.generateWaitEyebrow.replace(
+    "{n}",
+    String(phaseIndex + 1),
+  );
 
   return (
     <div className="igw-page w-full min-w-0">
@@ -97,7 +102,7 @@ export function ImageGenerateWaitPanel({
         <ImageReviewStepper
           workflowMode={workflowMode}
           kind={waitKind === "video" ? "video" : waitKind === "storyboard" ? "storyboard" : "image"}
-          activeIndex={generateWaitPhaseIndex(workflowMode, waitKind)}
+          activeIndex={phaseIndex}
           onSelectPhaseIndex={onSelectPhaseIndex}
         />
       ) : null}
@@ -105,7 +110,7 @@ export function ImageGenerateWaitPanel({
       <div className={`igw-panel${showStepper ? " mt-3" : ""}`}>
         <div className="igw-panel-body">
           <p className="text-[13px] font-bold tracking-[0.12em] text-violet-600 sm:text-[15px]">
-            {mw.generateWaitEyebrow}
+            {stepEyebrow}
           </p>
           <h2 className="igw-title">{title ?? mw.generateImageTitle}</h2>
           <p className="igw-hint">{m.wizard.generationWaitHint}</p>

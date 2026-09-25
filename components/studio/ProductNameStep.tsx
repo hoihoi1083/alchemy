@@ -2,7 +2,7 @@
 
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
-import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
+import { promoteSubjectPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 
 type Props = {
   value: string;
@@ -192,7 +192,7 @@ export function ProductNameStep({
       {showPhaseStepper ? (
         <PhaseStepper
           phases={studioPhasesForMode(m.start, wizard.workflowMode)}
-          activeIndex={setupContentPhaseIndex()}
+          activeIndex={promoteSubjectPhaseIndex()}
           onSelectIndex={onSelectPhaseIndex}
         />
       ) : null}

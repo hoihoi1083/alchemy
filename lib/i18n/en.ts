@@ -7474,7 +7474,7 @@ export const en = {
 		pickAngleHint:
 			"Choose an angle from research — we borrow layout and style, not the topic.",
 		generateImageTitle: "Generate image",
-		generateWaitEyebrow: "STEP 5",
+		generateWaitEyebrow: "STEP {n}",
 		generateImageHint:
 			"Review settings above, then generate your poster or keyframe.",
 		generateImageFooterHint:

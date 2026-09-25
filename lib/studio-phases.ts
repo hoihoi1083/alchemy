@@ -18,6 +18,16 @@ export function studioPhasesForMode(
   return start.phases;
 }
 
+/** “Choose what to promote” — product / concept name. */
+export function promoteSubjectPhaseIndex(): number {
+  return 0;
+}
+
+/** “Choose how to create” — image / video / combined path. */
+export function creationPathPhaseIndex(): number {
+  return 1;
+}
+
 /** Product / intake / image pre-generate — always “Set up content”. */
 export function setupContentPhaseIndex(): number {
   return 2;

@@ -6,7 +6,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { canUseStoryboard, minPlanForFeature } from "@/lib/billing/plan-gates";
 import type { WorkflowMode } from "@/lib/workflow-mode";
-import { studioPhasesForMode } from "@/lib/studio-phases";
+import { creationPathPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 
 type Props = {
   value: WorkflowMode | null;
@@ -366,7 +366,7 @@ export function CreationPathPicker({
       {showPhaseStepper ? (
         <PhaseStepper
           phases={studioPhasesForMode(m.start, value)}
-          activeIndex={1}
+          activeIndex={creationPathPhaseIndex()}
           onSelectIndex={onSelectPhaseIndex}
         />
       ) : null}

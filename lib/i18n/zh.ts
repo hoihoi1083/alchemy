@@ -6818,7 +6818,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		pickAngleTitle: "揀參考貼文",
 		pickAngleHint: "從平台研究揀一個角度 — 只借排版同風格，唔抄話題。",
 		generateImageTitle: "生成圖片",
-		generateWaitEyebrow: "第 5 步",
+		generateWaitEyebrow: "第 {n} 步",
 		generateImageHint: "確認上面設定後，生成海報或關鍵幀。",
 		generateImageFooterHint:
 			"揀出圖數量（單張 / A/B / Campaign / 教學輪播），然後按下方「生成相片」。",
