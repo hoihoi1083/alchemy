@@ -1,6 +1,11 @@
 /**
  * Sample live-text style from a text-layer crop (RGBA).
  * Pure / testable — no DOM. Used by sampleTextStyleFromCrop in the client.
+ *
+ * Two paths:
+ * - Alpha cutouts → distance-to-clear core/rim (fill + outline/shadow).
+ * - Opaque plates (JPEG / bbox lifts) → border-contrast ink (old-style fill),
+ *   no invented outline/shadow (alpha path would treat the whole plate as “core”).
  */
 
 import type { LiveTextEffect } from "@/lib/edit-image-2-live-text";
@@ -23,6 +28,9 @@ const DEFAULT_STYLE: SampledTextStyle = {
   effectColor: "#000000",
   textEffect: "none",
 };
+
+/** Below this clear-pixel fraction, treat crop as an opaque plate. */
+const OPAQUE_CLEAR_RATIO = 0.08;
 
 function lum(r: number, g: number, b: number): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -82,20 +90,27 @@ function meanRgb(v: Vote): [number, number, number] {
 }
 
 /**
- * Chebyshev distance to nearest transparent / empty pixel.
+ * Manhattan distance to nearest transparent / empty pixel.
  * Core glyph pixels score high; outline rings score low.
+ * Returns clearCount so callers can detect opaque plates (no useful alpha).
  */
 function distanceToClear(
   data: Uint8ClampedArray | Buffer | Uint8Array,
   width: number,
   height: number,
   alphaMin: number,
-): Float32Array {
+): { distMap: Float32Array; clearCount: number } {
   const n = width * height;
   const distMap = new Float32Array(n);
   const INF = width + height;
+  let clearCount = 0;
   for (let i = 0; i < n; i++) {
-    distMap[i] = data[i * 4 + 3]! >= alphaMin ? INF : 0;
+    if (data[i * 4 + 3]! >= alphaMin) {
+      distMap[i] = INF;
+    } else {
+      distMap[i] = 0;
+      clearCount += 1;
+    }
   }
   // Forward
   for (let y = 0; y < height; y++) {
@@ -115,12 +130,93 @@ function distanceToClear(
       if (y + 1 < height) distMap[i] = Math.min(distMap[i]!, distMap[i + width]! + 1);
     }
   }
-  return distMap;
+  return { distMap, clearCount };
+}
+
+/**
+ * Opaque JPEG / bbox plate: ink = high contrast vs border average.
+ * Does not invent outline/shadow (no reliable alpha edges).
+ */
+function sampleOpaquePlateStyle(
+  data: Uint8ClampedArray | Buffer | Uint8Array,
+  width: number,
+  height: number,
+): SampledTextStyle {
+  const border = Math.max(1, Math.round(Math.min(width, height) * 0.08));
+  let br = 0;
+  let bg = 0;
+  let bb = 0;
+  let bn = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (x >= border && x < width - border && y >= border && y < height - border) {
+        continue;
+      }
+      const i = (y * width + x) * 4;
+      if (data[i + 3]! < 80) continue;
+      br += data[i]!;
+      bg += data[i + 1]!;
+      bb += data[i + 2]!;
+      bn += 1;
+    }
+  }
+  const bgRgb: [number, number, number] = bn
+    ? [br / bn, bg / bn, bb / bn]
+    : [255, 255, 255];
+
+  const ink = new Map<number, Vote>();
+  let darkN = 0;
+  let lightN = 0;
+  let inkN = 0;
+  for (let y = border; y < height - border; y++) {
+    for (let x = border; x < width - border; x++) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3]! < 80) continue;
+      const r = data[i]!;
+      const g = data[i + 1]!;
+      const b = data[i + 2]!;
+      if (dist([r, g, b], bgRgb) < 90) continue;
+      inkN += 1;
+      const L = lum(r, g, b);
+      if (L < 128) darkN += 1;
+      else lightN += 1;
+      // Prefer saturated / high-contrast ink over muddy midtones.
+      const w = 1 + Math.min(3, Math.floor(dist([r, g, b], bgRgb) / 60));
+      addVote(ink, r, g, b, w);
+    }
+  }
+  if (inkN < 6) return { ...DEFAULT_STYLE };
+
+  const votes = topVotes(ink, 4);
+  if (!votes.length) return { ...DEFAULT_STYLE };
+
+  let best = votes[0]!;
+  let bestScore = -1;
+  for (const v of votes) {
+    const rgb = meanRgb(v);
+    const score =
+      v.n * (1 + sat(rgb[0], rgb[1], rgb[2]) * 1.2) + dist(rgb, bgRgb) * 0.1;
+    if (score > bestScore) {
+      bestScore = score;
+      best = v;
+    }
+  }
+  const fillRgb = meanRgb(best);
+  const fillL = lum(fillRgb[0], fillRgb[1], fillRgb[2]);
+
+  return {
+    fill: toHex(fillRgb),
+    fontBold: darkN >= lightN * 0.45,
+    strokeColor: fillL > 160 ? "#111827" : "#ffffff",
+    effectColor: "#000000",
+    textEffect: "none",
+  };
 }
 
 /**
  * Analyse raw RGBA pixels from a text crop.
- * Core ink (far from alpha) → fill; rim ink that differs → stroke; dark offset → shadow.
+ * Alpha cutouts → core fill + rim stroke/shadow.
+ * Opaque plates → border-contrast fill only (no phantom effects).
  */
 export function sampleTextStyleFromRgba(
   data: Uint8ClampedArray | Buffer | Uint8Array,
@@ -132,7 +228,13 @@ export function sampleTextStyleFromRgba(
   }
 
   const alphaMin = 80;
-  const distMap = distanceToClear(data, width, height, alphaMin);
+  const { distMap, clearCount } = distanceToClear(data, width, height, alphaMin);
+  const clearRatio = clearCount / (width * height);
+
+  // Fully opaque or only a thin letterbox ring → old border-contrast path.
+  if (clearRatio < OPAQUE_CLEAR_RATIO) {
+    return sampleOpaquePlateStyle(data, width, height);
+  }
 
   let maxDist = 0;
   let inkN = 0;
@@ -168,7 +270,6 @@ export function sampleTextStyleFromRgba(
       else lightN += 1;
 
       if (d >= coreThreshold) {
-        // Weight deep core more so thin outline rings don't win fill.
         addVote(core, r, g, b, 1 + Math.floor(d));
       }
       if (d <= rimThreshold) {
@@ -259,11 +360,7 @@ export function sampleTextStyleFromRgba(
     textEffect = "softShadow";
   } else if (hasShadow) {
     textEffect = "hardShadow";
-  } else if (
-    strokeRgb &&
-    fillL < 100 &&
-    strokeL > fillL + 50
-  ) {
+  } else if (strokeRgb && fillL < 100 && strokeL > fillL + 50) {
     textEffect = "outline";
   }
 

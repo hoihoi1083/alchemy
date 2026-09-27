@@ -1118,9 +1118,19 @@ export function EditImage2Client() {
             const style = await sampleTextStyleFromCrop(crop);
             earlyPatch.fill = style.fill;
             earlyPatch.fontBold = style.fontBold;
-            earlyPatch.strokeColor = style.strokeColor;
-            earlyPatch.effectColor = style.effectColor;
-            earlyPatch.textEffect = style.textEffect;
+            // Seed picker colours, but do not overwrite an existing effect.
+            const priorEffect = layer.textEffect;
+            const priorNone =
+              !priorEffect || priorEffect === "none" || priorEffect === "shadow";
+            if (priorNone && style.textEffect !== "none") {
+              earlyPatch.textEffect = style.textEffect;
+              earlyPatch.strokeColor = style.strokeColor;
+              earlyPatch.effectColor = style.effectColor;
+            } else if (priorNone) {
+              // No confident effect — keep fill only; leave stroke/effect defaults.
+              earlyPatch.strokeColor = style.strokeColor;
+              earlyPatch.effectColor = style.effectColor;
+            }
             earlyPatch.styleSampled = true;
           } catch {
             earlyPatch.fill = layer.fill ?? "#111827";
@@ -1634,14 +1644,23 @@ export function EditImage2Client() {
       if (!crop) continue;
       void sampleTextStyleFromCrop(crop)
         .then((style) => {
-          patchLayer(l.id, {
+          const priorEffect = l.textEffect;
+          const priorNone =
+            !priorEffect || priorEffect === "none" || priorEffect === "shadow";
+          const patch: Partial<DecLayer> = {
             fill: style.fill,
             fontBold: style.fontBold,
-            strokeColor: style.strokeColor,
-            effectColor: style.effectColor,
-            textEffect: style.textEffect,
             styleSampled: true,
-          });
+          };
+          if (priorNone && style.textEffect !== "none") {
+            patch.textEffect = style.textEffect;
+            patch.strokeColor = style.strokeColor;
+            patch.effectColor = style.effectColor;
+          } else if (priorNone) {
+            patch.strokeColor = style.strokeColor;
+            patch.effectColor = style.effectColor;
+          }
+          patchLayer(l.id, patch);
         })
         .catch(() => {
           patchLayer(l.id, { styleSampled: true });
@@ -2679,11 +2698,10 @@ export function EditImage2Client() {
         return;
       }
       setNotice(t.erasingHole);
-      // Same path as box “clean plate”: flat posters → local ring-fill;
-      // photos → Flux erase. Hardcoding "local" skipped generative heal and
-      // fell through to blurPunchBackground (sharp blur rectangle).
-      const mode = await pickHealModeForHole(bgUrl, bbox);
-      const healed = await healBackgroundHole(bgUrl, bbox, { mode });
+      // Match box clean-plate: default "auto" → Flux erase on photos.
+      // (pickHealModeForHole local path was cheaper on flat posters but weaker
+      // on real photos than box erase.)
+      const healed = await healBackgroundHole(bgUrl, bbox);
       applyHealedBackground(healed);
       setBrushLines([]);
       brushLinesRef.current = [];
