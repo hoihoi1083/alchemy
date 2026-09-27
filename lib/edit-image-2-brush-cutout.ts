@@ -3,6 +3,18 @@
  * Stage coords → natural image coords.
  */
 
+import {
+  DEFAULT_SAMPLED_TEXT_STYLE,
+  sampleTextStyleFromRgba,
+  type SampledTextStyle,
+} from "@/lib/edit-image-2-text-style-sample";
+
+export type { SampledTextStyle } from "@/lib/edit-image-2-text-style-sample";
+export {
+  DEFAULT_SAMPLED_TEXT_STYLE,
+  sampleTextStyleFromRgba,
+} from "@/lib/edit-image-2-text-style-sample";
+
 export type BrushStroke = number[];
 
 export function paintStrokesOnMask(
@@ -336,77 +348,31 @@ export function canvasDisplayUrl(url: string | null | undefined): string | null 
   return url;
 }
 
-/** Sample ink colour from a text crop — contrast vs border (bg), not average of all pixels. */
+/**
+ * Sample fill / outline / shadow / effect from a text crop.
+ * Uses modal interior ink (not a muddy average) so live text stays closer
+ * to the original letter style.
+ */
 export async function sampleTextStyleFromCrop(
   cropUrl: string,
-): Promise<{ fill: string; fontBold: boolean }> {
+): Promise<SampledTextStyle> {
   try {
     const img = await loadImage(canvasDisplayUrl(cropUrl) ?? cropUrl);
-    const w = Math.min(96, img.naturalWidth);
-    const h = Math.min(96, img.naturalHeight);
-    if (!w || !h) return { fill: "#111827", fontBold: true };
+    const maxSide = 160;
+    const nw = img.naturalWidth || 0;
+    const nh = img.naturalHeight || 0;
+    if (!nw || !nh) return { ...DEFAULT_SAMPLED_TEXT_STYLE };
+    const scale = Math.min(1, maxSide / Math.max(nw, nh));
+    const w = Math.max(8, Math.round(nw * scale));
+    const h = Math.max(8, Math.round(nh * scale));
     const c = document.createElement("canvas");
     c.width = w;
     c.height = h;
-    const ctx = c.getContext("2d")!;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return { ...DEFAULT_SAMPLED_TEXT_STYLE };
     ctx.drawImage(img, 0, 0, w, h);
-    const data = ctx.getImageData(0, 0, w, h).data;
-
-    // Border average ≈ background
-    let br = 0;
-    let bg = 0;
-    let bb = 0;
-    let bn = 0;
-    const border = Math.max(1, Math.round(Math.min(w, h) * 0.08));
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (x >= border && x < w - border && y >= border && y < h - border) continue;
-        const i = (y * w + x) * 4;
-        if (data[i + 3]! < 80) continue;
-        br += data[i]!;
-        bg += data[i + 1]!;
-        bb += data[i + 2]!;
-        bn += 1;
-      }
-    }
-    const bR = bn ? br / bn : 255;
-    const bG = bn ? bg / bn : 255;
-    const bB = bn ? bb / bn : 255;
-
-    // Ink = pixels far from background colour
-    let r = 0;
-    let g = 0;
-    let b = 0;
-    let n = 0;
-    let dark = 0;
-    let light = 0;
-    for (let y = border; y < h - border; y++) {
-      for (let x = border; x < w - border; x++) {
-        const i = (y * w + x) * 4;
-        if (data[i + 3]! < 80) continue;
-        const rr = data[i]!;
-        const gg = data[i + 1]!;
-        const bb2 = data[i + 2]!;
-        const dist = Math.abs(rr - bR) + Math.abs(gg - bG) + Math.abs(bb2 - bB);
-        if (dist < 90) continue;
-        r += rr;
-        g += gg;
-        b += bb2;
-        n += 1;
-        const lum = 0.2126 * rr + 0.7152 * gg + 0.0722 * bb2;
-        if (lum < 128) dark += 1;
-        else light += 1;
-      }
-    }
-    if (n < 6) return { fill: "#111827", fontBold: true };
-    const toHex = (v: number) =>
-      Math.max(0, Math.min(255, Math.round(v)))
-        .toString(16)
-        .padStart(2, "0");
-    const fill = `#${toHex(r / n)}${toHex(g / n)}${toHex(b / n)}`;
-    const fontBold = dark >= light * 0.45;
-    return { fill, fontBold };
+    return sampleTextStyleFromRgba(ctx.getImageData(0, 0, w, h).data, w, h);
   } catch {
-    return { fill: "#111827", fontBold: true };
+    return { ...DEFAULT_SAMPLED_TEXT_STYLE };
   }
 }

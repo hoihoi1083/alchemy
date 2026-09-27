@@ -1118,6 +1118,9 @@ export function EditImage2Client() {
             const style = await sampleTextStyleFromCrop(crop);
             earlyPatch.fill = style.fill;
             earlyPatch.fontBold = style.fontBold;
+            earlyPatch.strokeColor = style.strokeColor;
+            earlyPatch.effectColor = style.effectColor;
+            earlyPatch.textEffect = style.textEffect;
             earlyPatch.styleSampled = true;
           } catch {
             earlyPatch.fill = layer.fill ?? "#111827";
@@ -1634,6 +1637,9 @@ export function EditImage2Client() {
           patchLayer(l.id, {
             fill: style.fill,
             fontBold: style.fontBold,
+            strokeColor: style.strokeColor,
+            effectColor: style.effectColor,
+            textEffect: style.textEffect,
             styleSampled: true,
           });
         })
@@ -2673,14 +2679,22 @@ export function EditImage2Client() {
         return;
       }
       setNotice(t.erasingHole);
-      const healed = await healBackgroundHole(bgUrl, bbox, { mode: "local" });
+      // Same path as box “clean plate”: flat posters → local ring-fill;
+      // photos → Flux erase. Hardcoding "local" skipped generative heal and
+      // fell through to blurPunchBackground (sharp blur rectangle).
+      const mode = await pickHealModeForHole(bgUrl, bbox);
+      const healed = await healBackgroundHole(bgUrl, bbox, { mode });
       applyHealedBackground(healed);
       setBrushLines([]);
       brushLinesRef.current = [];
       setBrushMode(false);
       const chargeBit =
         typeof healed.tokensCharged === "number"
-          ? t.chargedHeal(healed.tokensCharged)
+          ? healed.mode === "erase" || healed.mode === "fill"
+            ? t.chargedErase(healed.tokensCharged)
+            : healed.mode === "local"
+              ? t.chargedHeal(healed.tokensCharged)
+              : t.blurPunchFallback
           : healed.mode === "blur"
             ? t.blurPunchFallback
             : null;
