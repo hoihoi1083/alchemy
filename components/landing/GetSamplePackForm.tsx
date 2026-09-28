@@ -62,7 +62,7 @@ export function GetSamplePackForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="mx-auto w-full max-w-md space-y-4 rounded-2xl border border-white/10 bg-black/40 p-6 shadow-xl backdrop-blur-md"
+      className="relative mx-auto w-full max-w-md space-y-4 overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-6 shadow-xl backdrop-blur-md"
     >
       <div>
         <label
@@ -103,12 +103,18 @@ export function GetSamplePackForm() {
           placeholder={S.emailPlaceholder}
         />
       </div>
-      {/* Honeypot */}
-      <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0" aria-hidden>
-        <label htmlFor="sample-company">Company</label>
+      {/* Bot honeypot — clipped off-screen; do not use visible label text. */}
+      <div
+        className="pointer-events-none absolute -left-[10000px] top-0 h-px w-px overflow-hidden opacity-0"
+        aria-hidden="true"
+      >
+        <label htmlFor="sample-company">
+          <span className="sr-only">Company</span>
+        </label>
         <input
           id="sample-company"
           name="company"
+          type="text"
           tabIndex={-1}
           autoComplete="off"
           value={company}
@@ -120,7 +126,7 @@ export function GetSamplePackForm() {
           type="checkbox"
           checked={tipsOptIn}
           onChange={(e) => setTipsOptIn(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-white/30 bg-white/10 text-violet-500"
+          className="mt-1 h-4 w-4 shrink-0 rounded border-white/30 bg-white/10 text-violet-500"
         />
         <span>{S.tipsOptIn}</span>
       </label>
