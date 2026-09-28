@@ -58,6 +58,18 @@ export class ChargeInProgressError extends Error {
   }
 }
 
+/**
+ * Same chargeRef already finalized for a *different* amount/kind.
+ * Indicates a bug (unsalted multi-charge) — must not silently under-charge.
+ */
+export class ChargeRefMismatchError extends Error {
+  readonly status = 409;
+  constructor(message: string) {
+    super(message);
+    this.name = "ChargeRefMismatchError";
+  }
+}
+
 const WALLET_CAS_ATTEMPTS = 12;
 
 function sumRemaining(batches: TokenBatch[]): number {
@@ -278,7 +290,21 @@ export async function consumeTokens(
       existing.balanceAfter >= 0 &&
       existing.meta?.consumePending !== true
     ) {
-      // Same idempotency key — return prior charge (no second debit).
+      const priorCost = Math.abs(existing.delta);
+      const priorKind =
+        typeof existing.meta?.kind === "string" ? existing.meta.kind : undefined;
+      const nextKind =
+        typeof opts?.meta?.kind === "string" ? opts.meta.kind : undefined;
+      if (priorCost !== cost || (priorKind && nextKind && priorKind !== nextKind)) {
+        throw new ChargeRefMismatchError(
+          `Charge ref ${chargeRef} already consumed for ${priorCost} tokens` +
+            (priorKind ? ` (${priorKind})` : "") +
+            `; refusing reuse for ${cost}` +
+            (nextKind ? ` (${nextKind})` : "") +
+            ".",
+        );
+      }
+      // Same idempotency key + salt — return prior charge (no second debit).
       return existing.balanceAfter;
     }
 

@@ -11,6 +11,19 @@ describe("buildRefundRef", () => {
     assert.match(a, /^refund_/);
   });
 
+  it("differs when chargeRef differs (two similar failures)", () => {
+    const base = { kind: "image", mode: "single", reason: "generation_failed" };
+    const a = buildRefundRef("user_a", 65, {
+      ...base,
+      chargeRef: "charge_aaa",
+    });
+    const b = buildRefundRef("user_a", 65, {
+      ...base,
+      chargeRef: "charge_bbb",
+    });
+    assert.notEqual(a, b);
+  });
+
   it("honors explicit refundRef when provided", () => {
     assert.equal(
       buildRefundRef("user_a", 100, { refundRef: "refund_custom_1" }),

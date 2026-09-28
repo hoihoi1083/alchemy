@@ -6661,7 +6661,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		searchCooldown: "請等 {seconds} 秒再搜尋。",
 		planRequiredStandard: "平台內容研究需要 Standard 或以上方案。",
 		tiktokPasteUnsupported:
-			"暫時未支援貼上 TikTok 連結。請用關鍵字搜尋並選 TikTok（影片或組合工作流），或貼上小紅書 / Instagram / Facebook 連結。",
+			"貼上連結只支援小紅書、Instagram 同 Facebook。其他平台請改用關鍵字搜尋。",
 		noRelatedPosts: "搵唔到相關帖文。",
 		topicRequired: "請先輸入搜尋關鍵字。",
 		topPicksTitle: "為你改寫嘅 3 個方向（參考爆款）",

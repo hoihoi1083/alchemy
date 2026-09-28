@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import {
   chargeTokens,
   refundTokens,
+  refundMetaFromCharge,
   h3TokenCostFromRequest,
   videoTokenCostFromSeedanceEndpoint,
 } from "@/lib/billing/charge";
@@ -320,11 +321,15 @@ async function runReferenceVideoViaH3(input: {
       note: "Reference-reel video — your motion clip + product still.",
     });
   } catch (e: unknown) {
-    await refundTokens(input.clerkId, h3Cost, {
-      kind: "minimax_h3",
-      reason: "generation_failed",
-      via: "generate_reference_h3_primary",
-    });
+    await refundTokens(
+      input.clerkId,
+      h3Cost,
+      refundMetaFromCharge(charged, {
+        kind: "minimax_h3",
+        reason: "generation_failed",
+        via: "generate_reference_h3_primary",
+      }),
+    );
     console.error("[api/generate] MiniMax H3 reference-to-video failed", e);
     return NextResponse.json(
       { error: formatFalError(e) },
@@ -694,11 +699,15 @@ export async function POST(request: Request) {
 
     if (!hasRefs) {
       // Form looked valid but uploads/mirrors produced nothing — refund.
-      await refundTokens(auth.user.userId, tokenCost, {
-        kind: "video",
-        mode,
-        reason: "reference_materialize_empty",
-      });
+      await refundTokens(
+        auth.user.userId,
+        tokenCost,
+        refundMetaFromCharge(charged, {
+          kind: "video",
+          mode,
+          reason: "reference_materialize_empty",
+        }),
+      );
       return NextResponse.json(
         {
           error:
@@ -770,11 +779,15 @@ export async function POST(request: Request) {
           : {}),
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, tokenCost, {
-      kind: "video",
-      mode,
-      reason: "generation_failed",
-    });
+    await refundTokens(
+      auth.user.userId,
+      tokenCost,
+      refundMetaFromCharge(charged, {
+        kind: "video",
+        mode,
+        reason: "generation_failed",
+      }),
+    );
     if (e instanceof ValidationError) {
       console.error("[api/generate] validation", JSON.stringify(e.fieldErrors));
     } else {
@@ -863,11 +876,15 @@ export async function POST(request: Request) {
             });
           } catch (h3Err: unknown) {
             console.error("[api/generate] MiniMax H3 fallback failed", h3Err);
-            await refundTokens(auth.user.userId, h3Cost, {
-              kind: "minimax_h3",
-              reason: "generation_failed",
-              via: "generate_auto_fallback",
-            });
+            await refundTokens(
+              auth.user.userId,
+              h3Cost,
+              refundMetaFromCharge(h3Charged, {
+                kind: "minimax_h3",
+                reason: "generation_failed",
+                via: "generate_auto_fallback",
+              }),
+            );
           }
         }
       }
@@ -950,11 +967,15 @@ export async function POST(request: Request) {
             });
           } catch (klingErr: unknown) {
             console.error("[api/generate] Kling fallback failed", klingErr);
-            await refundTokens(auth.user.userId, klingCost, {
-              kind: "kling_storyboard_fallback",
-              reason: "generation_failed",
-              via: "generate_auto",
-            });
+            await refundTokens(
+              auth.user.userId,
+              klingCost,
+              refundMetaFromCharge(klingCharged, {
+                kind: "kling_storyboard_fallback",
+                reason: "generation_failed",
+                via: "generate_auto",
+              }),
+            );
             return NextResponse.json(
               {
                 error: formatKlingFalError(klingErr),

@@ -6,9 +6,13 @@ import {
   insufficientTokensResponse,
   InsufficientTokensError,
   ChargeInProgressError,
+  ChargeRefMismatchError,
 } from "@/lib/billing/ledger";
 import { buildRefundRef } from "@/lib/billing/refund-ref";
-import { billingMetaFromRequest } from "@/lib/billing/charge-ref";
+import {
+  billingMetaFromRequest,
+  newEphemeralChargeRef,
+} from "@/lib/billing/charge-ref";
 import { grantTokensOnce } from "@/lib/stripe/billing-sync";
 import {
   estimateH3Tokens,
@@ -28,7 +32,17 @@ import { resolveTokenPayer } from "@/lib/billing/team-payer";
 import { recordPendingRefund } from "@/lib/billing/pending-refunds";
 
 export { resolveVideoBillingResolution, estimateVideoTokens, estimateH3Tokens };
-export { billingMetaFromRequest } from "@/lib/billing/charge-ref";
+export {
+  billingMetaFromRequest,
+  refundMetaFromCharge,
+} from "@/lib/billing/charge-ref";
+
+export type ChargeTokensOk = {
+  balanceAfter: number | null;
+  /** Ledger consume ref — pass into refundTokens so refunds stay 1:1 with this debit. */
+  chargeRef: string;
+  billedClerkId: string;
+};
 
 const REFUND_RETRY_ATTEMPTS = 3;
 const REFUND_RETRY_BASE_MS = 120;
@@ -64,6 +78,12 @@ export function billingErrorResponse(err: unknown): NextResponse | null {
   if (err instanceof ChargeInProgressError) {
     return NextResponse.json(
       { error: err.message, code: "CHARGE_IN_PROGRESS" },
+      { status: 409 },
+    );
+  }
+  if (err instanceof ChargeRefMismatchError) {
+    return NextResponse.json(
+      { error: err.message, code: "CHARGE_REF_MISMATCH" },
       { status: 409 },
     );
   }
@@ -106,31 +126,49 @@ export async function requireTokens(clerkId: string, cost: number): Promise<Next
  * pass. On fal failure, call `refundTokens` so the user is not charged.
  *
  * Pass `request` (or meta.idempotencyKey / meta.chargeRef) so a client retry
- * with the same Idempotency-Key reuses the first debit instead of charging twice.
+ * with the same Idempotency-Key + kind/mode salt reuses the first debit.
+ * Always returns `chargeRef` — pass it into `refundTokens` via
+ * `refundMetaFromCharge(charged, meta)`.
  */
 export async function chargeTokens(
   clerkId: string,
   cost: number,
   meta: Record<string, unknown>,
   request?: Request | null,
-): Promise<{ error: NextResponse } | { balanceAfter: number | null }> {
+): Promise<{ error: NextResponse } | ChargeTokensOk> {
   if (cost <= 0) {
-    return { balanceAfter: null };
+    return {
+      balanceAfter: null,
+      chargeRef: newEphemeralChargeRef(),
+      billedClerkId: clerkId,
+    };
   }
   if (await isInternalUnlimitedUser(clerkId)) {
-    return { balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE };
+    return {
+      balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE,
+      chargeRef: newEphemeralChargeRef(),
+      billedClerkId: clerkId,
+    };
   }
   // Production must never silently skip billing when Mongo is unset.
   if (!isMongoConfigured()) {
     if (isProductionEnv()) {
       return { error: billingDbUnavailableResponse() };
     }
-    return { balanceAfter: null };
+    return {
+      balanceAfter: null,
+      chargeRef: newEphemeralChargeRef(),
+      billedClerkId: clerkId,
+    };
   }
   try {
     const payer = await resolveTokenPayer(clerkId);
     if (await isInternalUnlimitedUser(payer.payerClerkId)) {
-      return { balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE };
+      return {
+        balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE,
+        chargeRef: newEphemeralChargeRef(),
+        billedClerkId: payer.payerClerkId,
+      };
     }
     const billedMeta = billingMetaFromRequest(request, {
       ...meta,
@@ -143,12 +181,18 @@ export async function chargeTokens(
     const chargeRef =
       typeof billedMeta.chargeRef === "string" && billedMeta.chargeRef.trim()
         ? billedMeta.chargeRef.trim()
-        : undefined;
+        : newEphemeralChargeRef();
+    billedMeta.chargeRef = chargeRef;
+    billedMeta.chargeCost = cost;
     const balanceAfter = await consumeTokens(payer.payerClerkId, cost, {
-      ...(chargeRef ? { ref: chargeRef } : {}),
+      ref: chargeRef,
       meta: billedMeta,
     });
-    return { balanceAfter };
+    return {
+      balanceAfter,
+      chargeRef,
+      billedClerkId: payer.payerClerkId,
+    };
   } catch (err) {
     return {
       error:

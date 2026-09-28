@@ -1,7 +1,7 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens, refundMetaFromCharge } from "@/lib/billing/charge";
 import { estimateInpaintTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { isFailedFluxEraseOutput } from "@/lib/edit-image-2-erase-quality";
 import { holeContentBarelyChanged } from "@/lib/edit-image-2-heal-quality";
@@ -294,10 +294,14 @@ export async function POST(request: Request) {
 
       if (!outJpeg) {
         generativeFallback = true;
-        await refundTokens(auth.user.userId, tokenCost, {
-          kind: "smart_layers_heal",
-          reason: "generative_failed_fallback_local",
-        });
+        await refundTokens(
+          auth.user.userId,
+          tokenCost,
+          refundMetaFromCharge(charged, {
+            kind: "smart_layers_heal",
+            reason: "generative_failed_fallback_local",
+          }),
+        );
         const flat = await plateLooksFlatBright(imgBuf);
         if (!flat) {
           // Do not paint solid black/grey on stadium photos — keep plate, client
@@ -309,6 +313,7 @@ export async function POST(request: Request) {
           kind: "smart_layers_heal",
           mode: "local",
           coverage,
+          chargeSeq: "after-generative",
         }, request);
         if ("error" in localCharged) {
           return localCharged.error;
@@ -353,10 +358,14 @@ export async function POST(request: Request) {
       ...(generativeFallback ? { generativeFallback: true } : {}),
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, tokenCost, {
-      kind: "smart_layers_heal",
-      reason: "heal_failed",
-    });
+    await refundTokens(
+      auth.user.userId,
+      tokenCost,
+      refundMetaFromCharge(charged, {
+        kind: "smart_layers_heal",
+        reason: "heal_failed",
+      }),
+    );
     const message = e instanceof Error ? e.message : "Heal failed.";
     console.error("[layer-heal]", e);
     return NextResponse.json({ error: message }, { status: 502 });

@@ -1,7 +1,7 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens, refundMetaFromCharge } from "@/lib/billing/charge";
 import {
   estimateInpaintTokens,
   estimateSmartLayersDetectTokens,
@@ -321,29 +321,45 @@ export async function POST(request: Request) {
                 matteTokensCharged = matteCost;
                 creditBalance = matteCharged.balanceAfter ?? creditBalance;
               } else {
-                await refundTokens(auth.user.userId, matteCost, {
-                  kind: "smart_layers_matte",
-                  reason: "subject_unused",
-                });
+                await refundTokens(
+                  auth.user.userId,
+                  matteCost,
+                  refundMetaFromCharge(matteCharged, {
+                    kind: "smart_layers_matte",
+                    reason: "subject_unused",
+                  }),
+                );
               }
             } else {
-              await refundTokens(auth.user.userId, matteCost, {
-                kind: "smart_layers_matte",
-                reason: "subject_download_failed",
-              });
+              await refundTokens(
+                auth.user.userId,
+                matteCost,
+                refundMetaFromCharge(matteCharged, {
+                  kind: "smart_layers_matte",
+                  reason: "subject_download_failed",
+                }),
+              );
             }
           } else {
-            await refundTokens(auth.user.userId, matteCost, {
-              kind: "smart_layers_matte",
-              reason: "subject_empty",
-            });
+            await refundTokens(
+              auth.user.userId,
+              matteCost,
+              refundMetaFromCharge(matteCharged, {
+                kind: "smart_layers_matte",
+                reason: "subject_empty",
+              }),
+            );
           }
         } catch (subErr) {
           console.warn("[decompose-image-layers] BiRefNet subject skipped:", subErr);
-          await refundTokens(auth.user.userId, matteCost, {
-            kind: "smart_layers_matte",
-            reason: "subject_failed",
-          });
+          await refundTokens(
+            auth.user.userId,
+            matteCost,
+            refundMetaFromCharge(matteCharged, {
+              kind: "smart_layers_matte",
+              reason: "subject_failed",
+            }),
+          );
         }
       }
     }
@@ -700,6 +716,7 @@ export async function POST(request: Request) {
           const matteCharged = await chargeTokens(auth.user.userId, matteCost, {
             kind: "smart_layers_matte",
             mode: "person-crop",
+            chargeSeq: personMatted,
           }, request);
           if (!("error" in matteCharged)) {
             matteTokensCharged += matteCost;
@@ -849,10 +866,14 @@ export async function POST(request: Request) {
           localErr,
         );
         if (canBillLocal) {
-          await refundTokens(userId, healCost, {
-            kind: "smart_layers_heal",
-            reason: "local_heal_failed_try_erase",
-          });
+          await refundTokens(
+            userId,
+            healCost,
+            refundMetaFromCharge(healCharged, {
+              kind: "smart_layers_heal",
+              reason: "local_heal_failed_try_erase",
+            }),
+          );
         }
         const megapixels = (imgW * imgH) / 1_000_000;
         const eraseCost = estimateInpaintTokens(megapixels);
@@ -920,10 +941,14 @@ export async function POST(request: Request) {
             eraseErr,
           );
           if (!("error" in eraseCharged)) {
-            await refundTokens(userId, eraseCost, {
-              kind: "smart_layers_heal",
-              reason: "erase_heal_failed",
-            });
+            await refundTokens(
+              userId,
+              eraseCost,
+              refundMetaFromCharge(eraseCharged, {
+                kind: "smart_layers_heal",
+                reason: "erase_heal_failed",
+              }),
+            );
           }
           backgroundUrl = originalBackgroundUrl;
           backgroundMode = "original";
@@ -975,10 +1000,14 @@ export async function POST(request: Request) {
       },
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, tokenCost, {
-      kind: "smart_layers_detect",
-      reason: "decompose_failed",
-    });
+    await refundTokens(
+      auth.user.userId,
+      tokenCost,
+      refundMetaFromCharge(charged, {
+        kind: "smart_layers_detect",
+        reason: "decompose_failed",
+      }),
+    );
     const message = e instanceof Error ? e.message : "Decompose failed.";
     console.error("[decompose-image-layers]", e);
     return NextResponse.json({ error: message }, { status: 502 });

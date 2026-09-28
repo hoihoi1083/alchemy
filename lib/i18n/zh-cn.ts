@@ -6062,7 +6062,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     searchCooldown: "请等 {seconds} 秒再搜索。",
     planRequiredStandard: "平台内容研究需要 Standard 或以上方案。",
     tiktokPasteUnsupported:
-      "暂不支持粘贴 TikTok 链接。请用关键词搜索并选择 TikTok（视频或组合工作流），或粘贴小红书 / Instagram / Facebook 链接。",
+      "粘贴链接仅支持小红书、Instagram 和 Facebook。其他平台请改用关键词搜索。",
     noRelatedPosts: "未找到相关帖子。",
     topicRequired: "请先输入搜索关键词。",
     topPicksTitle: "为你改写的 3 个方向（参考爆款）",

@@ -1,7 +1,7 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { chargeTokens, refundTokens, requireTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens, refundMetaFromCharge, requireTokens } from "@/lib/billing/charge";
 import {
   estimateSmartLayersDetectTokens,
   estimateSmartLayersSandwichTokens,
@@ -130,7 +130,9 @@ export async function POST(request: Request) {
   if ("error" in detectCharged) return detectCharged.error;
 
   let qwenChargedBalance: number | null = null;
+  let qwenChargedOk: Awaited<ReturnType<typeof chargeTokens>> | null = null;
   let matteTokensCharged = 0;
+  let matteChargedOk: Awaited<ReturnType<typeof chargeTokens>> | null = null;
   let creditBalance = detectCharged.balanceAfter ?? 0;
   let logoSkipped = 0;
 
@@ -223,24 +225,37 @@ export async function POST(request: Request) {
                 z: 500,
               });
               matteTokensCharged = matteCost;
+              matteChargedOk = matteCharged;
               creditBalance = matteCharged.balanceAfter ?? creditBalance;
             } else {
-              await refundTokens(auth.user.userId, matteCost, {
-                kind: "smart_layers_matte",
-                reason: "hybrid_subject_unused",
-              });
+              await refundTokens(
+                auth.user.userId,
+                matteCost,
+                refundMetaFromCharge(matteCharged, {
+                  kind: "smart_layers_matte",
+                  reason: "hybrid_subject_unused",
+                }),
+              );
             }
           } else {
-            await refundTokens(auth.user.userId, matteCost, {
-              kind: "smart_layers_matte",
-              reason: "hybrid_subject_download_failed",
-            });
+            await refundTokens(
+              auth.user.userId,
+              matteCost,
+              refundMetaFromCharge(matteCharged, {
+                kind: "smart_layers_matte",
+                reason: "hybrid_subject_download_failed",
+              }),
+            );
           }
         } else {
-          await refundTokens(auth.user.userId, matteCost, {
-            kind: "smart_layers_matte",
-            reason: "hybrid_subject_empty",
-          });
+          await refundTokens(
+            auth.user.userId,
+            matteCost,
+            refundMetaFromCharge(matteCharged, {
+              kind: "smart_layers_matte",
+              reason: "hybrid_subject_empty",
+            }),
+          );
         }
       } else {
         console.warn("[decompose-sandwich] subject matte charge failed");
@@ -460,6 +475,7 @@ export async function POST(request: Request) {
         },
       });
     }
+    qwenChargedOk = qwenCharge;
     qwenChargedBalance = qwenCharge.balanceAfter ?? creditBalance;
     creditBalance = qwenChargedBalance;
 
@@ -632,21 +648,33 @@ export async function POST(request: Request) {
       },
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, detectCost, {
-      kind: "smart_layers_detect",
-      reason: "hybrid_failed",
-    });
-    if (qwenChargedBalance != null) {
-      await refundTokens(auth.user.userId, qwenCost, {
-        kind: "smart_layers_qwen",
+    await refundTokens(
+      auth.user.userId,
+      detectCost,
+      refundMetaFromCharge(detectCharged, {
+        kind: "smart_layers_detect",
         reason: "hybrid_failed",
-      });
+      }),
+    );
+    if (qwenChargedOk && !("error" in qwenChargedOk)) {
+      await refundTokens(
+        auth.user.userId,
+        qwenCost,
+        refundMetaFromCharge(qwenChargedOk, {
+          kind: "smart_layers_qwen",
+          reason: "hybrid_failed",
+        }),
+      );
     }
-    if (matteTokensCharged > 0) {
-      await refundTokens(auth.user.userId, matteTokensCharged, {
-        kind: "smart_layers_matte",
-        reason: "hybrid_failed",
-      });
+    if (matteChargedOk && !("error" in matteChargedOk) && matteTokensCharged > 0) {
+      await refundTokens(
+        auth.user.userId,
+        matteTokensCharged,
+        refundMetaFromCharge(matteChargedOk, {
+          kind: "smart_layers_matte",
+          reason: "hybrid_failed",
+        }),
+      );
     }
     const message = e instanceof Error ? e.message : "Hybrid layer split failed.";
     console.error("[decompose-sandwich-layers]", e);

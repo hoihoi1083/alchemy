@@ -4,6 +4,8 @@ import {
   chargeTokens,
   getAffordabilityBalance,
   refundTokens,
+  refundMetaFromCharge,
+  type ChargeTokensOk,
   h3TokenCostFromRequest,
   videoTokenCostFromRequest,
 } from "@/lib/billing/charge";
@@ -237,7 +239,7 @@ export async function POST(request: Request) {
   const runSeedanceFirst = afford.action === "run-seedance" && !expectsReel;
   const firstCost = runSeedanceFirst ? seedanceCost : h3Cost;
   const firstKind = runSeedanceFirst ? "video" : "minimax_h3";
-  let firstCharged: { balanceAfter: number | null } = { balanceAfter: null };
+  let firstCharged: ChargeTokensOk | null = null;
   if (!skipToKling) {
     const charged = await chargeTokens(clerkId, firstCost, {
       kind: firstKind,
@@ -256,24 +258,32 @@ export async function POST(request: Request) {
     });
     videoUrls = expectsReel ? await collectMinimaxH3FallbackVideoUrls(formData) : [];
   } catch (e: unknown) {
-    if (!skipToKling) {
-      await refundTokens(clerkId, firstCost, {
-        kind: firstKind,
-        reason: "image_materialize_failed",
-        via: "storyboard_primary",
-      });
+    if (!skipToKling && firstCharged) {
+      await refundTokens(
+        clerkId,
+        firstCost,
+        refundMetaFromCharge(firstCharged, {
+          kind: firstKind,
+          reason: "image_materialize_failed",
+          via: "storyboard_primary",
+        }),
+      );
     }
     const message = e instanceof Error ? e.message : "Failed to read storyboard images.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
   if (!imageUrls.length) {
-    if (!skipToKling) {
-      await refundTokens(clerkId, firstCost, {
-        kind: firstKind,
-        reason: "no_images_after_charge",
-        via: "storyboard_primary",
-      });
+    if (!skipToKling && firstCharged) {
+      await refundTokens(
+        clerkId,
+        firstCost,
+        refundMetaFromCharge(firstCharged, {
+          kind: firstKind,
+          reason: "no_images_after_charge",
+          via: "storyboard_primary",
+        }),
+      );
     }
     return NextResponse.json(
       { error: "Upload at least one storyboard scene image." },
@@ -285,12 +295,16 @@ export async function POST(request: Request) {
     expectedCount > 0 &&
     imageUrls.length < expectedCount
   ) {
-    if (!skipToKling) {
-      await refundTokens(clerkId, firstCost, {
-        kind: firstKind,
-        reason: "incomplete_scene_images",
-        via: "storyboard_primary",
-      });
+    if (!skipToKling && firstCharged) {
+      await refundTokens(
+        clerkId,
+        firstCost,
+        refundMetaFromCharge(firstCharged, {
+          kind: firstKind,
+          reason: "incomplete_scene_images",
+          via: "storyboard_primary",
+        }),
+      );
     }
     return NextResponse.json(
       {
@@ -301,12 +315,16 @@ export async function POST(request: Request) {
   }
 
   if (expectsReel && videoUrls.length < 1) {
-    if (!skipToKling) {
-      await refundTokens(clerkId, firstCost, {
-        kind: firstKind,
-        reason: "reference_video_missing",
-        via: "storyboard_primary",
-      });
+    if (!skipToKling && firstCharged) {
+      await refundTokens(
+        clerkId,
+        firstCost,
+        refundMetaFromCharge(firstCharged, {
+          kind: firstKind,
+          reason: "reference_video_missing",
+          via: "storyboard_primary",
+        }),
+      );
     }
     return referenceVideoRequiredResponse();
   }
@@ -406,11 +424,15 @@ export async function POST(request: Request) {
           "Stitched per-scene clips — single-clip mode needed more tokens than your balance.",
       });
     } catch (e: unknown) {
-      await refundTokens(clerkId, klingCost, {
-        kind: "kling_storyboard_fallback",
-        reason: "generation_failed",
-        via: "storyboard_wallet_kling",
-      });
+      await refundTokens(
+        clerkId,
+        klingCost,
+        refundMetaFromCharge(klingCharged, {
+          kind: "kling_storyboard_fallback",
+          reason: "generation_failed",
+          via: "storyboard_wallet_kling",
+        }),
+      );
       if (e instanceof KlingDurationUnreachableError) {
         return NextResponse.json(
           {
@@ -451,7 +473,7 @@ export async function POST(request: Request) {
         referenceImageCount: imageUrls.length,
         referenceVideoCount: videoUrls.length,
         tokensCharged: firstCost,
-        creditBalance: firstCharged.balanceAfter,
+        creditBalance: firstCharged?.balanceAfter ?? null,
         note: "Reference-reel video — your reference clip + storyboard stills.",
       });
     } catch (seedanceErr: unknown) {
@@ -459,11 +481,17 @@ export async function POST(request: Request) {
         "[generate-storyboard-video] Seedance R2V failed → MiniMax H3",
         seedanceErr,
       );
-      await refundTokens(clerkId, firstCost, {
-        kind: "video",
-        reason: "generation_failed",
-        via: "storyboard_seedance_r2v",
-      });
+      if (firstCharged) {
+        await refundTokens(
+          clerkId,
+          firstCost,
+          refundMetaFromCharge(firstCharged, {
+            kind: "video",
+            reason: "generation_failed",
+            via: "storyboard_seedance_r2v",
+          }),
+        );
+      }
     }
 
     const h3Charged = await chargeTokens(clerkId, h3Cost, {
@@ -479,25 +507,35 @@ export async function POST(request: Request) {
         "[generate-storyboard-video] MiniMax H3 failed after Seedance — no Kling (reel required)",
         h3Err,
       );
-      await refundTokens(clerkId, h3Cost, {
-        kind: "minimax_h3",
-        reason: "generation_failed",
-        via: "storyboard_after_seedance",
-      });
+      await refundTokens(
+        clerkId,
+        h3Cost,
+        refundMetaFromCharge(h3Charged, {
+          kind: "minimax_h3",
+          reason: "generation_failed",
+          via: "storyboard_after_seedance",
+        }),
+      );
       return referenceVideoRequiredResponse();
     }
   }
 
   // A / face-heavy reel: MiniMax H3 first
   try {
-    return await runH3AndReturn(firstCharged.balanceAfter, firstCost);
+    return await runH3AndReturn(firstCharged?.balanceAfter ?? null, firstCost);
   } catch (h3Err: unknown) {
     console.error("[generate-storyboard-video] MiniMax H3 failed → Kling", h3Err);
-    await refundTokens(clerkId, firstCost, {
-      kind: "minimax_h3",
-      reason: "generation_failed",
-      via: "storyboard_primary",
-    });
+    if (firstCharged) {
+      await refundTokens(
+        clerkId,
+        firstCost,
+        refundMetaFromCharge(firstCharged, {
+          kind: "minimax_h3",
+          reason: "generation_failed",
+          via: "storyboard_primary",
+        }),
+      );
+    }
   }
 
   if (expectsReel || !enginePlan.allowKling) {
@@ -554,11 +592,15 @@ export async function POST(request: Request) {
         "Single-clip mode unavailable — used per-scene clips + stitch.",
     });
   } catch (e: unknown) {
-    await refundTokens(clerkId, klingCost, {
-      kind: "kling_storyboard_fallback",
-      reason: "generation_failed",
-      via: "storyboard_after_h3",
-    });
+    await refundTokens(
+      clerkId,
+      klingCost,
+      refundMetaFromCharge(klingCharged, {
+        kind: "kling_storyboard_fallback",
+        reason: "generation_failed",
+        via: "storyboard_after_h3",
+      }),
+    );
     if (e instanceof KlingDurationUnreachableError) {
       return NextResponse.json(
         {

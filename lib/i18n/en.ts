@@ -7301,7 +7301,7 @@ export const en = {
 		planRequiredStandard:
 			"Platform research needs the Standard plan or above.",
 		tiktokPasteUnsupported:
-			"TikTok paste-link is not supported yet. Use keyword search with TikTok selected (Video or Combined workflow), or paste a RedNote / Instagram / Facebook link.",
+			"Paste link only works for RedNote, Instagram, and Facebook. For other platforms, use keyword search instead.",
 		noRelatedPosts: "No related posts found.",
 		searchCooldown:
 			"Please wait {seconds}s before searching again.",
