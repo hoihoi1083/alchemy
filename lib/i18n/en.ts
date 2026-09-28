@@ -468,8 +468,11 @@ export const en = {
 			privacyNote: "We’ll only use this to send your pack and tips you opted into. See Privacy.",
 			thanksTitle: "Your sample pack is ready",
 			thanksBody:
-				"Browse watermarked samples below (Created with Alchemy AI Lab). Save what you like, then create your own in the studio.",
-			galleryHint: "Samples include an Alchemy watermark on screen.",
+				"Browse watermarked samples below (Created with Alchemy AI Lab). Download the pack or save individual images, then create your own in the studio.",
+			galleryHint:
+				"Every download has “Created with Alchemy AI Lab” burned into the image.",
+			downloadPack: "Download sample pack (ZIP)",
+			downloadOne: "Save",
 			thanksCtaPrimary: "Try free in studio",
 			thanksCtaHome: "Back to home",
 			labels: {

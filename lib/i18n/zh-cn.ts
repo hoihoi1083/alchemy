@@ -408,8 +408,10 @@ export const zhCn = {
       privacyNote: "仅用于发送样本包和你勾选的资讯。详见隐私政策。",
       thanksTitle: "样本包已解锁",
       thanksBody:
-        "以下为带水印样例（Created with Alchemy AI Lab）。可保存参考，再到工作室创作。",
-      galleryHint: "画面上会显示 Alchemy 水印。",
+        "以下为带水印样例（Created with Alchemy AI Lab）。可下载整包或单张保存，再到工作室创作。",
+      galleryHint: "下载的图片已烧录 “Created with Alchemy AI Lab” 水印。",
+      downloadPack: "下载样本包（ZIP）",
+      downloadOne: "保存",
       thanksCtaPrimary: "免费试用工作室",
       thanksCtaHome: "返回首页",
       labels: {

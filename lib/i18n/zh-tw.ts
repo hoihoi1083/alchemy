@@ -408,8 +408,10 @@ export const zhTw = {
       privacyNote: "僅用於發送樣本包與你勾選的資訊。詳見隱私權政策。",
       thanksTitle: "樣本包已解鎖",
       thanksBody:
-        "以下為帶浮水印樣例（Created with Alchemy AI Lab）。可儲存參考，再到工作室創作。",
-      galleryHint: "畫面上會顯示 Alchemy 浮水印。",
+        "以下為帶浮水印樣例（Created with Alchemy AI Lab）。可下載整包或單張儲存，再到工作室創作。",
+      galleryHint: "下載的圖片已燒錄 “Created with Alchemy AI Lab” 浮水印。",
+      downloadPack: "下載樣本包（ZIP）",
+      downloadOne: "儲存",
       thanksCtaPrimary: "免費試用工作室",
       thanksCtaHome: "返回首頁",
       labels: {

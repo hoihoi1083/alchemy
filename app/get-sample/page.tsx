@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
 import { GetSamplePackForm } from "@/components/landing/GetSamplePackForm";
 import { GetSamplePackShell } from "@/components/landing/GetSamplePackShell";
 import { PRODUCT_NAME } from "@/lib/brand";
@@ -22,11 +21,6 @@ export default function GetSamplePage() {
       >
         <GetSamplePackForm />
       </Suspense>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        <Link href="/" className="underline hover:text-slate-300">
-          ← Home
-        </Link>
-      </p>
     </GetSamplePackShell>
   );
 }

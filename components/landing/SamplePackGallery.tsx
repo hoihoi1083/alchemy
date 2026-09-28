@@ -1,12 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
-import {
-  SAMPLE_PACK_ITEMS,
-  SAMPLE_PACK_WATERMARK,
-} from "@/lib/sample-pack";
+import { SAMPLE_PACK_ITEMS } from "@/lib/sample-pack";
 
 export function SamplePackGallery() {
   const { m } = useLocale();
@@ -15,6 +11,14 @@ export function SamplePackGallery() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <p className="mb-4 text-center text-sm text-slate-400">{S.galleryHint}</p>
+      <div className="mb-6 flex justify-center">
+        <a
+          href="/api/sample-pack-download"
+          className="inline-flex w-full items-center justify-center rounded-full border border-violet-400/50 bg-violet-500/15 px-5 py-2.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/25 sm:w-auto"
+        >
+          {S.downloadPack}
+        </a>
+      </div>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
         {SAMPLE_PACK_ITEMS.map((item) => (
           <li
@@ -22,25 +26,27 @@ export function SamplePackGallery() {
             className="group relative overflow-hidden rounded-xl border border-white/10 bg-black/30 shadow-lg"
           >
             <div className="relative aspect-[4/5] w-full">
-              <Image
-                src={item.src}
+              {/* Served from API with watermark burned into pixels (not CSS). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/sample-pack-image/${item.id}`}
                 alt={S.labels[item.labelKey]}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 50vw, 25vw"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
-              <div
-                className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-8"
-                aria-hidden
-              >
-                <p className="text-center text-[9px] font-semibold uppercase tracking-wider text-white/90 sm:text-[10px]">
-                  {SAMPLE_PACK_WATERMARK}
-                </p>
-              </div>
             </div>
-            <p className="truncate px-2 py-1.5 text-center text-[11px] font-medium text-slate-300">
-              {S.labels[item.labelKey]}
-            </p>
+            <div className="flex items-center justify-between gap-1 px-2 py-1.5">
+              <p className="truncate text-[11px] font-medium text-slate-300">
+                {S.labels[item.labelKey]}
+              </p>
+              <a
+                href={`/api/sample-pack-image/${item.id}?download=1`}
+                className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-violet-300 hover:text-violet-200"
+              >
+                {S.downloadOne}
+              </a>
+            </div>
           </li>
         ))}
       </ul>

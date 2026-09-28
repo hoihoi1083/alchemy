@@ -1,6 +1,6 @@
 /**
  * Curated landing samples for the “Get sample pack” lead magnet.
- * Displayed with an on-page Alchemy watermark (not burned into files).
+ * Served via `/api/sample-pack-image/[id]` with Alchemy watermark burned into pixels.
  */
 export type SamplePackItem = {
   id: string;
