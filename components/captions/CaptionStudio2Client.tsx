@@ -280,8 +280,15 @@ export function CaptionStudio2Client() {
   const mediaAddInputRef = useRef<HTMLInputElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const editAbortRef = useRef<AbortController | null>(null);
-  /** Caption-free plate used as BGM mix base so re-Apply does not double-layer. */
+  /** Caption-free, music-free plate used as BGM mix base so re-Apply does not double-layer. */
   const bgmCleanPlateRef = useRef<string | null>(null);
+  /**
+   * True after split/trim/reorder/delete until the next bake/BGM.
+   * Prevents re-Apply BGM from restoring a pre-structure clean plate / originalSourceUrl.
+   */
+  const structurePlatesStaleRef = useRef(false);
+  /** Set after a successful Apply BGM — stale rebakes may already contain music. */
+  const bgmMixedOnceRef = useRef(false);
   const handoffDone = useRef(false);
   const packLoadDone = useRef(false);
   const blobPreviewRef = useRef<string | null>(null);
@@ -540,6 +547,8 @@ export function CaptionStudio2Client() {
     setCaptionsBurnedInPlate(Boolean(snap.captionsBurnedInPlate));
     // Pack load is a new board — never reuse a previous session's BGM clean plate.
     bgmCleanPlateRef.current = null;
+    structurePlatesStaleRef.current = false;
+    bgmMixedOnceRef.current = false;
     setToolTab(snap.captionLines.length > 0 ? "captions" : "edit");
     setError(null);
     setWarn(null);
@@ -712,19 +721,28 @@ export function CaptionStudio2Client() {
     [projectDur],
   );
 
+  const invalidatePlatesForStructureEdit = useCallback(() => {
+    // Drop cached BGM base so the next Apply rebakes the current timeline
+    // (otherwise re-Apply restores the pre-split/trim plate and structure is lost).
+    bgmCleanPlateRef.current = null;
+    structurePlatesStaleRef.current = true;
+  }, []);
+
   const setClipsWithUndo = useCallback(
     (next: TimelineClip[] | ((prev: TimelineClip[]) => TimelineClip[])) => {
       pushUndo();
+      invalidatePlatesForStructureEdit();
       setTimelineClips(next);
     },
-    [pushUndo],
+    [pushUndo, invalidatePlatesForStructureEdit],
   );
 
   const setClipsLive = useCallback(
     (next: TimelineClip[] | ((prev: TimelineClip[]) => TimelineClip[])) => {
+      invalidatePlatesForStructureEdit();
       setTimelineClips(next);
     },
-    [],
+    [invalidatePlatesForStructureEdit],
   );
 
   const applySource = useCallback(
@@ -764,6 +782,8 @@ export function CaptionStudio2Client() {
       setPackName("");
       setCaptionsBurnedInPlate(false);
       bgmCleanPlateRef.current = null;
+      structurePlatesStaleRef.current = false;
+      bgmMixedOnceRef.current = false;
       setNote(null);
       setWarn(null);
       setError(null);
@@ -865,6 +885,8 @@ export function CaptionStudio2Client() {
     setSelectedVoicePreviewId(null);
     setCaptionsBurnedInPlate(false);
     bgmCleanPlateRef.current = null;
+    structurePlatesStaleRef.current = false;
+    bgmMixedOnceRef.current = false;
     if (blobPreviewRef.current) {
       URL.revokeObjectURL(blobPreviewRef.current);
       blobPreviewRef.current = null;
@@ -1081,6 +1103,8 @@ export function CaptionStudio2Client() {
       // AI edit replaces pixels — burn/BGM plates from the old clip are stale.
       setCaptionsBurnedInPlate(false);
       bgmCleanPlateRef.current = null;
+      structurePlatesStaleRef.current = false;
+      bgmMixedOnceRef.current = false;
       if (wasFirst) {
         setSourceUrl(next);
         setOriginalSourceUrl(next);
@@ -1656,9 +1680,10 @@ export function CaptionStudio2Client() {
       }
 
       let videoUrl =
-        captionsBurnedInPlate && originalSourceUrl
+        captionsBurnedInPlate && originalSourceUrl && !structurePlatesStaleRef.current
           ? toRelativePipelineUrl(originalSourceUrl)
           : await bakeTimelinePlate();
+      structurePlatesStaleRef.current = false;
       const mixLines = captionLinesForMix.filter((l) => l.text.trim());
 
       const dubOnce = async (body: Record<string, unknown>) => {
@@ -1755,6 +1780,8 @@ export function CaptionStudio2Client() {
         setOriginalSourceUrl(toRelativePipelineUrl(videoUrl));
         if (captionsBurnedInPlate) setCaptionsBurnedInPlate(false);
         bgmCleanPlateRef.current = null;
+        structurePlatesStaleRef.current = false;
+        bgmMixedOnceRef.current = false;
 
         const doneNote =
           speechStartSec > 0.05
@@ -1784,6 +1811,8 @@ export function CaptionStudio2Client() {
             setOriginalSourceUrl(toRelativePipelineUrl(videoUrl));
             if (captionsBurnedInPlate) setCaptionsBurnedInPlate(false);
             bgmCleanPlateRef.current = null;
+            structurePlatesStaleRef.current = false;
+            bgmMixedOnceRef.current = false;
             setNote(
               `${t.audioVoiceDone} · ${mixedVoCount}/${timelineVos.length} VO`,
             );
@@ -1815,20 +1844,36 @@ export function CaptionStudio2Client() {
           throw new Error(t.aiMusicSelectTrack);
         }
       }
-      // Always mix from a caption-free base so re-Apply / burn→BGM→re-burn keep audio.
+      // Prefer music-free clean plate so burn → re-Apply BGM does not double music.
+      // If structure changed since the last bake, rebake the current timeline (keeps trims)
+      // and replace source audio when a prior BGM mix may already be in the plate.
+      const structureWasStale = structurePlatesStaleRef.current;
       let plate: string;
-      if (captionsBurnedInPlate && originalSourceUrl) {
-        plate = toRelativePipelineUrl(originalSourceUrl);
-        bgmCleanPlateRef.current = plate;
-      } else if (bgmCleanPlateRef.current) {
+      let replaceAudio = replaceSourceAudio;
+      if (bgmCleanPlateRef.current && !structureWasStale) {
         plate = bgmCleanPlateRef.current;
+      } else if (
+        !structureWasStale &&
+        captionsBurnedInPlate &&
+        originalSourceUrl
+      ) {
+        // Burn base without a preserved music-free plate — may already include BGM.
+        plate = toRelativePipelineUrl(originalSourceUrl);
+        replaceAudio = true;
       } else {
         plate = await bakeTimelinePlate();
-        bgmCleanPlateRef.current = plate;
+        // Structure rebake (or first bake) — only treat as music-free when no prior BGM mix.
+        if (structureWasStale && bgmMixedOnceRef.current) {
+          bgmCleanPlateRef.current = null;
+          replaceAudio = true;
+        } else {
+          bgmCleanPlateRef.current = plate;
+        }
       }
+      structurePlatesStaleRef.current = false;
       const body: Record<string, unknown> = {
         video_url: plate,
-        replace_source_audio: replaceSourceAudio,
+        replace_source_audio: replaceAudio,
         start_sec: bgmStartSec,
         duration_sec: effectiveBgmDuration,
         volume: bgmVolume,
@@ -1856,7 +1901,9 @@ export function CaptionStudio2Client() {
       }
       const mixed = toRelativePipelineUrl(data.videoUrl);
       // Caption-free plate with BGM — next burn keeps the music.
+      // Keep bgmCleanPlateRef as the music-free base used above (do not point at mixed).
       setOriginalSourceUrl(mixed);
+      bgmMixedOnceRef.current = true;
       if (captionsBurnedInPlate) {
         setCaptionsBurnedInPlate(false);
       }
@@ -1886,9 +1933,9 @@ export function CaptionStudio2Client() {
    * (that would double text on the next burn).
    */
   async function resolveFinishBasePlateUrl(): Promise<string> {
-    if (captionsBurnedInPlate) {
-      if (originalSourceUrl) return toRelativePipelineUrl(originalSourceUrl);
-      throw new Error(t2.burnNeedCleanPlate);
+    // After structure edits, never restore a pre-trim originalSourceUrl.
+    if (captionsBurnedInPlate && originalSourceUrl && !structurePlatesStaleRef.current) {
+      return toRelativePipelineUrl(originalSourceUrl);
     }
     return bakeTimelinePlate();
   }
@@ -1897,6 +1944,11 @@ export function CaptionStudio2Client() {
     const usable = captionLines.filter((l) => l.text.trim());
     if (usable.length === 0) {
       setError(t2.burnNeedLines);
+      return;
+    }
+    // Structure changed after burn — baking the burned timeline then re-burning doubles text.
+    if (captionsBurnedInPlate && structurePlatesStaleRef.current) {
+      setError(t2.burnNeedCleanPlate);
       return;
     }
     if (blockIfCannotAfford(TOKEN_COST.caption_burn)) return;
@@ -1928,7 +1980,11 @@ export function CaptionStudio2Client() {
       }
       // Clean plate stays the re-burn / export base; timeline becomes the finished plate.
       setOriginalSourceUrl(toRelativePipelineUrl(burnUrl));
-      bgmCleanPlateRef.current = toRelativePipelineUrl(burnUrl);
+      // Do not overwrite a music-free BGM base with the burn input (often already has BGM).
+      if (!bgmCleanPlateRef.current) {
+        bgmCleanPlateRef.current = toRelativePipelineUrl(burnUrl);
+      }
+      structurePlatesStaleRef.current = false;
       await commitPlateToTimeline(data.videoUrl, sourceLabel || "Burned");
       setCaptionsBurnedInPlate(true);
       setShowOriginal(false);
@@ -1951,6 +2007,7 @@ export function CaptionStudio2Client() {
       await commitPlateToTimeline(clean, sourceLabel || "Export");
       // Structure-only plate — no captions in pixels.
       setCaptionsBurnedInPlate(false);
+      structurePlatesStaleRef.current = false;
       setShowOriginal(false);
       setNote(t2.exportDone);
     } catch (e: unknown) {

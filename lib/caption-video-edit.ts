@@ -175,31 +175,49 @@ export async function runCaptionVideoEdit(opts: {
     throw aborted;
   }
 
-  const result = await fal.subscribe(FAL_R2V, {
-    input: {
-      prompt,
-      duration: String(durationSec),
-      aspect_ratio: "auto",
-      resolution,
-      generate_audio: false,
-      image_urls: publicImageUrl ? [publicImageUrl] : [],
-      video_urls: [publicVideoUrl],
-    },
-    logs: true,
-    abortSignal: opts.signal,
-  });
-  const rawUrl = extractFalVideoUrl(result.data);
-  if (!rawUrl) throw new Error("fal Seedance edit returned no video.");
-  const durable = await persistEditedVideo({
-    clerkId: opts.clerkId,
-    remoteUrl: rawUrl,
-    job: opts.job,
-  });
-  return {
-    videoUrl: durable,
-    provider: "fal-seedance",
-    modelOrEndpoint: FAL_R2V,
-    tokenCost,
-    prompt,
+  // fal.subscribe abortSignal stops polling but does not cancel the remote job —
+  // capture requestId via onEnqueue and cancel explicitly when the client aborts.
+  let falRequestId: string | undefined;
+  const cancelFalOnAbort = () => {
+    if (!falRequestId) return;
+    void fal.queue.cancel(FAL_R2V, { requestId: falRequestId }).catch(() => {
+      /* best-effort — refund already handled by the route */
+    });
   };
+  opts.signal?.addEventListener("abort", cancelFalOnAbort);
+  try {
+    const result = await fal.subscribe(FAL_R2V, {
+      input: {
+        prompt,
+        duration: String(durationSec),
+        aspect_ratio: "auto",
+        resolution,
+        generate_audio: false,
+        image_urls: publicImageUrl ? [publicImageUrl] : [],
+        video_urls: [publicVideoUrl],
+      },
+      logs: true,
+      abortSignal: opts.signal,
+      onEnqueue: (requestId) => {
+        falRequestId = requestId;
+        if (opts.signal?.aborted) cancelFalOnAbort();
+      },
+    });
+    const rawUrl = extractFalVideoUrl(result.data);
+    if (!rawUrl) throw new Error("fal Seedance edit returned no video.");
+    const durable = await persistEditedVideo({
+      clerkId: opts.clerkId,
+      remoteUrl: rawUrl,
+      job: opts.job,
+    });
+    return {
+      videoUrl: durable,
+      provider: "fal-seedance",
+      modelOrEndpoint: FAL_R2V,
+      tokenCost,
+      prompt,
+    };
+  } finally {
+    opts.signal?.removeEventListener("abort", cancelFalOnAbort);
+  }
 }
