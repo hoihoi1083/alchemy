@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import { buildCaptionEditPrompt } from "../lib/byteplus-seedance-edit";
 import { estimateCaptionVideoEditTokens } from "../lib/billing/token-costs";
@@ -26,5 +28,15 @@ describe("caption video edit prompts", () => {
     const tok = estimateCaptionVideoEditTokens(8);
     assert.ok(tok >= 1000);
     assert.ok(tok <= 2000);
+  });
+
+  it("does not fall through to fal after abort / cancel", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/caption-video-edit.ts"),
+      "utf8",
+    );
+    assert.match(src, /signal\?\.aborted/);
+    assert.match(src, /AbortError/);
+    assert.match(src, /abortSignal:\s*opts\.signal/);
   });
 });

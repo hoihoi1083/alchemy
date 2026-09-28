@@ -538,6 +538,8 @@ export function CaptionStudio2Client() {
     setUndoStack([]);
     setEditedVideoUrl(null);
     setCaptionsBurnedInPlate(Boolean(snap.captionsBurnedInPlate));
+    // Pack load is a new board — never reuse a previous session's BGM clean plate.
+    bgmCleanPlateRef.current = null;
     setToolTab(snap.captionLines.length > 0 ? "captions" : "edit");
     setError(null);
     setWarn(null);
@@ -761,6 +763,7 @@ export function CaptionStudio2Client() {
       setPackId(null);
       setPackName("");
       setCaptionsBurnedInPlate(false);
+      bgmCleanPlateRef.current = null;
       setNote(null);
       setWarn(null);
       setError(null);
@@ -861,6 +864,7 @@ export function CaptionStudio2Client() {
     setVoicePreviewTracks([]);
     setSelectedVoicePreviewId(null);
     setCaptionsBurnedInPlate(false);
+    bgmCleanPlateRef.current = null;
     if (blobPreviewRef.current) {
       URL.revokeObjectURL(blobPreviewRef.current);
       blobPreviewRef.current = null;
@@ -1074,6 +1078,9 @@ export function CaptionStudio2Client() {
       );
       setSelectedClipId(updated.id);
       setEditedVideoUrl(next);
+      // AI edit replaces pixels — burn/BGM plates from the old clip are stale.
+      setCaptionsBurnedInPlate(false);
+      bgmCleanPlateRef.current = null;
       if (wasFirst) {
         setSourceUrl(next);
         setOriginalSourceUrl(next);
@@ -1675,91 +1682,117 @@ export function CaptionStudio2Client() {
       };
 
       let speechStartSec = 0;
-      if (timelineVos.length > 0) {
-        // Mix every VO clip onto the plate in start order (keeps multi-section VO).
-        // After the first mix, do not re-duck prior VO (under_voice = 1).
-        for (let i = 0; i < timelineVos.length; i++) {
-          const vo = timelineVos[i]!;
-          if (!isHttpOrLibraryMediaUrl(vo.audioUrl)) {
-            throw new Error(m.errors.voiceoverFailed);
+      const plateBeforeMix = videoUrl;
+      let mixedVoCount = 0;
+      try {
+        if (timelineVos.length > 0) {
+          // Mix every VO clip onto the plate in start order (keeps multi-section VO).
+          // After the first mix, do not re-duck prior VO (under_voice = 1).
+          for (let i = 0; i < timelineVos.length; i++) {
+            const vo = timelineVos[i]!;
+            if (!isHttpOrLibraryMediaUrl(vo.audioUrl)) {
+              throw new Error(m.errors.voiceoverFailed);
+            }
+            speechStartSec = vo.startSec;
+            videoUrl = await dubOnce({
+              video_url: videoUrl,
+              locale: voiceoverLocale,
+              target_duration_sec: targetDurationSec,
+              speech_start_sec: vo.startSec,
+              speech_url: vo.audioUrl,
+              voice_volume: voiceVolume,
+              under_voice_bgm_volume: i === 0 ? underVoiceBgmVolume : 1,
+              mix_mode: "continuous",
+            });
+            mixedVoCount = i + 1;
           }
-          speechStartSec = vo.startSec;
-          videoUrl = await dubOnce({
+        } else {
+          const speechStart = captionVoiceStartSec(mixLines);
+          speechStartSec = speechStart;
+          const voiceBody: Record<string, unknown> = {
             video_url: videoUrl,
             locale: voiceoverLocale,
             target_duration_sec: targetDurationSec,
-            speech_start_sec: vo.startSec,
-            speech_url: vo.audioUrl,
+            speech_start_sec: speechStart,
             voice_volume: voiceVolume,
-            under_voice_bgm_volume: i === 0 ? underVoiceBgmVolume : 1,
+            under_voice_bgm_volume: underVoiceBgmVolume,
             mix_mode: "continuous",
-          });
-        }
-      } else {
-        const speechStart =
-          captionVoiceStartSec(mixLines);
-        speechStartSec = speechStart;
-        const voiceBody: Record<string, unknown> = {
-          video_url: videoUrl,
-          locale: voiceoverLocale,
-          target_duration_sec: targetDurationSec,
-          speech_start_sec: speechStart,
-          voice_volume: voiceVolume,
-          under_voice_bgm_volume: underVoiceBgmVolume,
-          mix_mode: "continuous",
-        };
-        if (selectedPreview) {
-          voiceBody.voice_preset = selectedPreview.presetId;
-          if (selectedPreview.audioUrl) {
-            if (!isHttpOrLibraryMediaUrl(selectedPreview.audioUrl)) {
-              throw new Error(m.errors.voiceoverFailed);
+          };
+          if (selectedPreview) {
+            voiceBody.voice_preset = selectedPreview.presetId;
+            if (selectedPreview.audioUrl) {
+              if (!isHttpOrLibraryMediaUrl(selectedPreview.audioUrl)) {
+                throw new Error(m.errors.voiceoverFailed);
+              }
+              voiceBody.speech_url = selectedPreview.audioUrl;
             }
-            voiceBody.speech_url = selectedPreview.audioUrl;
+          }
+          if (script) voiceBody.script = script;
+          videoUrl = await dubOnce(voiceBody);
+
+          const previewUrl = selectedPreview?.audioUrl ?? null;
+          let voDur = selectedPreview?.durationSec ?? 0;
+          if (previewUrl && isHttpOrLibraryMediaUrl(previewUrl) && !(voDur > 0)) {
+            voDur = await probeAudioDurationSec(withCacheBust(previewUrl));
+          }
+          if (previewUrl && isHttpOrLibraryMediaUrl(previewUrl) && voDur > 0) {
+            const clip: VoClip = {
+              id: `vo-${Date.now()}`,
+              audioUrl: previewUrl,
+              startSec: speechStart,
+              durationSec: voDur,
+              label: t2.nleVoLane,
+            };
+            setVoClips([clip]);
+            setSelectedVoId(clip.id);
           }
         }
-        if (script) voiceBody.script = script;
-        videoUrl = await dubOnce(voiceBody);
 
-        const previewUrl = selectedPreview?.audioUrl ?? null;
-        let voDur = selectedPreview?.durationSec ?? 0;
-        if (previewUrl && isHttpOrLibraryMediaUrl(previewUrl) && !(voDur > 0)) {
-          voDur = await probeAudioDurationSec(withCacheBust(previewUrl));
+        await commitPlateToTimeline(videoUrl, sourceLabel || "VO mix");
+        // VO is baked into the plate — clear lane so re-mix does not double-charge.
+        setVoClips([]);
+        setSelectedVoId(null);
+        setOriginalSourceUrl(toRelativePipelineUrl(videoUrl));
+        if (captionsBurnedInPlate) setCaptionsBurnedInPlate(false);
+        bgmCleanPlateRef.current = null;
+
+        const doneNote =
+          speechStartSec > 0.05
+            ? t.audioVoiceDoneAtCaption.replace(
+                "{sec}",
+                speechStartSec.toFixed(1),
+              )
+            : t.audioVoiceDone;
+        const multi =
+          timelineVos.length > 1
+            ? ` · ${timelineVos.length} VO`
+            : "";
+        const msg = `${voiceFitNote ? `${voiceFitNote} ` : ""}${doneNote}${multi}`;
+        setAudioNote(msg);
+        setNote(msg);
+      } catch (e: unknown) {
+        // Partial multi-VO: keep paid mixes on the board so tokens aren't wasted.
+        if (
+          mixedVoCount > 0 &&
+          videoUrl !== plateBeforeMix &&
+          timelineVos.length > 0
+        ) {
+          try {
+            await commitPlateToTimeline(videoUrl, sourceLabel || "VO mix");
+            setVoClips(timelineVos.slice(mixedVoCount));
+            setSelectedVoId(null);
+            setOriginalSourceUrl(toRelativePipelineUrl(videoUrl));
+            if (captionsBurnedInPlate) setCaptionsBurnedInPlate(false);
+            bgmCleanPlateRef.current = null;
+            setNote(
+              `${t.audioVoiceDone} · ${mixedVoCount}/${timelineVos.length} VO`,
+            );
+          } catch {
+            /* surface original error below */
+          }
         }
-        if (previewUrl && isHttpOrLibraryMediaUrl(previewUrl) && voDur > 0) {
-          const clip: VoClip = {
-            id: `vo-${Date.now()}`,
-            audioUrl: previewUrl,
-            startSec: speechStart,
-            durationSec: voDur,
-            label: t2.nleVoLane,
-          };
-          setVoClips([clip]);
-          setSelectedVoId(clip.id);
-        }
+        setError(safeErr(e, t.burnFailed));
       }
-
-      await commitPlateToTimeline(videoUrl, sourceLabel || "VO mix");
-      // VO is baked into the plate — clear lane so re-mix does not double-charge.
-      setVoClips([]);
-      setSelectedVoId(null);
-      setOriginalSourceUrl(toRelativePipelineUrl(videoUrl));
-      if (captionsBurnedInPlate) setCaptionsBurnedInPlate(false);
-      bgmCleanPlateRef.current = null;
-
-      const doneNote =
-        speechStartSec > 0.05
-          ? t.audioVoiceDoneAtCaption.replace(
-              "{sec}",
-              speechStartSec.toFixed(1),
-            )
-          : t.audioVoiceDone;
-      const multi =
-        timelineVos.length > 1
-          ? ` · ${timelineVos.length} VO`
-          : "";
-      const msg = `${voiceFitNote ? `${voiceFitNote} ` : ""}${doneNote}${multi}`;
-      setAudioNote(msg);
-      setNote(msg);
     } catch (e: unknown) {
       setError(safeErr(e, t.burnFailed));
     } finally {
@@ -1987,6 +2020,17 @@ export function CaptionStudio2Client() {
     setSelectedClipId(null);
   }
 
+  function doDeleteSelectedCaption() {
+    if (captionLines.length === 0) return;
+    const idx = Math.max(
+      0,
+      Math.min(selectedCaptionIndex, captionLines.length - 1),
+    );
+    pushUndo();
+    setCaptionLines((prev) => prev.filter((_, i) => i !== idx));
+    setSelectedCaptionIndex((i) => Math.max(0, Math.min(i, captionLines.length - 2)));
+  }
+
   useEffect(() => {
     if (!hasWorkspace) return;
     const onKey = (e: KeyboardEvent) => {
@@ -2000,7 +2044,9 @@ export function CaptionStudio2Client() {
       ) {
         return;
       }
+      // Let focused buttons use Space for activation (don't steal for play/pause).
       if (e.code === "Space") {
+        if (el?.tagName === "BUTTON" || el?.closest("button")) return;
         e.preventDefault();
         const v = previewVideoRef.current;
         if (!v) return;
@@ -2008,14 +2054,19 @@ export function CaptionStudio2Client() {
         else v.pause();
         return;
       }
-      if (e.key === "s" || e.key === "S") {
+      // Plain S = split. Cmd/Ctrl+S is reserved (browser save / pack save).
+      if ((e.key === "s" || e.key === "S") && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         doSplitAtPlayhead();
         return;
       }
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        doDeleteSelectedClip();
+        if (toolTab === "captions" && captionLines.length > 0) {
+          doDeleteSelectedCaption();
+        } else {
+          doDeleteSelectedClip();
+        }
         return;
       }
       if ((e.metaKey || e.ctrlKey) && (e.key === "z" || e.key === "Z")) {
@@ -2031,6 +2082,9 @@ export function CaptionStudio2Client() {
     timelineClips,
     playheadSec,
     selectedClipId,
+    selectedCaptionIndex,
+    captionLines.length,
+    toolTab,
     undoStack.length,
   ]);
 

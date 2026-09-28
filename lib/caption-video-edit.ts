@@ -160,10 +160,19 @@ export async function runCaptionVideoEdit(opts: {
         prompt,
       };
     } catch (e) {
+      // Never fall through to fal after the user cancelled — that starts a new paid job.
+      if (opts.signal?.aborted) throw e;
+      if (e instanceof Error && e.name === "AbortError") throw e;
       const msg = e instanceof Error ? e.message : String(e);
-      if (/not configured/i.test(msg)) throw e;
+      if (/not configured/i.test(msg) || /^aborted$/i.test(msg.trim())) throw e;
       console.warn("[caption-video-edit] ModelArk failed, trying fal:", msg.slice(0, 200));
     }
+  }
+
+  if (opts.signal?.aborted) {
+    const aborted = new Error("Aborted");
+    aborted.name = "AbortError";
+    throw aborted;
   }
 
   const result = await fal.subscribe(FAL_R2V, {
@@ -177,6 +186,7 @@ export async function runCaptionVideoEdit(opts: {
       video_urls: [publicVideoUrl],
     },
     logs: true,
+    abortSignal: opts.signal,
   });
   const rawUrl = extractFalVideoUrl(result.data);
   if (!rawUrl) throw new Error("fal Seedance edit returned no video.");

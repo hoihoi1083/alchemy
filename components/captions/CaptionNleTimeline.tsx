@@ -217,18 +217,22 @@ export function CaptionNleTimeline(props: {
         setDropIndex(target);
       } else if (drag.kind === "caption-move") {
         const len = drag.origEnd - drag.origStart;
-        const start = Math.max(0, Math.min(durationSec - len, sec - len / 2));
+        // Clamp to packed project end (not expanded trim room) so lines stay in the burn.
+        const start = Math.max(0, Math.min(projectEndSec - len, sec - len / 2));
         onUpdateCaption(drag.index, {
           startSec: start,
           endSec: start + len,
         });
       } else if (drag.kind === "caption-start") {
         onUpdateCaption(drag.index, {
-          startSec: Math.max(0, Math.min(sec, drag.origEnd - 0.1)),
+          startSec: Math.max(
+            0,
+            Math.min(sec, Math.min(drag.origEnd - 0.1, projectEndSec - 0.1)),
+          ),
         });
       } else if (drag.kind === "caption-end") {
         onUpdateCaption(drag.index, {
-          endSec: Math.min(durationSec, Math.max(sec, drag.origStart + 0.1)),
+          endSec: Math.min(projectEndSec, Math.max(sec, drag.origStart + 0.1)),
         });
       } else if (drag.kind === "bgm-move") {
         const start = Math.max(
@@ -427,7 +431,7 @@ export function CaptionNleTimeline(props: {
         className="relative mt-1 min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border border-white/5 bg-black/40"
         onPointerDown={(e) => {
           if ((e.target as HTMLElement).closest("[data-nle-handle]")) return;
-          onPlayhead(secFromClientX(e.clientX));
+          onPlayhead(Math.min(projectEndSec, secFromClientX(e.clientX)));
           startDrag({ kind: "playhead" }, e);
         }}
       >
