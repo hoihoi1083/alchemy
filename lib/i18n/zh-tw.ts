@@ -5435,7 +5435,9 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
     exportDone: "時間軸已匯出 — 可下載或繼續燒錄字幕。",
     burnNeedLines: "燒錄需有字幕文字；也可先單獨匯出時間軸。",
     burnNeedCleanPlate:
-      "缺少乾淨底板，無法再燒錄。請先匯出時間軸（純結構），再燒錄。",
+      "燒錄後改過剪輯，或乾淨底板已失效。再燒錄需要乾淨底板 — 可匯出成品下載，或從乾淨時間軸重新燒錄。",
+    bgmReplaceWipesVo:
+      "再次套用 BGM 會整段取代音軌，口播會被清掉。繼續？",
     modePure: "純字幕",
     modeSpeech: "從語音",
     modeAi: "AI 規劃",

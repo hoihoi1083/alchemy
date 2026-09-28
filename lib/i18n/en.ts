@@ -6634,7 +6634,9 @@ export const en = {
 		signInToUse: "Sign in to upload and edit videos.",
 		burnNeedLines: "Add caption text to burn, or export the timeline alone.",
 		burnNeedCleanPlate:
-			"Missing clean plate for re-burn. Bake timeline (structure only), then burn again.",
+			"You changed structure after burning captions, or the clean plate is gone. Re-burn needs a caption-free base — export the finished cut to download, or start from a clean timeline before burning again.",
+		bgmReplaceWipesVo:
+			"Re-applying BGM replaces the audio track and will remove your voiceover. Continue?",
 		modePure: "Pure captions",
 		modeSpeech: "From speech",
 		modeAi: "AI script",

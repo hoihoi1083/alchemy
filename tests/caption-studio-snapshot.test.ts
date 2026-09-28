@@ -70,10 +70,16 @@ describe("caption-studio-snapshot", () => {
       selectedVoicePreviewId: null,
       playheadSec: 1.2,
       captionsBurnedInPlate: true,
+      bgmMixedOnce: true,
+      voMixedOnce: true,
+      structurePlatesStale: true,
     });
 
     assert.equal(snap.version, 1);
     assert.equal(snap.captionsBurnedInPlate, true);
+    assert.equal(snap.bgmMixedOnce, true);
+    assert.equal(snap.voMixedOnce, true);
+    assert.equal(snap.structurePlatesStale, true);
     assert.equal(snap.sourceUrl, null);
     assert.equal(
       snap.originalSourceUrl,
@@ -117,9 +123,15 @@ describe("caption-studio-snapshot", () => {
       selectedVoicePreviewId: null,
       playheadSec: 0,
       captionsBurnedInPlate: true,
+      bgmMixedOnce: true,
+      voMixedOnce: true,
+      structurePlatesStale: true,
     });
     assert.ok(snap);
     assert.equal(snap!.captionsBurnedInPlate, true);
+    assert.equal(snap!.bgmMixedOnce, true);
+    assert.equal(snap!.voMixedOnce, true);
+    assert.equal(snap!.structurePlatesStale, true);
     assert.equal(snap!.captionLines.length, 1);
     assert.equal(snap!.captionLines[0]!.spokenText, "维生素C精华");
     assert.equal(snap!.timelineClips.length, 0);

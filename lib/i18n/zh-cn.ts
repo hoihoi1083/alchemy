@@ -5445,7 +5445,9 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     exportDone: "时间轴已导出 — 可下载或继续烧录字幕。",
     burnNeedLines: "烧录需有字幕文字；也可先单独导出时间轴。",
     burnNeedCleanPlate:
-      "缺少干净底板，无法再烧录。请先导出时间轴（纯结构），再烧录。",
+      "烧录后改过剪辑，或干净底板已失效。再烧录需要干净底板 — 可导出成品下载，或从干净时间轴重新烧录。",
+    bgmReplaceWipesVo:
+      "再次套用 BGM 会整段替换音轨，口播会被清掉。继续？",
     modePure: "纯字幕",
     modeSpeech: "从语音",
     modeAi: "AI 规划",

@@ -56,6 +56,21 @@ export type CaptionStudioSnapshot = {
   playheadSec: number;
   /** True when caption text is already burned into the plate pixels. */
   captionsBurnedInPlate?: boolean;
+  /**
+   * True after a successful Apply BGM in this pack.
+   * Timeline / originalSourceUrl may already contain music — re-Apply must replace, not layer.
+   */
+  bgmMixedOnce?: boolean;
+  /**
+   * True after voiceover was baked into the plate (VO lane may be empty).
+   * Re-Apply BGM with replace_source_audio would wipe narration.
+   */
+  voMixedOnce?: boolean;
+  /**
+   * True when timeline structure diverged from cached burn/BGM plates.
+   * Re-burn must stay blocked until a trusted caption-free base exists.
+   */
+  structurePlatesStale?: boolean;
 };
 
 export type CaptionStudioSnapshotInput = {
@@ -89,6 +104,9 @@ export type CaptionStudioSnapshotInput = {
   selectedVoicePreviewId: string | null;
   playheadSec: number;
   captionsBurnedInPlate?: boolean;
+  bgmMixedOnce?: boolean;
+  voMixedOnce?: boolean;
+  structurePlatesStale?: boolean;
 };
 
 function isPersistableUrl(url: unknown): url is string {
@@ -311,6 +329,9 @@ export function serializeCaptionStudioSnapshot(
     selectedVoicePreviewId: selectedVoPreview,
     playheadSec: Math.max(0, asFiniteNumber(input.playheadSec, 0)),
     captionsBurnedInPlate: Boolean(input.captionsBurnedInPlate),
+    bgmMixedOnce: Boolean(input.bgmMixedOnce),
+    voMixedOnce: Boolean(input.voMixedOnce),
+    structurePlatesStale: Boolean(input.structurePlatesStale),
   };
 }
 
@@ -429,6 +450,9 @@ export function parseCaptionStudioSnapshot(
     selectedVoicePreviewId,
     playheadSec: Math.max(0, asFiniteNumber(o.playheadSec, 0)),
     captionsBurnedInPlate: Boolean(o.captionsBurnedInPlate),
+    bgmMixedOnce: Boolean(o.bgmMixedOnce),
+    voMixedOnce: Boolean(o.voMixedOnce),
+    structurePlatesStale: Boolean(o.structurePlatesStale),
   };
 }
 
