@@ -37,6 +37,7 @@ function LandingFooterInner() {
     { label: f.studio, href: "/start" },
     { label: f.how, href: "/#how" },
     { label: f.watchDemo, onClick: () => openLandingDemo() },
+    { label: f.getSamplePack, href: "/get-sample" },
     { label: f.pricing, href: "/pricing" },
     { label: f.library, href: "/library" },
     { label: L.ultraCanvasNavLink, href: "/ultra" },

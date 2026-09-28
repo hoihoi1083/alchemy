@@ -284,6 +284,14 @@ export function LandingPricingTeaser() {
 							<p className="landing-pricing-subtitle mt-2 text-sm leading-relaxed text-white/90">
 								{P.subtitle}
 							</p>
+							<p className="mt-3 text-sm text-white/75">
+								<Link
+									href="/get-sample"
+									className="font-semibold text-violet-200 underline-offset-2 hover:text-white hover:underline"
+								>
+									{m.landing.ctaSamplePack} →
+								</Link>
+							</p>
 						</div>
 					</Reveal>
 
