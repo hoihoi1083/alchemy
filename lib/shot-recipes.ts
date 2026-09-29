@@ -211,6 +211,7 @@ export function storyboardTvcRolesPlannerLines(preferSceneCount: number): string
     "- lightingEn (required): English lighting for THIS beat only (e.g. soft side key, rim edge on logo, silhouette backlight).",
     "- cameraMotionEn (required): English camera for THIS beat — match the role, not a generic slow push-in for every scene.",
     "- role field MUST be one of the TVC roles above when possible.",
+    "- macro = detail of the IMAGE 1 object only — never invent a different applicator/bottle from the product name.",
   ];
 }
 

@@ -237,6 +237,56 @@ export function effectiveStoryboardSceneCount(
   return uiCount;
 }
 
+/**
+ * Classic TVC — default flexible product commercial.
+ * Must lock IMAGE 1 like premium-punch / swift-chroma; empty recipe lines used to
+ * let the planner invent a different SKU from the product NAME (e.g. serum dropper
+ * when IMAGE 1 is a cream jar).
+ */
+function classicTvcPlannerLinesProduct(sceneCount: number): string[] {
+  const n = Math.max(3, Math.min(6, Math.round(sceneCount) || 4));
+  const shared = [
+    "NARRATIVE RECIPE: CLASSIC TVC — flexible product commercial (establish → detail → payoff).",
+    "IMAGE 1 pixels ARE the only product identity (shape, materials, colors, cap/lid, label geometry). Product name / headline are claim labels only — NEVER invent a different SKU from the name.",
+    "Example FAIL: product name says \"Vitamin C serum\" but IMAGE 1 is a cream jar → stills must keep the jar; do NOT invent a dropper bottle, amber serum vial, or second companion SKU.",
+    "Every scene that shows a product MUST show the EXACT IMAGE 1 object — same silhouette, materials, colors. Scene variety = camera angle, scale, lighting, and setting AROUND that object.",
+    "Macro / detail beats = extreme close-up of IMAGE 1 materials only (lid reflection, cream texture, glass edge, label area) — NOT a stock \"serum drop from a pipette\" unless that exact pipette is already visible in IMAGE 1.",
+    "FORBIDDEN: inventing companion products not in IMAGE 1; renaming the object into another beauty category; Social drip 三分屏; celebrity faces unless on IMAGE 1.",
+    "Motion notes: one continuous commercial across stills; hard cuts OK; textless unless integrated type requested.",
+  ];
+
+  if (n >= 5) {
+    return [
+      ...shared,
+      `EXACTLY ${n} scenes. Arc: establish → macro of IMAGE 1 → orbit / logo-trace → lifestyle with IMAGE 1 → payoff.`,
+      "Scene 1 (establish): hero packshot / environment plate with EXACT IMAGE 1 product.",
+      "Scene 2 (macro): extreme detail of IMAGE 1 materials only — same object, tighter crop.",
+      "Scene 3 (orbit or logo-trace): camera glides along IMAGE 1 contour / label area — same object.",
+      "Scene 4 (lifestyle): hands or model may use/apply the SAME IMAGE 1 product — no second invented bottle.",
+      "Scene 5+ (payoff): clean hero hold of EXACT IMAGE 1 + CTA energy.",
+    ];
+  }
+
+  return [
+    ...shared,
+    `EXACTLY ${n} scenes. Arc: establish → macro of IMAGE 1 → orbit/lifestyle with IMAGE 1 → payoff.`,
+    "Scene 1 (establish): EXACT IMAGE 1 product in a strong opening plate.",
+    "Scene 2 (macro): extreme detail of IMAGE 1 materials only — never a different applicator/bottle.",
+    "Scene 3 (orbit / lifestyle): motion or use of the SAME IMAGE 1 object.",
+    "Scene 4 (payoff): hero lockup of EXACT IMAGE 1.",
+  ];
+}
+
+function classicTvcPlannerLinesConcept(sceneCount: number): string[] {
+  const n = Math.max(3, Math.min(6, Math.round(sceneCount) || 4));
+  return [
+    "NARRATIVE RECIPE: CLASSIC TVC CONCEPT — service / idea commercial (no fake packaged SKU).",
+    `About ${n} scenes: establish → detail → payoff for the experience — atmosphere, hands, tools, room.`,
+    "Do NOT invent a packaged beauty bottle or dropper as the hero unless the user uploaded that object.",
+    "FORBIDDEN: fake SKU catalog stills; Social drip 三分屏.",
+  ];
+}
+
 function luxuryBirthPlannerLinesProduct(sceneCount: number): string[] {
   if (sceneCount >= 5) {
     return [
@@ -538,6 +588,16 @@ export function storyboardRecipePlannerLines(
   conceptMode: boolean,
   sceneCountTarget?: StoryboardSceneCount,
 ): string[] {
+  if (recipe === "classic-tvc") {
+    const n = Number(
+      sceneCountTarget && sceneCountTarget !== "auto"
+        ? sceneCountTarget
+        : "4",
+    );
+    return conceptMode
+      ? classicTvcPlannerLinesConcept(n)
+      : classicTvcPlannerLinesProduct(n);
+  }
   if (isLuxuryBirthRecipe(recipe)) {
     const n = Number(coerceLuxuryBirthSceneCount(sceneCountTarget ?? "5"));
     return conceptMode

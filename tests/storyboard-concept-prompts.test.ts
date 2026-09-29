@@ -176,6 +176,8 @@ describe("concept vs product storyboard prompts", () => {
     });
     assert.ok(/IMAGE 1 (IS MANDATORY|PIXELS ARE THE PRODUCT)/i.test(prompt));
     assert.match(prompt, /CLAIM|PIXEL LOCK/i);
+    assert.match(prompt, /KEEP packaging\/label text/i);
+    assert.doesNotMatch(prompt, /If IMAGE 1 has text, REMOVE it completely/i);
   });
 
   it("layout-transfer storyboard uses IMAGE 2 as layout shell, IMAGE 1 as product", () => {

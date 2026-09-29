@@ -2815,7 +2815,8 @@ export const zhCn = {
     imageTextModeIntegrated: "AI 图上文字",
     imageTextModeIntegratedHint: "主标副标写入生成提示词。",
     imageTextModeTextless: "无字底图",
-    imageTextModeTextlessHint: "干净底图 — 在快速小修 → 添加文字自己排版。",
+    imageTextModeTextlessHint:
+      "画面不加额外广告标题 — 产品包装上的原有文字会保留。字幕/文案可之后在 Captions / 快速小修添加。",
     imageTextlessPostHint: "无字底图已生成 — 打开快速小修 → 添加文字，放置标题、形状和 logo。",
     batchExportTitle: "批量导出尺寸",
     batchExportHint: "将当前图片缩放至常见广告比例（9:16、1:1、4:5、16:9），方便多平台发布。",

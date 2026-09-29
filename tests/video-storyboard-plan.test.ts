@@ -190,7 +190,8 @@ describe("video-storyboard-plan on-image type", () => {
       styleHint: "",
       imageTextMode: "textless",
     });
-    assert.match(prompt, /NEVER describe on-image text/i);
+    assert.match(prompt, /NEVER describe overlaid campaign headlines/i);
+    assert.match(prompt, /KEEP product packaging\/label text/i);
     assert.doesNotMatch(prompt, /MUST render exact readable on-image/i);
   });
 

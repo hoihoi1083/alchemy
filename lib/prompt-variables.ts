@@ -50,6 +50,7 @@ import { lookBibleSummaryLine } from "@/lib/shot-recipes";
 import {
 	REFERENCE_CONTENT_REPLACE_LINE,
 	REFERENCE_CONTENT_REPLACE_TEXTLESS_LINE,
+	REFERENCE_ERASE_STYLE_KEEP_PRODUCT_LABELS_LINE,
 	REFERENCE_ERASE_TEXT_LINE,
 	REFERENCE_STYLE_MATCH_LINE,
 	REFERENCE_TOPIC_GUARD_LINE,
@@ -3335,7 +3336,11 @@ function imageStoryboardStyleRefBlock(
 	const contentReplace = textless
 		? REFERENCE_CONTENT_REPLACE_TEXTLESS_LINE
 		: REFERENCE_CONTENT_REPLACE_LINE;
-	const eraseText = textless ? REFERENCE_ERASE_TEXT_LINE : "";
+	const eraseText = textless
+		? dualProductAndStyle
+			? REFERENCE_ERASE_STYLE_KEEP_PRODUCT_LABELS_LINE
+			: REFERENCE_ERASE_TEXT_LINE
+		: "";
 	if (dualProductAndStyle) {
 		return joinParts(
 			"DUAL REFERENCE — IMAGE 1 = the user's EXACT product photo; IMAGE 2 = style/layout mood from research",
@@ -3465,8 +3470,8 @@ export function buildStoryboardSceneImagePrompt(
 	})();
 	const textlessRule =
 		brandLogoImageIndex != null
-			? `TEXTLESS STILL (mandatory for video): ZERO readable marketing copy — no Chinese/Latin captions, title bars, or watermarks. Exception: integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Leave blank space for burned captions AFTER Kling/Seedance.`
-			: "TEXTLESS STILL (mandatory for video): ZERO readable text — no Chinese, no Latin, no digits-as-copy, no captions, no title bars, no watermarks, no fake UI labels. Phone/laptop/tablet screens must show soft blank or abstract UI chrome only — never invent gibberish Chinese/English on screens. If IMAGE 1 has text, REMOVE it completely. Leave blank space where type would go — captions are burned AFTER Kling/Seedance.";
+			? `TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no Chinese/Latin campaign captions, title bars, CTA stickers, or watermarks. KEEP brand/label text printed ON the product packaging from IMAGE 1 (identity). Exception: also integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Leave blank margin for burned captions AFTER Kling/Seedance.`
+			: "TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no campaign headlines, captions, title bars, watermarks, or fake UI labels. Phone/laptop/tablet screens must show soft blank or abstract UI chrome only — never invent gibberish Chinese/English on screens. KEEP packaging/label text that is printed ON the product in IMAGE 1 (brand name, SKU lines on bottle/jar/box) — blanking the product label is a FAIL. Only omit extra marketing type that is NOT part of the product. Leave empty space for burned captions AFTER Kling/Seedance.";
 	const imageBriefVars: PromptVariables = sceneCopy
 		? {
 				...sceneVars,
@@ -3598,6 +3603,7 @@ export function buildStoryboardSceneImagePrompt(
     `Scene role: ${scene.role}.`,
     imageReferenceAnchorBlock(vars),
 			"PIXEL LOCK: if the scene action names a different object category than IMAGE 1 pixels, IGNORE the substitute and stage IMAGE 1's object.",
+			"SINGLE SKU LOCK: Do NOT invent companion products missing from IMAGE 1 (extra dropper bottles, second vials, open jars of a different formula, pipette tips). Macro = close-up of IMAGE 1 materials only.",
 			sceneImagePrompt,
     "Keep the exact product from IMAGE 1 — same item, colors, materials, and shape. Do not swap for a different product category.",
     artStyleImageClause(vars.artStyle),

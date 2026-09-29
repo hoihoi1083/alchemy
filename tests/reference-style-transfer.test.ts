@@ -105,7 +105,8 @@ describe("reference-style-transfer", () => {
     assert.match(prompt, /REFERENCE STYLE TRANSFER/i);
     assert.match(prompt, /3D cartoon meme ad energy/);
     assert.match(prompt, /TEXTLESS STILL/i);
-    assert.match(prompt, /erase every readable character/i);
+    assert.match(prompt, /KEEP packaging\/label text|KEEP brand\/label text|KEEP readable brand\/label text/i);
+    assert.doesNotMatch(prompt, /If IMAGE 1 has text, REMOVE it completely/i);
     assert.doesNotMatch(prompt, /ON-IMAGE COPY/);
     assert.match(prompt, /do NOT default to generic photorealistic/i);
   });

@@ -250,7 +250,8 @@ function storyboardTypePlannerLines(
     ];
   }
   return [
-    "- imagePrompt: English 9:16 still. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless; captions burn after video). Open with lookBible echo.",
+    "- imagePrompt: English 9:16 still. NEVER describe overlaid campaign headlines, captions, title bars, or slogans (those burn after video). Open with lookBible echo.",
+    "- KEEP product packaging/label text that belongs on the IMAGE 1 object (brand name printed on the bottle/jar) — textless means no EXTRA marketing type, not a blank unlabeled SKU.",
     `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${copyRule}`,
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
     "- Do NOT put marketing headlines into imagePrompt — those belong only in onImageCopyZh for caption burn.",

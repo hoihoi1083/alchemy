@@ -3465,7 +3465,7 @@ export const en = {
 			"Headline and subline baked into the generation prompt.",
 		imageTextModeTextless: "Textless background",
 		imageTextModeTextlessHint:
-			"Clean plate — add your own typography in Quick fix → Add your text.",
+			"No extra campaign headlines on the frame — product packaging labels from your photo stay. Add your own typography later in Captions / Quick fix.",
 		imageTextlessPostHint:
 			"Textless image ready — open Quick fix → Add your text to place headline, shapes, and logos.",
 		batchExportTitle: "Batch export sizes",
@@ -8220,7 +8220,7 @@ export const en = {
 			storyboardLookBeforePlanHint:
 				"Pick look first — style is written into the AI storyboard plan and the stills.",
 			storyboardTextModeHint:
-				"Default is textless stills (captions later). Choose AI on-image type if you want words baked into each frame — Video will try to keep them moving.",
+				"Default is textless stills (captions later) — product packaging labels from your photo stay. Choose AI on-image type if you want campaign headlines baked into each frame — Video will try to keep them moving.",
 			styleLabel: "Choose image style",
 			aspectLabel: "Aspect ratio",
 			textModeLabel: "Text mode",

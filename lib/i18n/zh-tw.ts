@@ -2805,7 +2805,8 @@ export const zhTw = {
     imageTextModeIntegrated: "AI 圖上文字",
     imageTextModeIntegratedHint: "主標副標寫入生成提示詞。",
     imageTextModeTextless: "無字底圖",
-    imageTextModeTextlessHint: "乾淨底圖 — 在快速小修 → 添加文字自己排版。",
+    imageTextModeTextlessHint:
+      "畫面不加額外廣告標題 — 產品包裝上的原有文字會保留。字幕／文案可之後在 Captions／快速小修添加。",
     imageTextlessPostHint: "無字底圖已生成 — 打開快速小修 → 添加文字，放置標題、形狀和 logo。",
     batchExportTitle: "批量導出尺寸",
     batchExportHint: "將當前圖片縮放至常見廣告比例（9:16、1:1、4:5、16:9），方便多平臺發佈。",
