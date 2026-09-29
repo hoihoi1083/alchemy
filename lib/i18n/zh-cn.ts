@@ -2813,10 +2813,11 @@ export const zhCn = {
     imageTextModeTitle: "图上文字",
     imageTextModeHint: "选 AI 在图上写标题，还是你自己在快速小修加字（都只计一次生成）。",
     imageTextModeIntegrated: "AI 图上文字",
-    imageTextModeIntegratedHint: "主标副标写入生成提示词。",
+    imageTextModeIntegratedHint:
+      "会把标题写进分镜静帧方便预览。成片视频经常糊掉或丢掉这些字 — 想稳定上字请生成后用 Captions。",
     imageTextModeTextless: "无字底图",
     imageTextModeTextlessHint:
-      "画面不加额外广告标题 — 产品包装上的原有文字会保留。字幕/文案可之后在 Captions / 快速小修添加。",
+      "画面不加额外广告标题 — 产品包装上的原有文字会保留。字幕/文案可之后在 Captions / 快速小修添加（成片更干净，推荐）。",
     imageTextlessPostHint: "无字底图已生成 — 打开快速小修 → 添加文字，放置标题、形状和 logo。",
     batchExportTitle: "批量导出尺寸",
     batchExportHint: "将当前图片缩放至常见广告比例（9:16、1:1、4:5、16:9），方便多平台发布。",

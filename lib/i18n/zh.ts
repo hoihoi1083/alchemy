@@ -3192,10 +3192,11 @@ export const zh = {
 		imageTextModeHint:
 			"揀 AI 喺圖上寫標題，定係你自己喺快速小修加字（都只計一次生成）。",
 		imageTextModeIntegrated: "AI 圖上文字",
-		imageTextModeIntegratedHint: "主標副標寫入生成提示詞。",
+		imageTextModeIntegratedHint:
+			"會把標題寫入分鏡靜幀方便預覽。成片影片好多時會糊掉或掉字 — 想穩定上字請生成後用 Captions。",
 		imageTextModeTextless: "無字底圖",
 		imageTextModeTextlessHint:
-			"畫面唔加額外廣告標題 — 產品包裝上嘅原有文字會保留。字幕／文案可以之後喺 Captions／快速小修加。",
+			"畫面唔加額外廣告標題 — 產品包裝上嘅原有文字會保留。字幕／文案可以之後喺 Captions／快速小修加（成片更乾淨，推薦）。",
 		imageTextlessPostHint:
 			"無字底圖已生成 — 打開快速小修 → 添加文字，放置標題、形狀同 logo。",
 		batchExportTitle: "批量導出尺寸",

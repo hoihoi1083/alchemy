@@ -67,8 +67,17 @@ function sceneCountForDuration(durationSec: number): { min: number; max: number 
   return { min: 4, max: 6 };
 }
 
-function finishMotionPlanPrompt(prompt: string): string {
+function finishMotionPlanPrompt(
+  prompt: string,
+  imageTextMode: ImageTextMode = "textless",
+): string {
   const p = prompt.trim();
+  if (imageTextMode === "integrated") {
+    if (!/keep (?:existing )?on-screen|preserve.*type|keep still typography/i.test(p)) {
+      return `${p}\n\nRules: Keep campaign wording already painted on each still identical while the camera moves. Do not invent new slogans or rewrite letters. English camera motion only per scene. Hard cuts between clips OK.`;
+    }
+    return p;
+  }
   if (!/textless|no on-screen text/i.test(p)) {
     return `${p}\n\nRules: Textless video frames — captions burn later via /captions. English camera motion only per scene. Hard cuts between clips (no morph).`;
   }
@@ -78,9 +87,15 @@ function finishMotionPlanPrompt(prompt: string): string {
 function ensureMotionPlanCoversScenes(
   motionPlan: string,
   scenes: StoryboardScenePlan[],
+  imageTextMode: ImageTextMode = "textless",
 ): string {
   let prompt = motionPlan.trim();
   if (!prompt) return prompt;
+
+  const frameNote =
+    imageTextMode === "integrated"
+      ? "keep existing on-screen type locked"
+      : "textless frame";
 
   for (let i = 1; i <= scenes.length; i++) {
     if (new RegExp(`Scene\\s*${i}\\b`, "i").test(prompt)) continue;
@@ -88,7 +103,7 @@ function ensureMotionPlanCoversScenes(
     const role = scene.role?.trim() || `scene ${i}`;
     const start = Number.isFinite(scene.startSec) ? scene.startSec : i - 1;
     const end = Number.isFinite(scene.endSec) ? scene.endSec : i;
-    prompt = `${prompt}\nScene ${i} [${start}-${end}s]: ${role} — subtle camera motion matching role; textless frame.`;
+    prompt = `${prompt}\nScene ${i} [${start}-${end}s]: ${role} — subtle camera motion matching role; ${frameNote}.`;
   }
   return prompt;
 }
@@ -160,6 +175,7 @@ function normalizeStoryboardPlan(
   parsed: Partial<VideoStoryboardPlan>,
   durationSec: number,
   sceneCountTarget?: StoryboardSceneCount,
+  imageTextMode: ImageTextMode = "textless",
 ): VideoStoryboardPlan {
   const rawScenes = Array.isArray(parsed.scenes) ? parsed.scenes : [];
   let scenes = rawScenes
@@ -195,7 +211,11 @@ function normalizeStoryboardPlan(
   }
   // Keep field name seedancePrompt for API compat; content is H3/Kling motion plan notes.
   // Pad missing Scene N lines when scene_count forces more scenes.
-  seedancePrompt = ensureMotionPlanCoversScenes(seedancePrompt, scenes);
+  seedancePrompt = ensureMotionPlanCoversScenes(
+    seedancePrompt,
+    scenes,
+    imageTextMode,
+  );
 
   // Backfill cameraMotionEn from Scene N blocks when the model omitted the field.
   const hints = parseSceneMotionHintsFromPlan(seedancePrompt);
@@ -218,7 +238,7 @@ function normalizeStoryboardPlan(
       Number(parsed.totalDurationSec) || durationSec,
     ),
     scenes,
-    seedancePrompt: finishMotionPlanPrompt(seedancePrompt),
+    seedancePrompt: finishMotionPlanPrompt(seedancePrompt, imageTextMode),
     productionNotes: String(parsed.productionNotes ?? "").trim(),
   };
 }
@@ -594,8 +614,14 @@ export function parseVideoStoryboardPlan(
   parsed: Partial<VideoStoryboardPlan>,
   durationSec: number,
   sceneCountTarget?: StoryboardSceneCount,
+  imageTextMode: ImageTextMode = "textless",
 ): VideoStoryboardPlan {
-  return normalizeStoryboardPlan(parsed, durationSec, sceneCountTarget);
+  return normalizeStoryboardPlan(
+    parsed,
+    durationSec,
+    sceneCountTarget,
+    imageTextMode,
+  );
 }
 
 export async function planVideoStoryboard(
@@ -677,6 +703,7 @@ export async function planVideoStoryboard(
     parseLlmJsonObject<Partial<VideoStoryboardPlan>>(outputText, "Video storyboard plan"),
     durationSec,
     sceneCountTarget,
+    input.imageTextMode === "integrated" ? "integrated" : "textless",
   );
 
   return alignStoryboardPlanCopyLanguage(plan, (input.market as PromptMarket) || "hk");
@@ -930,6 +957,7 @@ export async function planVideoStoryboardFromReelAnalysis(
     parseLlmJsonObject<Partial<VideoStoryboardPlan>>(outputText, "Reel storyboard plan"),
     durationSec,
     input.sceneCountTarget,
+    input.imageTextMode === "integrated" ? "integrated" : "textless",
   );
   const topic =
     input.headline?.trim() ||
@@ -1178,6 +1206,7 @@ export async function planVideoStoryboardFromImageReference(
     ),
     durationSec,
     input.sceneCountTarget,
+    input.imageTextMode === "integrated" ? "integrated" : "textless",
   );
   const topic =
     input.headline?.trim() ||

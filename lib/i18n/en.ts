@@ -3462,10 +3462,10 @@ export const en = {
 			"Choose whether AI renders headline copy on the image, or you add text yourself in Quick fix (one generation either way).",
 		imageTextModeIntegrated: "AI text on image",
 		imageTextModeIntegratedHint:
-			"Headline and subline baked into the generation prompt.",
+			"Bakes headline into each still for review. Video may blur or drop that type — use Captions after generate for reliable on-screen words.",
 		imageTextModeTextless: "Textless background",
 		imageTextModeTextlessHint:
-			"No extra campaign headlines on the frame — product packaging labels from your photo stay. Add your own typography later in Captions / Quick fix.",
+			"No extra campaign headlines on the frame — product packaging labels from your photo stay. Add typography later in Captions (recommended for clean video).",
 		imageTextlessPostHint:
 			"Textless image ready — open Quick fix → Add your text to place headline, shapes, and logos.",
 		batchExportTitle: "Batch export sizes",
@@ -8220,7 +8220,7 @@ export const en = {
 			storyboardLookBeforePlanHint:
 				"Pick look first — style is written into the AI storyboard plan and the stills.",
 			storyboardTextModeHint:
-				"Default is textless stills (captions later) — product packaging labels from your photo stay. Choose AI on-image type if you want campaign headlines baked into each frame — Video will try to keep them moving.",
+				"Default is textless stills (captions later) — product packaging labels from your photo stay. AI on-image type bakes headlines into stills for review, but video engines often lose that type — Captions after generate is the reliable path.",
 			styleLabel: "Choose image style",
 			aspectLabel: "Aspect ratio",
 			textModeLabel: "Text mode",

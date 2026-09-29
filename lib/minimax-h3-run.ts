@@ -395,7 +395,11 @@ export function buildStoryboardMinimaxH3Prompt(input: {
     look ? `Look lock (grade only across all beats): ${look}.` : "",
     input.hasReferenceVideo ? seedancePromptToMinimaxH3(VIDEO1_SPINE_SCREENPLAY) : "",
     ...lines,
-    plan ? `Director notes (adapt, do not copy on-screen copy): ${plan}` : "",
+    plan
+      ? input.preserveOnScreenType
+        ? `Director notes for camera/light only (keep wording already on the stills): ${plan}`
+        : `Director notes (adapt, do not invent on-screen copy): ${plan}`
+      : "",
   ]
     .filter(Boolean)
     .join("\n");

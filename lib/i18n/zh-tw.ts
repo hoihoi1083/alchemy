@@ -2803,10 +2803,11 @@ export const zhTw = {
     imageTextModeTitle: "圖上文字",
     imageTextModeHint: "選 AI 在圖上寫標題，還是你自己在快速小修加字（都只計一次生成）。",
     imageTextModeIntegrated: "AI 圖上文字",
-    imageTextModeIntegratedHint: "主標副標寫入生成提示詞。",
+    imageTextModeIntegratedHint:
+      "會把標題寫進分鏡靜幀方便預覽。成片影片常會糊掉或丟掉這些字 — 想穩定上字請生成後用 Captions。",
     imageTextModeTextless: "無字底圖",
     imageTextModeTextlessHint:
-      "畫面不加額外廣告標題 — 產品包裝上的原有文字會保留。字幕／文案可之後在 Captions／快速小修添加。",
+      "畫面不加額外廣告標題 — 產品包裝上的原有文字會保留。字幕／文案可之後在 Captions／快速小修添加（成片更乾淨，推薦）。",
     imageTextlessPostHint: "無字底圖已生成 — 打開快速小修 → 添加文字，放置標題、形狀和 logo。",
     batchExportTitle: "批量導出尺寸",
     batchExportHint: "將當前圖片縮放至常見廣告比例（9:16、1:1、4:5、16:9），方便多平臺發佈。",
