@@ -3468,10 +3468,17 @@ export function buildStoryboardSceneImagePrompt(
 			lighting ? `Scene lighting (this beat): ${lighting}.` : "",
 		);
 	})();
-	const textlessRule =
-		brandLogoImageIndex != null
-			? `TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no Chinese/Latin campaign captions, title bars, CTA stickers, or watermarks. KEEP brand/label text printed ON the product packaging from IMAGE 1 (identity). Exception: also integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Leave blank margin for burned captions AFTER Kling/Seedance.`
-			: "TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no campaign headlines, captions, title bars, watermarks, or fake UI labels. Phone/laptop/tablet screens must show soft blank or abstract UI chrome only — never invent gibberish Chinese/English on screens. KEEP packaging/label text that is printed ON the product in IMAGE 1 (brand name, SKU lines on bottle/jar/box) — blanking the product label is a FAIL. Only omit extra marketing type that is NOT part of the product. Leave empty space for burned captions AFTER Kling/Seedance.";
+	const textlessRule = (() => {
+		if (!textless) return "";
+		if (hasProductImage) {
+			return brandLogoImageIndex != null
+				? `TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no Chinese/Latin campaign captions, title bars, CTA stickers, or watermarks. KEEP brand/label text printed ON the product packaging from IMAGE 1 (identity). Exception: also integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Leave blank margin for burned captions AFTER Kling/Seedance.`
+				: "TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no campaign headlines, captions, title bars, watermarks, or fake UI labels. Phone/laptop/tablet screens must show soft blank or abstract UI chrome only — never invent gibberish Chinese/English on screens. KEEP packaging/label text that is printed ON the product in IMAGE 1 (brand name, SKU lines on bottle/jar/box) — blanking the product label is a FAIL. Only omit extra marketing type that is NOT part of the product. Leave empty space for burned captions AFTER Kling/Seedance.";
+		}
+		return brandLogoImageIndex != null
+			? `TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no campaign captions, title bars, or watermarks. Exception: integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Do NOT invent a fake product bottle or packaging label. Leave blank margin for burned captions AFTER Kling/Seedance.`
+			: "TEXTLESS STILL (mandatory for video): ZERO overlaid marketing copy — no campaign headlines, captions, title bars, watermarks, or fake UI labels. Do NOT invent a packaged SKU bottle or fake product label. If IMAGE 1 is a face/logo/wordmark still, keep that identity. Leave empty space for burned captions AFTER Kling/Seedance.";
+	})();
 	const imageBriefVars: PromptVariables = sceneCopy
 		? {
 				...sceneVars,

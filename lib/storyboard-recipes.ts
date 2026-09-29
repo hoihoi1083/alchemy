@@ -281,9 +281,11 @@ function classicTvcPlannerLinesConcept(sceneCount: number): string[] {
   const n = Math.max(3, Math.min(6, Math.round(sceneCount) || 4));
   return [
     "NARRATIVE RECIPE: CLASSIC TVC CONCEPT — service / idea commercial (no fake packaged SKU).",
-    `About ${n} scenes: establish → detail → payoff for the experience — atmosphere, hands, tools, room.`,
-    "Do NOT invent a packaged beauty bottle or dropper as the hero unless the user uploaded that object.",
-    "FORBIDDEN: fake SKU catalog stills; Social drip 三分屏.",
+    `EXACTLY ${n} scenes. Arc: establish → detail → experience → payoff for the idea — atmosphere, hands, tools, room, silhouette.`,
+    "Hero = the SERVICE / EXPERIENCE / IDEA from the campaign topic — never invent a beauty bottle, dropper, or catalog SKU unless the user uploaded that exact object.",
+    "If the user uploaded a face / logo / wordmark still, lock that identity across scenes; otherwise invent plausible original cast/props matching the brief.",
+    "Textless stills: no overlaid campaign headlines; do not invent packaging labels on fake bottles.",
+    "FORBIDDEN: fake SKU catalog stills; Social drip 三分屏; inventing a different industry location than the brief/reference.",
   ];
 }
 

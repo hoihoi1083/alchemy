@@ -240,13 +240,24 @@ function endCardLogoPlannerRules(useBrandLogo?: boolean): string[] {
 function storyboardTypePlannerLines(
   integrated: boolean,
   copyRule: string,
+  opts?: { conceptMode?: boolean },
 ): string[] {
+  const conceptMode = Boolean(opts?.conceptMode);
   if (integrated) {
     return [
       "- imagePrompt: English 9:16 still. MUST render exact readable on-image headline/CTA for THIS scene — same words as onImageCopyZh. Integrated typography in the art, not a white flyer or production label. Open with lookBible echo.",
       `- onImageCopyZh: exact consumer words printed on the still (optional captions later). ${copyRule}`,
       "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
       "- Do NOT leave the still textless when on-image type is requested.",
+    ];
+  }
+  if (conceptMode) {
+    return [
+      "- imagePrompt: English 9:16 still. NEVER describe overlaid campaign headlines, captions, title bars, or slogans (those burn after video). Open with lookBible echo.",
+      "- CONCEPT textless: sell the service / idea — do NOT invent a packaged SKU bottle or fake product label. If the user uploaded a face/logo/wordmark still, keep that identity text; otherwise leave campaign type blank for captions later.",
+      `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${copyRule}`,
+      "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "- Do NOT put marketing headlines into imagePrompt — those belong only in onImageCopyZh for caption burn.",
     ];
   }
   return [
@@ -407,6 +418,7 @@ function buildPlanPrompt(input: {
       ...storyboardTypePlannerLines(
         input.imageTextMode === "integrated",
         plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+        { conceptMode: true },
       ),
       "- cameraMotionEn: English camera motion ONLY for this scene — no Chinese, no prices, no on-screen text.",
       "- lightingEn: English lighting ONLY for this scene.",
@@ -497,6 +509,7 @@ function buildPlanPrompt(input: {
     ...storyboardTypePlannerLines(
       input.imageTextMode === "integrated",
       plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+      { conceptMode: false },
     ),
     "- onImageCopyZh: consumer headline/CTA for THIS scene only. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
       "- cameraMotionEn: English camera motion ONLY for this scene — echo reference beat when research is active, not a generic slow push-in.",
@@ -790,6 +803,7 @@ function buildReelStoryboardPlanPrompt(input: {
     ...storyboardTypePlannerLines(
       input.imageTextMode === "integrated",
       plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+      { conceptMode: Boolean(input.conceptMode) },
     ),
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
     "- cameraMotionEn: English camera motion ONLY for this scene — echo the reference beat's camera, not a generic slow push-in.",
@@ -1028,6 +1042,7 @@ function buildImageReferenceStoryboardPlanPrompt(input: {
     ...storyboardTypePlannerLines(
       input.imageTextMode === "integrated",
       plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+      { conceptMode: Boolean(input.conceptMode) },
     ),
     "- sceneDescriptionZh: one line for the user UI.",
     "- cameraMotionEn / lightingEn: English only — echo reference beat, not generic push-in every scene.",

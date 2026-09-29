@@ -17,6 +17,39 @@ describe("storyboard classic-tvc recipe identity lock", () => {
     assert.match(joined, /EXACTLY 4 scenes/i);
   });
 
+  it("concept classic-tvc forbids fake SKU and does not force packaging lock", () => {
+    const joined = storyboardRecipePlannerLines("classic-tvc", true, "4").join(
+      "\n",
+    );
+    assert.match(joined, /CLASSIC TVC CONCEPT/i);
+    assert.match(joined, /no fake packaged SKU|Do NOT invent a packaged/i);
+    assert.doesNotMatch(joined, /IMAGE 1 pixels ARE the only product identity/i);
+
+    const prompt = buildStoryboardPlanPromptForTest({
+      product: "60-minute facial",
+      business: "",
+      headline: "Relax today",
+      subline: "",
+      offer: "",
+      storyboardBrief: "",
+      durationSec: 8,
+      sceneCountTarget: "4",
+      market: "hk",
+      framing: "auto",
+      styleHint: "",
+      artStyleId: "realistic",
+      storyboardRecipeId: "classic-tvc",
+      conceptMode: true,
+      imageTextMode: "textless",
+    });
+    assert.match(prompt, /CONCEPT ADAPTATION|CLASSIC TVC CONCEPT/i);
+    assert.match(prompt, /CONCEPT textless|Do NOT invent a packaged SKU/i);
+    assert.doesNotMatch(
+      prompt,
+      /KEEP product packaging\/label text that belongs on the IMAGE 1 object/i,
+    );
+  });
+
   it("lands identity rules in the full plan prompt", () => {
     const prompt = buildStoryboardPlanPromptForTest({
       product: "Vitamin C serum",
