@@ -25,6 +25,8 @@ export type UserPlanEntitlements = {
   maxVideoResolution: VideoResolutionCap;
   maxImageResolution: ImageResolutionCap;
   creditBalance: number | null;
+  /** True while Stripe Pro trial window is active (`proTrialEndsAt` in the future). */
+  inProTrial: boolean;
   /** False while signed-in /api/me is in flight (avoids Free false-gates). */
   planReady: boolean;
   /** Re-fetch /api/me (e.g. after checkout). Shares in-flight requests. */
@@ -36,6 +38,7 @@ type MePayload = {
     plan?: string | null;
     effectivePlan?: string | null;
     creditBalance?: number | null;
+    proTrialEndsAt?: string | Date | null;
   } | null;
 };
 
@@ -64,22 +67,35 @@ function applyMePayload(
   data: MePayload | null,
   setPlan: (p: UserPlan) => void,
   setCreditBalance: (n: number | null) => void,
+  setInProTrial: (v: boolean) => void,
 ) {
   if (!data?.user) {
     setPlan("free");
     setCreditBalance(0);
+    setInProTrial(false);
     return;
   }
   setPlan(normalizeUserPlan(data.user.effectivePlan ?? data.user.plan));
   setCreditBalance(
     typeof data.user.creditBalance === "number" ? data.user.creditBalance : 0,
   );
+  const ends = data.user.proTrialEndsAt;
+  const endsMs =
+    ends == null
+      ? 0
+      : typeof ends === "string"
+        ? new Date(ends).getTime()
+        : ends instanceof Date
+          ? ends.getTime()
+          : 0;
+  setInProTrial(Number.isFinite(endsMs) && endsMs > Date.now());
 }
 
 export function UserPlanProvider({ children }: { children: ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
   const [plan, setPlan] = useState<UserPlan>("free");
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [inProTrial, setInProTrial] = useState(false);
   const [planReady, setPlanReady] = useState(false);
   const genRef = useRef(0);
 
@@ -91,7 +107,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     try {
       const data = await fetchSharedMe();
       if (gen !== genRef.current) return;
-      applyMePayload(data, setPlan, setCreditBalance);
+      applyMePayload(data, setPlan, setCreditBalance, setInProTrial);
     } finally {
       if (gen === genRef.current) setPlanReady(true);
     }
@@ -110,6 +126,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       genRef.current += 1;
       setPlan("free");
       setCreditBalance(null);
+      setInProTrial(false);
       setPlanReady(true);
       return;
     }
@@ -135,10 +152,11 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       maxVideoResolution: videoCapForPlan(plan),
       maxImageResolution: imageCapForPlan(plan),
       creditBalance,
+      inProTrial,
       planReady,
       refreshPlan,
     }),
-    [plan, creditBalance, planReady, refreshPlan],
+    [plan, creditBalance, inProTrial, planReady, refreshPlan],
   );
 
   return (

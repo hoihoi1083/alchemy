@@ -54,6 +54,11 @@ import {
 	trackGenerateSuccess,
 } from "@/lib/analytics";
 import {
+	trackStoryboardFix,
+	trackStoryboardUsed,
+	type StoryboardFixAction,
+} from "@/lib/analytics-storyboard";
+import {
 	promptMarketFromLocale,
 	voiceoverLocaleFromUiLocale,
 } from "@/lib/copy-locale";
@@ -605,7 +610,26 @@ const TEXT_ENDPOINT = BANANA2_TEXT_ENDPOINT;
 export function useStudioWizard(promotionMode: PromotionMode) {
   const { m, locale } = useLocale();
   const friendlyError = useFriendlyError(m);
-	const { creditBalance, plan, planReady } = useUserPlanEntitlements();
+	const { creditBalance, plan, planReady, inProTrial } = useUserPlanEntitlements();
+	/** Fixes after the latest successful storyboard image generate (session). */
+	const storyboardFixesSinceGenerateRef = useRef(0);
+
+	const recordStoryboardFix = useCallback(
+		(
+			action: StoryboardFixAction,
+			extra?: { sceneIndex?: number; sceneCount?: number },
+		) => {
+			storyboardFixesSinceGenerateRef.current += 1;
+			trackStoryboardFix({
+				action,
+				fixesSinceGenerate: storyboardFixesSinceGenerateRef.current,
+				inProTrial,
+				sceneIndex: extra?.sceneIndex,
+				sceneCount: extra?.sceneCount,
+			});
+		},
+		[inProTrial],
+	);
 
 	/** Client preflight: block before any fal call when balance is known and too low. */
 	function blockIfCannotAfford(required: number): boolean {
@@ -3909,6 +3933,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         endpoint,
       }),
     );
+		storyboardFixesSinceGenerateRef.current = 0;
+		trackStoryboardUsed({
+			sceneCount: hydratedScenes.length,
+			inProTrial,
+			recipeId: storyboardRecipeId,
+		});
   }
 
 	function normalizeStoryboardIndices(
@@ -3918,14 +3948,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   }
 
   function reorderStoryboardScene(from: number, to: number) {
+		if (from === to) return;
+		if (
+			from < 0 ||
+			to < 0 ||
+			from >= storyboardScenes.length ||
+			to >= storyboardScenes.length
+		) {
+			return;
+		}
 		setStoryboardScenes((prev: StoryboardSceneResult[]) => {
-			if (from < 0 || to < 0 || from >= prev.length || to >= prev.length)
-				return prev;
       const next = [...prev];
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
       return normalizeStoryboardIndices(next);
     });
+		recordStoryboardFix("reorder", {
+			sceneCount: storyboardScenes.length,
+		});
   }
 
   function trimStoryboardDurations(targetSecRaw: StoryboardDurationPreset) {
@@ -4020,6 +4060,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				),
 			);
 			setImageGenKey((k: number) => k + 1);
+			recordStoryboardFix("replace_image", {
+				sceneIndex,
+				sceneCount: storyboardScenes.length,
+			});
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.storyboardFailed));
     } finally {
@@ -4074,6 +4118,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			);
 			if (sceneIndex === 0) setImageUrl(nextUrl);
 			setImageGenKey((k: number) => k + 1);
+			recordStoryboardFix("stamp_logo", {
+				sceneIndex,
+				sceneCount: storyboardScenes.length,
+			});
 		} catch (e: unknown) {
 			setError(friendlyError(e, m.errors.storyboardFailed));
 		} finally {
@@ -4269,6 +4317,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setLastImageEndpoint(
 				(data.endpoint as string | undefined) ?? lastImageEndpoint,
 			);
+			recordStoryboardFix("regenerate_scene", {
+				sceneIndex,
+				sceneCount: storyboardScenes.length,
+			});
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.storyboardFailed));
     } finally {
@@ -12211,6 +12263,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				setVideoPrompt(data.seedancePrompt);
 			}
 			setVideoPromptPlanNote(data.plan?.productionNotes || null);
+			// Replan after images exist counts as a fix; first plan before generate does not.
+			if (storyboardScenes.some((s) => Boolean(s.imageUrl?.trim()))) {
+				recordStoryboardFix("replan", {
+					sceneCount: storyboardScenes.length,
+				});
+			}
 		} catch (e: unknown) {
 			setError(friendlyError(e, m.errors.storyboardFailed));
 		} finally {

@@ -380,3 +380,13 @@ export function trackEvent(
   if (!ensureMixpanel()) return;
   mixpanel.track(event, props);
 }
+
+/** Lifetime counters on the Mixpanel People profile (identified users). */
+export function incrementPeopleProperty(key: string, by = 1) {
+  if (!ensureMixpanel()) return;
+  try {
+    mixpanel.people.increment(key, by);
+  } catch {
+    /* people profile may be unavailable before identify */
+  }
+}
