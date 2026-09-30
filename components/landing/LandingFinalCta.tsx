@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useLocale } from "@/components/LocaleProvider";
-import { LandingWatchDemoButton } from "@/components/landing/LandingDemoModal";
 import { Reveal } from "@/components/landing/Reveal";
 
 const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=9";
@@ -151,7 +150,6 @@ export function LandingFinalCta() {
 								>
 									{isSignedIn ? L.startCreating : L.ctaPrimary}
 								</Link>
-								<LandingWatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/70 px-5 py-2.5 text-sm font-semibold text-white sm:w-auto" />
 								<Link
 									href="/get-sample"
 									className="inline-flex w-full items-center justify-center rounded-full border border-violet-300/40 bg-violet-500/20 px-5 py-2.5 text-sm font-semibold text-violet-100 hover:bg-violet-500/30 sm:w-auto"
