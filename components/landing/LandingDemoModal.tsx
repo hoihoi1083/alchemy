@@ -109,26 +109,34 @@ function DemoModalOverlay({
 
 	return (
 		<div
-			className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-[3px]"
+			className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain bg-black/60 p-3 backdrop-blur-[3px] sm:items-center sm:p-4"
 			role="dialog"
 			aria-modal="true"
 			aria-label={copy.title}
 			onClick={onClose}
 		>
 			<div
-				className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-white/15 bg-[#0c0a12] shadow-2xl shadow-violet-950/40"
+				className="relative my-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-white/15 bg-[#0c0a12] shadow-2xl shadow-violet-950/40"
 				onClick={(event) => event.stopPropagation()}
 			>
-				<button
-					type="button"
-					onClick={onClose}
-					className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-lg text-white transition hover:bg-black"
-					aria-label={D.close}
-				>
-					×
-				</button>
+				<div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-[#0c0a12]/95 px-4 py-3 backdrop-blur-sm sm:px-5">
+					<p className="min-w-0 truncate text-sm font-semibold text-white">
+						{copy.title}
+					</p>
+					<button
+						type="button"
+						onClick={onClose}
+						className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
+						aria-label={D.close}
+					>
+						<span aria-hidden className="text-base leading-none">
+							×
+						</span>
+						{D.close}
+					</button>
+				</div>
 
-				<div className="border-b border-white/10 px-5 pb-3 pt-5 pr-14 sm:px-6 sm:pt-6">
+				<div className="border-b border-white/10 px-5 pb-3 pt-4 sm:px-6 sm:pt-5">
 					<div
 						className="mb-3 flex flex-wrap gap-1.5"
 						role="tablist"
@@ -154,10 +162,7 @@ function DemoModalOverlay({
 							);
 						})}
 					</div>
-					<h2 className="text-lg font-bold tracking-tight text-white sm:text-xl">
-						{copy.title}
-					</h2>
-					<p className="mt-1 text-sm text-slate-400">{copy.subtitle}</p>
+					<p className="text-sm text-slate-400">{copy.subtitle}</p>
 				</div>
 
 				<div className="relative aspect-[16/10] w-full bg-violet-950/30 sm:aspect-video">
@@ -231,13 +236,22 @@ function DemoModalOverlay({
 
 					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 						<p className="text-xs text-slate-500">{copy.hint}</p>
-						<Link
-							href="/start"
-							onClick={onClose}
-							className="inline-flex items-center justify-center rounded-full bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/25 hover:bg-violet-400"
-						>
-							{D.tryCta}
-						</Link>
+						<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+							<button
+								type="button"
+								onClick={onClose}
+								className="inline-flex items-center justify-center rounded-full border border-white/25 bg-transparent px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 sm:hidden"
+							>
+								{D.close}
+							</button>
+							<Link
+								href="/start"
+								onClick={onClose}
+								className="inline-flex items-center justify-center rounded-full bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/25 hover:bg-violet-400"
+							>
+								{D.tryCta}
+							</Link>
+						</div>
 					</div>
 				</div>
 			</div>
