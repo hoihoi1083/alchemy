@@ -424,6 +424,9 @@ export const zhTw = {
         coffeeDesign: "設計／咖啡廣告",
         evDrive: "電動車場景",
         powerbank: "行動電源促銷",
+        powerGallery: "電源裝置藝術展",
+        brightEvGallery: "明亮電動車展",
+        challengeTactical: "挑戰戰術廣告",
       },
       videoLabels: {
         desktop: "桌面樣例片",

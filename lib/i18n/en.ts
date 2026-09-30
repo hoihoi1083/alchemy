@@ -485,6 +485,9 @@ export const en = {
 				coffeeDesign: "Design / coffee ad",
 				evDrive: "EV lifestyle",
 				powerbank: "Power bank promo",
+				powerGallery: "Power gallery install",
+				brightEvGallery: "Bright EV gallery",
+				challengeTactical: "Challenge tactical",
 			},
 			videoLabels: {
 				desktop: "Desktop reel",

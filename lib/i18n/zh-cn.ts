@@ -424,6 +424,9 @@ export const zhCn = {
         coffeeDesign: "设计／咖啡广告",
         evDrive: "电动车场景",
         powerbank: "充电宝促销",
+        powerGallery: "电源装置艺术展",
+        brightEvGallery: "明亮电动车展",
+        challengeTactical: "挑战战术广告",
       },
       videoLabels: {
         desktop: "桌面样例片",

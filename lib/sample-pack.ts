@@ -13,7 +13,10 @@ export type SamplePackItem = {
     | "phoneTeardown"
     | "coffeeDesign"
     | "evDrive"
-    | "powerbank";
+    | "powerbank"
+    | "powerGallery"
+    | "brightEvGallery"
+    | "challengeTactical";
 };
 
 export type SamplePackVideo = {
@@ -55,6 +58,21 @@ export const SAMPLE_PACK_ITEMS: readonly SamplePackItem[] = [
     id: "powerbank",
     src: "/images/sample-pack/powerbank.jpg",
     labelKey: "powerbank",
+  },
+  {
+    id: "power-gallery",
+    src: "/images/sample-pack/power-gallery.jpg",
+    labelKey: "powerGallery",
+  },
+  {
+    id: "bright-ev-gallery",
+    src: "/images/sample-pack/bright-ev-gallery.jpg",
+    labelKey: "brightEvGallery",
+  },
+  {
+    id: "challenge-tactical",
+    src: "/images/sample-pack/challenge-tactical.jpg",
+    labelKey: "challengeTactical",
   },
 ] as const;
 

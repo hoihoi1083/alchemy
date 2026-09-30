@@ -38,7 +38,7 @@ export function SamplePackGallery() {
                 {/* Served from API with watermark burned into pixels (not CSS). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/api/sample-pack-image/${item.id}?v=6`}
+                  src={`/api/sample-pack-image/${item.id}?v=7`}
                   alt={S.labels[item.labelKey]}
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"
@@ -50,7 +50,7 @@ export function SamplePackGallery() {
                   {S.labels[item.labelKey]}
                 </p>
                 <a
-                  href={`/api/sample-pack-image/${item.id}?download=1&v=6`}
+                  href={`/api/sample-pack-image/${item.id}?download=1&v=7`}
                   className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-violet-300 hover:text-violet-200"
                 >
                   {S.downloadOne}
