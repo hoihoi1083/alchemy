@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
 import { useLocale } from "@/components/LocaleProvider";
 import { LandingWatchDemoButton } from "@/components/landing/LandingDemoModal";
 import { LandingHeroMascot } from "@/components/landing/LandingHeroMascot";
@@ -9,6 +10,7 @@ import { LandingWhyDifferent } from "@/components/landing/LandingWhyDifferent";
 export function LandingHero() {
 	const { m } = useLocale();
 	const L = m.landing;
+	const { isSignedIn } = useAuth();
 
 	return (
 		<section
@@ -78,7 +80,13 @@ export function LandingHero() {
 								href="/start"
 								className="landing-hero-cta-primary inline-flex w-full items-center justify-center rounded-full bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/30 hover:bg-violet-400 sm:w-auto sm:px-6 sm:py-3"
 							>
-								{L.ctaPrimary}
+								{isSignedIn ? L.startCreating : L.ctaPrimary}
+							</Link>
+							<Link
+								href="/get-sample"
+								className="landing-hero-cta-sample inline-flex w-full items-center justify-center rounded-full border border-violet-300/50 bg-violet-500/20 px-4 py-2.5 text-sm font-semibold text-violet-100 backdrop-blur-sm hover:bg-violet-500/30 sm:w-auto sm:px-5 sm:py-3"
+							>
+								{L.ctaSamplePack}
 							</Link>
 							<LandingWatchDemoButton className="landing-hero-cta-secondary inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:border-violet-300/50 hover:bg-white/10 sm:w-auto sm:px-5 sm:py-3" />
 						</div>

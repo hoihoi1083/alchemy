@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import {
+  burnTextSvgPaths,
+  measureBurnTextWidth,
+} from "@/lib/compositor/latin-text-paths";
+import {
   SAMPLE_PACK_ITEMS,
   SAMPLE_PACK_WATERMARK,
   type SamplePackItem,
@@ -12,25 +16,54 @@ function publicPathFromSrc(src: string): string {
   return path.join(process.cwd(), "public", rel);
 }
 
-/** SVG overlay — bottom-centered Alchemy credit burned into pixels. */
+/**
+ * Diagonal repeating Alchemy watermark burned into pixels.
+ * Uses glyph path outlines (not SVG <text>) so Vercel/Sharp won't render tofu □□□.
+ * Pattern matches common stock-photo style overlays (tilted mesh of the phrase).
+ */
 function watermarkSvg(width: number, height: number): Buffer {
-  const fontSize = Math.max(14, Math.round(width * 0.028));
-  const padY = Math.max(16, Math.round(height * 0.035));
-  const barH = Math.round(fontSize * 2.4);
-  const text = SAMPLE_PACK_WATERMARK.replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  const phrase = SAMPLE_PACK_WATERMARK;
+  // Compact phrase + airy mesh so tiles don’t collide after rotation.
+  const fontSize = Math.max(11, Math.round(Math.min(width, height) * 0.016));
+  const phraseW = Math.max(
+    fontSize * 4,
+    measureBurnTextWidth(phrase, fontSize, true),
+  );
+  // Wide gaps — short phrase packs tight unless we leave lots of air.
+  const stepX = Math.max(phraseW * 2.4, phraseW + fontSize * 12);
+  const stepY = fontSize * 12;
+  const angle = -28;
+
+  const tiles: string[] = [];
+  // Oversized grid so rotation still covers corners.
+  for (let y = -height; y < height * 2; y += stepY) {
+    let row = 0;
+    for (let x = -width; x < width * 2; x += stepX) {
+      const offsetX = (row % 2) * (stepX * 0.5);
+      const glyph = burnTextSvgPaths({
+        lines: [phrase],
+        lineYs: [0],
+        x: 0,
+        anchor: "start",
+        fontSize,
+        bold: true,
+        fill: "#1a1a1a",
+        stroke: "transparent",
+        strokeWidth: 0,
+      });
+      tiles.push(
+        `<g transform="translate(${(x + offsetX).toFixed(1)} ${y.toFixed(1)})" opacity="0.24">${glyph}</g>`,
+      );
+      row += 1;
+    }
+  }
+
+  const cx = (width / 2).toFixed(1);
+  const cy = (height / 2).toFixed(1);
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000" stop-opacity="0.72"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="${height - barH - padY}" width="${width}" height="${barH + padY}" fill="url(#g)"/>
-  <text x="50%" y="${height - padY - fontSize * 0.35}" text-anchor="middle"
-    font-family="Helvetica, Arial, sans-serif" font-size="${fontSize}" font-weight="700"
-    fill="#ffffff" fill-opacity="0.95" letter-spacing="0.06em">${text}</text>
+  <g transform="rotate(${angle} ${cx} ${cy})">
+    ${tiles.join("\n")}
+  </g>
 </svg>`;
   return Buffer.from(svg);
 }

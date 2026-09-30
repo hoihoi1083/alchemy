@@ -46,4 +46,22 @@ test.describe("Public entry funnel", () => {
     // Clerk may briefly land on /start?__clerk_handshake=… before the sign-in redirect.
     await expect(page).toHaveURL(/sign-in/, { timeout: 30_000 });
   });
+
+  test("get-sample is public — no sign-in required", async ({ page }) => {
+    await page.goto("/get-sample", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/get-sample\/?$/);
+    await expect(page.getByRole("heading", { name: /sample pack/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page).not.toHaveURL(/sign-in/);
+  });
+
+  test("get-sample/thanks is public — no sign-in required", async ({ page }) => {
+    await page.goto("/get-sample/thanks", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/get-sample\/thanks/);
+    await expect(page).not.toHaveURL(/sign-in/);
+    await expect(page.getByRole("heading", { name: /sample pack is ready|sample images/i }).first()).toBeVisible({
+      timeout: 15_000,
+    });
+  });
 });

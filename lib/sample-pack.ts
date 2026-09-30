@@ -1,63 +1,90 @@
 /**
  * Curated landing samples for the “Get sample pack” lead magnet.
- * Served via `/api/sample-pack-image/[id]` with Alchemy watermark burned into pixels.
+ * Images: `/api/sample-pack-image/[id]` with Alchemy watermark burned into pixels.
+ * Videos: static MP4s under `/videos/sample-pack/` (no watermark).
  */
 export type SamplePackItem = {
   id: string;
   src: string;
   /** Short English label for alt text; UI localizes via i18n keys when present. */
   labelKey:
-    | "skincare"
-    | "jewelry"
-    | "fashion"
-    | "food"
-    | "cafe"
-    | "storyboard"
-    | "ecommerce"
-    | "carousel";
+    | "snowboard"
+    | "yoga"
+    | "phoneTeardown"
+    | "coffeeDesign"
+    | "evDrive"
+    | "powerbank";
+};
+
+export type SamplePackVideo = {
+  id: string;
+  /** Public URL under /videos/sample-pack/ */
+  src: string;
+  /** Still frame so the card shows what the clip is before play. */
+  poster: string;
+  labelKey: "desktop" | "reelA" | "reelB" | "reelC";
 };
 
 export const SAMPLE_PACK_ITEMS: readonly SamplePackItem[] = [
   {
-    id: "skincare",
-    src: "/images/landing/tpl-card-01-skincare.jpg",
-    labelKey: "skincare",
+    id: "snowboard",
+    src: "/images/sample-pack/snowboard.jpg",
+    labelKey: "snowboard",
   },
   {
-    id: "jewelry",
-    src: "/images/landing/tpl-biz-jewelry.jpg",
-    labelKey: "jewelry",
+    id: "yoga",
+    src: "/images/sample-pack/yoga.jpg",
+    labelKey: "yoga",
   },
   {
-    id: "fashion",
-    src: "/images/landing/tpl-biz-fashion.jpg",
-    labelKey: "fashion",
+    id: "phone-teardown",
+    src: "/images/sample-pack/phone-teardown.jpg",
+    labelKey: "phoneTeardown",
   },
   {
-    id: "food",
-    src: "/images/landing/tpl-v2-xhs-food.jpg",
-    labelKey: "food",
+    id: "coffee-design",
+    src: "/images/sample-pack/coffee-design.jpg",
+    labelKey: "coffeeDesign",
   },
   {
-    id: "cafe",
-    src: "/images/landing/tpl-biz-cafe-1.jpg",
-    labelKey: "cafe",
+    id: "ev-drive",
+    src: "/images/sample-pack/ev-drive.jpg",
+    labelKey: "evDrive",
   },
   {
-    id: "storyboard",
-    src: "/images/landing/luxury-storyboard-demo-poster.jpg",
-    labelKey: "storyboard",
-  },
-  {
-    id: "ecommerce",
-    src: "/images/landing/scenario-ecommerce.png",
-    labelKey: "ecommerce",
-  },
-  {
-    id: "carousel",
-    src: "/images/landing/tpl-biz-alchemy-carousel-1.jpg",
-    labelKey: "carousel",
+    id: "powerbank",
+    src: "/images/sample-pack/powerbank.jpg",
+    labelKey: "powerbank",
   },
 ] as const;
 
-export const SAMPLE_PACK_WATERMARK = "Created with Alchemy AI Lab";
+/** Sample reels — no watermark; served as static public files. */
+export const SAMPLE_PACK_VIDEOS: readonly SamplePackVideo[] = [
+  {
+    id: "desktop",
+    src: "/videos/sample-pack/desktop.mp4",
+    poster: "/images/sample-pack/desktop-poster.jpg",
+    labelKey: "desktop",
+  },
+  {
+    id: "ildkkq",
+    src: "/videos/sample-pack/ildkkq.mp4",
+    poster: "/images/sample-pack/ildkkq-poster.jpg",
+    labelKey: "reelA",
+  },
+  {
+    id: "video-24",
+    src: "/videos/sample-pack/video-24.mp4",
+    poster: "/images/sample-pack/video-24-poster.jpg",
+    labelKey: "reelB",
+  },
+  {
+    id: "z0wxcy",
+    src: "/videos/sample-pack/z0wxcy.mp4",
+    poster: "/images/sample-pack/z0wxcy-poster.jpg",
+    labelKey: "reelC",
+  },
+] as const;
+
+/** Phrase tiled diagonally across sample stills (path-outline burn). */
+export const SAMPLE_PACK_WATERMARK = "Alchemy AI Lab";

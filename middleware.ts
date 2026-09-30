@@ -19,6 +19,14 @@ const isPublicRoute = createRouteMatcher([
   "/api/stripe/webhook(.*)",
   // Landing assistant — open to signed-out visitors (anon IP quota in route).
   "/api/studio-assistant(.*)",
+  // Lead magnet — form + watermarked samples (no Clerk account).
+  "/get-sample",
+  "/get-sample/(.*)",
+  "/api/sample-pack-lead",
+  "/api/sample-pack-lead/(.*)",
+  "/api/sample-pack-image/(.*)",
+  "/api/sample-pack-download",
+  "/api/sample-pack-download/(.*)",
   // Vercel Cron — verified via CRON_SECRET in the route handler.
   "/api/cron/replay-pending-refunds(.*)",
 ]);

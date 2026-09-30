@@ -141,6 +141,15 @@ export type BurnTextSvgPathOpts = {
   strokeWidth?: number;
 };
 
+/** Layout width of a single line at the given size (for spacing overlays). */
+export function measureBurnTextWidth(
+  text: string,
+  fontSize: number,
+  bold = false,
+): number {
+  return layoutLine(text, fontSize, 0, bold).width;
+}
+
 /**
  * Render text as SVG path outlines (no @font-face / Pango / fontconfig).
  * Works for English + Chinese on Vercel Linux where Sharp SVG fonts tofu.

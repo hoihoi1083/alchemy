@@ -12,7 +12,6 @@ export function GetSamplePackForm() {
   const search = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [tipsOptIn, setTipsOptIn] = useState(true);
   const [company, setCompany] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +35,6 @@ export function GetSamplePackForm() {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
-          tipsOptIn,
           company,
           locale,
           ...utm,
@@ -121,15 +119,6 @@ export function GetSamplePackForm() {
           onChange={(e) => setCompany(e.target.value)}
         />
       </div>
-      <label className="flex cursor-pointer items-start gap-2.5 text-sm text-slate-300">
-        <input
-          type="checkbox"
-          checked={tipsOptIn}
-          onChange={(e) => setTipsOptIn(e.target.checked)}
-          className="mt-1 h-4 w-4 shrink-0 rounded border-white/30 bg-white/10 text-violet-500"
-        />
-        <span>{S.tipsOptIn}</span>
-      </label>
       {error ? (
         <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           {error}

@@ -58,6 +58,12 @@ export function LandingNav() {
 					</div>
 					<AuthNav compact />
 					<Link
+						href="/get-sample"
+						className="hidden rounded-full border border-violet-300/70 bg-violet-50 px-4 py-2.5 text-[14px] font-semibold text-violet-700 hover:bg-violet-100 sm:inline-flex xl:text-[15px]"
+					>
+						{L.ctaSamplePack}
+					</Link>
+					<Link
 						href="/start"
 						className="landing-cta-shine landing-try-free hidden rounded-full bg-violet-600 px-5 py-2.5 text-[15px] font-semibold text-white hover:bg-violet-500 sm:inline-flex"
 					>
@@ -92,6 +98,13 @@ export function LandingNav() {
 							</Link>
 						))}
 						<ToolkitNavMobileLinks onNavigate={() => setOpen(false)} />
+						<Link
+							href="/get-sample"
+							className="rounded-lg px-3 py-3 text-[15px] font-semibold text-violet-700 hover:bg-violet-50"
+							onClick={() => setOpen(false)}
+						>
+							{L.ctaSamplePack}
+						</Link>
 						<Link
 							href="/start"
 							className="mt-1 rounded-full bg-violet-600 px-4 py-3 text-center text-[15px] font-semibold text-white"

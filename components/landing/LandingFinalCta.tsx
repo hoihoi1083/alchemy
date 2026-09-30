@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { useLocale } from "@/components/LocaleProvider";
 import { LandingWatchDemoButton } from "@/components/landing/LandingDemoModal";
 import { Reveal } from "@/components/landing/Reveal";
@@ -93,6 +94,7 @@ function FinalCtaMedia({ alt }: { alt: string }) {
 export function LandingFinalCta() {
 	const { m } = useLocale();
 	const L = m.landing;
+	const { isSignedIn } = useAuth();
 
 	return (
 		<section className="w-full overflow-hidden bg-white px-5 py-1 md:px-8 md:py-1 mb-10">
@@ -147,7 +149,7 @@ export function LandingFinalCta() {
 									href="/start"
 									className="landing-cta-shine inline-flex w-full items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-violet-700 shadow sm:w-auto"
 								>
-									{L.ctaPrimary}
+									{isSignedIn ? L.startCreating : L.ctaPrimary}
 								</Link>
 								<LandingWatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/70 px-5 py-2.5 text-sm font-semibold text-white sm:w-auto" />
 								<Link
