@@ -4,7 +4,7 @@ import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
-import { estimateTeachingCarouselTokens, TOKEN_COST } from "@/lib/billing/token-costs";
+import { estimateTeachingCarouselTokens, imageTokensForResolution } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   buildFalLayoutTransferImageUrls,
@@ -258,12 +258,15 @@ export async function POST(request: Request) {
     regenerateSlideIndex >= 0 &&
     Boolean(existingPlan?.slides[regenerateSlideIndex]);
 
-  const tokenCost = isSingleSlideRegen
-    ? TOKEN_COST.image
-    : estimateTeachingCarouselTokens(slideCount);
+  const requestedImageRes =
+    (formData.get("resolution") as string | null)?.trim() || null;
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
+    requestedImageRes,
   );
+  const tokenCost = isSingleSlideRegen
+    ? imageTokensForResolution(imageResolution)
+    : estimateTeachingCarouselTokens(slideCount, imageResolution);
 
   let chargedBalance: number | null | undefined;
   try {

@@ -84,6 +84,7 @@ export function ImageStep() {
           ? referenceCarouselSlideCount
           : Number(storyboardSceneCount) || 4,
     passesPerScene: logoModeAPasses,
+    resolution: imageResolution,
   });
   const isConceptSocialImage =
     isConcept &&

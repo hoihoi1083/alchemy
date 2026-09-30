@@ -9,15 +9,19 @@ import {
 import {
   FREE_PACK,
   H3_TOKENS_PER_SEC,
+  IMAGE_TOKENS_BY_RESOLUTION,
   KLING_TURBO_PRO,
   MASTER_YEARLY_USD_PER_TOKEN,
   TOKEN_COST,
   VIDEO_TOKENS_PER_SEC,
   cogsUsdForTokens,
+  estimateCampaignTokens,
   estimateH3Tokens,
+  estimateImageTokens,
   estimateSocialDripTokens,
   h3BillingResolutionForPlan,
   h3TokenCost,
+  imageTokensForResolution,
   tokensForFalUsd,
   videoTokenCost,
 } from "../lib/billing/token-costs";
@@ -32,8 +36,14 @@ describe("billing token economics", () => {
   it("sizes fal actions at ~75% on Master yearly $0.0049375/token", () => {
     assert.equal(MASTER_YEARLY_USD_PER_TOKEN, 79 / 16_000);
     assert.equal(tokensForFalUsd(0.08), 65);
+    assert.equal(tokensForFalUsd(0.12), 98);
+    assert.equal(tokensForFalUsd(0.16), 130);
     assert.equal(tokensForFalUsd(0.35), 284);
     assert.equal(TOKEN_COST.image, 65);
+    assert.equal(IMAGE_TOKENS_BY_RESOLUTION["1K"], 65);
+    assert.equal(IMAGE_TOKENS_BY_RESOLUTION["2K"], 98);
+    assert.equal(IMAGE_TOKENS_BY_RESOLUTION["4K"], 130);
+    assert.equal(imageTokensForResolution("2K"), 98);
     assert.equal(H3_TOKENS_PER_SEC["480P"], 41);
     assert.equal(H3_TOKENS_PER_SEC["768P"], 65);
     assert.equal(H3_TOKENS_PER_SEC["2K"], 106);
@@ -41,6 +51,17 @@ describe("billing token economics", () => {
     const user = 65 * MASTER_YEARLY_USD_PER_TOKEN;
     const margin = (user - 0.08) / user;
     assert.ok(margin >= 0.74 && margin <= 0.76, `image margin ${margin}`);
+  });
+
+  it("2K image stills cost 1.5× 1K (fal Nano Banana 2)", () => {
+    assert.equal(estimateImageTokens({ resolution: "1K" }), 65);
+    assert.equal(estimateImageTokens({ resolution: "2K" }), 98);
+    assert.equal(estimateImageTokens({ mode: "ab", resolution: "2K" }), 196);
+    assert.equal(
+      estimateImageTokens({ mode: "storyboard", sceneCount: 4, resolution: "2K" }),
+      392,
+    );
+    assert.equal(estimateCampaignTokens("2K"), 5 + 98 * 3);
   });
 
   it("Free signup grant is below one image + one 8s 480P video combo", () => {

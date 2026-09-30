@@ -15,6 +15,8 @@ import {
 } from "@/lib/billing/charge-ref";
 import { grantTokensOnce } from "@/lib/stripe/billing-sync";
 import {
+  estimateAbImageTokens,
+  estimateCampaignTokens,
   estimateH3Tokens,
   estimateTeachingCarouselTokens,
   estimateVideoTokens,
@@ -327,21 +329,24 @@ export function imageTokenCostFromRequest(opts: {
   multipartMode?: string | null;
   /** Optional slide count when mode is carousel / teaching-carousel. */
   slideCount?: number | null;
+  /** Resolution actually sent to fal (1K / 2K / 4K). */
+  resolution?: string | null;
 }): number {
+  const res = opts.resolution;
   const mode = opts.multipartMode?.trim() || "";
-  if (mode.startsWith("refine")) return imageCountTokenCost(opts.numImages);
+  if (mode.startsWith("refine")) return imageCountTokenCost(opts.numImages, res);
   const out = opts.imageOutputMode?.trim() || "";
-  if (out === "campaign") return TOKEN_COST.campaign;
+  if (out === "campaign") return estimateCampaignTokens(res);
   // Unified UI mode "carousel" + legacy teaching-carousel — never fall back to single-image price.
   if (out === "teaching-carousel" || out === "carousel") {
     const n = Number(opts.slideCount);
     if (Number.isFinite(n) && n > 0) {
-      return estimateTeachingCarouselTokens(n);
+      return estimateTeachingCarouselTokens(n, res);
     }
-    return TOKEN_COST.teaching_carousel;
+    return estimateTeachingCarouselTokens(4, res);
   }
-  if (out === "ab") return TOKEN_COST.image_ab;
-  return imageCountTokenCost(opts.numImages);
+  if (out === "ab") return estimateAbImageTokens(res);
+  return imageCountTokenCost(opts.numImages, res);
 }
 
 export function seedanceEndpointUsesFastTier(endpoint: string): boolean {

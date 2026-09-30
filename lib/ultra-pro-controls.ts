@@ -8,6 +8,7 @@ import {
   TOKEN_COST,
   estimateH3Tokens,
   estimateVideoTokens,
+  imageTokensForResolution,
 } from "@/lib/billing/token-costs";
 import type { ImageResolutionCap } from "@/lib/billing/entitlements";
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
@@ -220,8 +221,8 @@ export function appendUltraProToPrompt(userPrompt: string, controls: UltraImageP
   return `${base}\n\n${suffix}`.trim();
 }
 
-export function estimateCanvasImageTokens(): number {
-  return TOKEN_COST.image;
+export function estimateCanvasImageTokens(resolution?: string | null): number {
+  return imageTokensForResolution(resolution);
 }
 
 export function estimateCanvasScriptTokens(): number {

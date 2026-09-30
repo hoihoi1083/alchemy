@@ -285,22 +285,24 @@ async function runRefineEdit(
   systemPrompt: string;
   userId: string;
   refineSources: string[];
-  tokenCost?: number;
   resolution?: "1K" | "2K" | "4K";
 }): Promise<NextResponse> {
-  const cost =
-    opts.tokenCost ??
-    imageTokenCostFromRequest({
-      multipartMode: "refine",
-      numImages: opts.numImages,
-    });
-  const charged = await chargeTokens(opts.userId, cost, { kind: "image", mode: "refine" }, request);
+  const plan = await getUserPlan(opts.userId);
+  const { resolution: imageResolution } = clampImageResolution(plan, opts.resolution ?? null);
+  const cost = imageTokenCostFromRequest({
+    multipartMode: "refine",
+    numImages: opts.numImages,
+    resolution: imageResolution,
+  });
+  const charged = await chargeTokens(opts.userId, cost, {
+    kind: "image",
+    mode: "refine",
+    resolution: imageResolution,
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
   try {
-    const plan = await getUserPlan(opts.userId);
-    const { resolution: imageResolution } = clampImageResolution(plan, opts.resolution ?? null);
     const hostedUrls = await Promise.all(
       opts.imageUrls.map((url) => mirrorImageToFalStorage(url, opts.userId)),
     );
@@ -459,8 +461,6 @@ export async function POST(request: Request) {
         );
       }
 
-      const refineLogoCost = imageTokenCostFromRequest({ multipartMode: "refine-logo", numImages });
-
       try {
         const logoUrl = await fal.storage.upload(logoFile as File);
         const prompt = buildLogoRefinePrompt({ placement, userNote });
@@ -473,7 +473,11 @@ export async function POST(request: Request) {
           systemPrompt: IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
           userId: auth.user.userId,
           refineSources: [sourceUrl, logoUrl],
-          tokenCost: refineLogoCost,
+          resolution: (formData.get("resolution") as string | null)?.trim() as
+            | "1K"
+            | "2K"
+            | "4K"
+            | undefined,
         });
       } catch (e: unknown) {
         return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -518,8 +522,6 @@ export async function POST(request: Request) {
         );
       }
 
-      const regionCost = imageTokenCostFromRequest({ multipartMode: "refine-regions", numImages });
-
       try {
         const imageUrls = [sourceUrl];
         if (hasHint) {
@@ -536,7 +538,11 @@ export async function POST(request: Request) {
           systemPrompt: IMAGE_REGION_REFINE_SYSTEM_PROMPT,
           userId: auth.user.userId,
           refineSources: [sourceUrl],
-          tokenCost: regionCost,
+          resolution: (formData.get("resolution") as string | null)?.trim() as
+            | "1K"
+            | "2K"
+            | "4K"
+            | undefined,
         });
       } catch (e: unknown) {
         return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -1141,10 +1147,14 @@ export async function POST(request: Request) {
     const slideCountRaw = Number(
       (formData.get("slide_count") as string | null)?.trim() || "",
     );
+    const plan = await getUserPlan(auth.user.userId);
+    const requestedImageRes = (formData.get("resolution") as string | null)?.trim() || null;
+    const { resolution: imageResolution } = clampImageResolution(plan, requestedImageRes);
     const tokenCost = imageTokenCostFromRequest({
       numImages,
       imageOutputMode,
       slideCount: Number.isFinite(slideCountRaw) ? slideCountRaw : null,
+      resolution: imageResolution,
     });
     const charged = await chargeTokens(auth.user.userId, tokenCost, {
       kind: "image",
@@ -1152,13 +1162,10 @@ export async function POST(request: Request) {
       numImages,
       imageOutputMode,
       slideCount: Number.isFinite(slideCountRaw) ? slideCountRaw : undefined,
+      resolution: imageResolution,
     }, request);
     if ("error" in charged) return charged.error;
     const balanceAfter = charged.balanceAfter;
-
-    const plan = await getUserPlan(auth.user.userId);
-    const requestedImageRes = (formData.get("resolution") as string | null)?.trim() || null;
-    const { resolution: imageResolution } = clampImageResolution(plan, requestedImageRes);
 
     try {
       const imageUrls: string[] = [];
@@ -1725,7 +1732,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const jsonCost = imageTokenCostFromRequest({ numImages });
+  const plan = await getUserPlan(auth.user.userId);
+  const { resolution: imageResolution } = clampImageResolution(plan, requestedResolution ?? null);
+  const jsonCost = imageTokenCostFromRequest({
+    numImages,
+    resolution: imageResolution,
+  });
 
   if (imageUrls.length > 0) {
     const baseSystem = isCompose
@@ -1742,21 +1754,19 @@ export async function POST(request: Request) {
       systemPrompt,
       userId: auth.user.userId,
       refineSources: imageUrls,
-      tokenCost: jsonCost,
-      resolution: requestedResolution,
+      resolution: imageResolution,
     });
   }
 
   const charged = await chargeTokens(auth.user.userId, jsonCost, {
     kind: "image",
     mode: "text",
+    resolution: imageResolution,
   }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
   try {
-    const plan = await getUserPlan(auth.user.userId);
-    const { resolution: imageResolution } = clampImageResolution(plan, requestedResolution ?? null);
     const styleSystem = artStyleSystemPrompt(artStyleId);
     const result = await fal.subscribe(endpoint, {
       input: {

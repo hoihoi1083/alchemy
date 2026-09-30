@@ -4,7 +4,7 @@ import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
-import { estimateImageTokens, TOKEN_COST } from "@/lib/billing/token-costs";
+import { estimateImageTokens, imageTokensForResolution } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import type { BrandProfile } from "@/lib/brand-profile";
@@ -394,22 +394,27 @@ export async function POST(request: Request) {
   const useBrandLogo = brandLogoWanted;
   const useLogoModeA = Boolean(useBrandLogo && brandLogoFalUrl);
   const passesPerScene = useLogoModeA ? 2 : 1;
+  const requestedImageRes =
+    (formData.get("resolution") as string | null)?.trim() || null;
+  const { resolution: imageResolution } = clampImageResolution(
+    userPlan,
+    requestedImageRes,
+  );
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
     sceneCount: scenesToGenerate.length,
     passesPerScene,
+    resolution: imageResolution,
   });
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "storyboard",
     sceneCount: scenesToGenerate.length,
     logoMode: useLogoModeA ? "mode-a" : useBrandLogo ? "stamp-fallback" : "none",
     passesPerScene,
+    resolution: imageResolution,
   }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
-  const { resolution: imageResolution } = clampImageResolution(
-    await getUserPlan(auth.user.userId),
-  );
   const logoEditEndpoint = defaultEditEndpoint();
 
   try {
@@ -616,7 +621,7 @@ export async function POST(request: Request) {
     if (useLogoModeA) {
       const modeAMisses = scenes.filter((s) => !s.modeALogoApplied).length;
       if (modeAMisses > 0) {
-        const refundAmount = TOKEN_COST.storyboard_scene * modeAMisses;
+        const refundAmount = imageTokensForResolution(imageResolution) * modeAMisses;
         const afterRefund = await refundTokens(auth.user.userId, refundAmount, {
           kind: "storyboard",
           reason: "mode_a_unused_pass",

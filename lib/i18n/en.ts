@@ -8896,6 +8896,10 @@ export const en = {
       loading: "Loading…",
       empty: "No assets yet — generate in Studio or Ultra canvas, then export to library.",
       unnamed: "Untitled",
+      searchPlaceholder: "Search by name…",
+      noMatch: "No assets match that name.",
+      count: "Showing {shown} of {total}",
+      previewFailed: "Preview unavailable",
     },
     export: {
       saveToLibrary: "Save to library",

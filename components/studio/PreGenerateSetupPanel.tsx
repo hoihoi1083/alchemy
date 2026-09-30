@@ -3494,6 +3494,7 @@ export function PreGenerateSetupPanel({
                                 ? 3
                                 : 1,
                           passesPerScene: logoPasses,
+                          resolution: wizard.imageResolution,
                         });
                       })(),
                     ),

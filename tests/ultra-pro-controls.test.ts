@@ -40,8 +40,10 @@ describe("ultra-pro-controls", () => {
     assert.match(out, /Rain-soaked alley/);
   });
 
-  it("estimates single image token cost", () => {
+  it("estimates single image token cost by resolution", () => {
     assert.equal(estimateCanvasImageTokens(), 65);
+    assert.equal(estimateCanvasImageTokens("1K"), 65);
+    assert.equal(estimateCanvasImageTokens("2K"), 98);
   });
 
   it("estimates video tokens from duration and resolution", () => {

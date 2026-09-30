@@ -3495,6 +3495,8 @@ function ProCanvasBoard({
     <ProCanvasActionsProvider value={actions}>
       {/* Single board shell: palette lives INSIDE so it cannot spill outside the canvas. */}
       <div
+        id="ultra-canvas-board"
+        data-ultra-canvas-board
         className={`relative min-h-[640px] h-[calc(100dvh-9.5rem)] w-full overflow-hidden rounded-2xl border shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5 ${
           isV2
             ? "border-cyan-500/20 bg-[#070b14]"

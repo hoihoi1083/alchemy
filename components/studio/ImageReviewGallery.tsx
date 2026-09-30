@@ -375,6 +375,7 @@ export function ImageReviewGallery({
     isStoryboard: view.kind === "storyboard" || wizard.isStoryboardOutput,
     isCinematic: view.kind === "cinematic" || wizard.isCinematicStitchOutput,
     sceneCount: items.length,
+    resolution: wizard.imageResolution,
   });
   const regenAllTokens = estimateImageRegenTokens({
     scope: "all",
@@ -382,6 +383,7 @@ export function ImageReviewGallery({
     isStoryboard: view.kind === "storyboard" || wizard.isStoryboardOutput,
     isCinematic: view.kind === "cinematic" || wizard.isCinematicStitchOutput,
     sceneCount: items.length,
+    resolution: wizard.imageResolution,
   });
   const regenOneHint = m.wizard.tokenCostHint.replace("{n}", String(regenOneTokens));
   const regenAllHint = m.wizard.tokenCostHint.replace("{n}", String(regenAllTokens));

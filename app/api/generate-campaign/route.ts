@@ -4,7 +4,7 @@ import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
-import { TOKEN_COST } from "@/lib/billing/token-costs";
+import { estimateCampaignTokens, imageTokensForResolution } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   buildFalLayoutTransferImageUrls,
@@ -256,13 +256,15 @@ export async function POST(request: Request) {
     { promotionMode, workflowMode: "image-only" },
   );
 
-  const tokenCost = isSingleSlideRegen ? TOKEN_COST.image : TOKEN_COST.campaign;
   const requestedImageRes =
     (formData.get("resolution") as string | null)?.trim() || null;
   const { resolution: imageResolution } = clampImageResolution(
     userPlan,
     requestedImageRes,
   );
+  const tokenCost = isSingleSlideRegen
+    ? imageTokensForResolution(imageResolution)
+    : estimateCampaignTokens(imageResolution);
 
   let plan: CampaignPlan;
   try {

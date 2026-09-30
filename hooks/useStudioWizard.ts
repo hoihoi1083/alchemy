@@ -4389,6 +4389,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				estimateImageRegenTokens({
 					scope: "one",
 					outputMode: effectiveImageOutputMode,
+					resolution: imageResolution,
 				}),
 			)
 		) {
@@ -6126,6 +6127,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				passesPerScene: isStoryboard
 					? storyboardImagePassesPerScene()
 					: 1,
+				resolution: imageResolution,
 			});
 			if (blockIfCannotAfford(imageCost)) return null;
 		}
@@ -6438,6 +6440,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             aspect_ratio: effectiveImageAspectRatio,
             art_style: artStyleId,
 						brand_kit: kitForCinematic,
+            resolution: imageResolution,
 						// Top-right by default so burned captions at bottom stay clear.
 						logo_placement:
 							quickFixLogoPlacement === "bottom-right" ||

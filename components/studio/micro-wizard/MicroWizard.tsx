@@ -327,6 +327,7 @@ export function MicroWizard({ promotionMode }: Props) {
                   wizard.campaignSlides.length ||
                   wizard.imageVariantUrls.length ||
                   1,
+            resolution: wizard.imageResolution,
           }),
         ),
       )}

@@ -32,8 +32,11 @@ function imageProFromData(data: ImageNodeData): UltraImageProControls {
 export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
   const { runImageNode, updateNodeData, nodes, boardBusy, isNodeStale } = useProCanvasActions();
   const { m } = useLocale();
-  const tokenCost = useMemo(() => estimateCanvasImageTokens(), []);
   const pro = imageProFromData(data);
+  const tokenCost = useMemo(
+    () => estimateCanvasImageTokens(pro.resolution),
+    [pro.resolution],
+  );
 
   return (
     <ProNodeShell

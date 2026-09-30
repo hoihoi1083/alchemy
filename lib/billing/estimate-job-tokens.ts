@@ -293,11 +293,14 @@ export function estimateImageJobTokens(opts: {
   numImages?: number;
   /** Mode A logo edit = 2 fal image calls per scene. */
   passesPerScene?: number;
+  /** Resolution actually sent to fal (1K / 2K / 4K). */
+  resolution?: string | null;
 }): number {
   if (opts.mode === "carousel") {
     return estimateImageTokens({
       mode: "teaching_carousel",
       sceneCount: opts.sceneCount,
+      resolution: opts.resolution,
     });
   }
   return estimateImageTokens({
@@ -305,5 +308,6 @@ export function estimateImageJobTokens(opts: {
     sceneCount: opts.sceneCount,
     numImages: opts.numImages,
     passesPerScene: opts.passesPerScene,
+    resolution: opts.resolution,
   });
 }

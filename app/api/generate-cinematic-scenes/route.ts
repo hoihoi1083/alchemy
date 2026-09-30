@@ -71,6 +71,7 @@ export async function POST(request: Request) {
     art_style?: string;
     brand_kit?: unknown;
     logo_placement?: string;
+    resolution?: string;
   };
   try {
     body = await request.json();
@@ -104,20 +105,25 @@ export async function POST(request: Request) {
   const useBrandLogoModeB = Boolean(brandLogoFalUrl && brandLogoWanted);
   const endpoint = resolveEditEndpointWhenNeeded(body.endpoint, useBrandLogoModeB);
 
+  const requestedImageRes =
+    typeof body.resolution === "string" ? body.resolution.trim() : null;
+  const { resolution: imageResolution } = clampImageResolution(
+    await getUserPlan(auth.user.userId),
+    requestedImageRes,
+  );
+
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
     sceneCount: plan.scenes.length,
+    resolution: imageResolution,
   });
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "cinematic_scenes",
     sceneCount: plan.scenes.length,
+    resolution: imageResolution,
   }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
-
-  const { resolution: imageResolution } = clampImageResolution(
-    await getUserPlan(auth.user.userId),
-  );
 
   try {
     const scenes = await Promise.all(

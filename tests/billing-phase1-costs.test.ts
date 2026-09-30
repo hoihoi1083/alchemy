@@ -33,6 +33,15 @@ describe("billing Phase 1 action costs", () => {
       imageTokenCostFromRequest({ multipartMode: "refine-logo" }),
       TOKEN_COST.image,
     );
+    assert.equal(imageTokenCostFromRequest({ resolution: "2K" }), 98);
+    assert.equal(
+      imageTokenCostFromRequest({ numImages: 2, resolution: "2K" }),
+      196,
+    );
+    assert.equal(
+      imageTokenCostFromRequest({ imageOutputMode: "campaign", resolution: "2K" }),
+      5 + 98 * 3,
+    );
   });
 
   it("prices storyboard / cinematic by scene count", () => {

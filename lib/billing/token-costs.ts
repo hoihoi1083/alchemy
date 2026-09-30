@@ -32,14 +32,47 @@ export function tokensForFalUsd(falUsd: number): number {
   return Math.max(1, Math.ceil(userUsd / MASTER_YEARLY_USD_PER_TOKEN));
 }
 
-/** Flat action costs (tokens). */
+/**
+ * Nano Banana 2 fal COGS by output resolution.
+ * @see https://fal.ai/models/fal-ai/nano-banana-2 — 2K = 1.5×, 4K = 2× of 1K.
+ */
+export const IMAGE_FAL_USD = {
+  "1K": 0.08,
+  "2K": 0.12,
+  "4K": 0.16,
+} as const;
+
+export type ImageBillingResolution = keyof typeof IMAGE_FAL_USD;
+
+/** Tokens per still at each Nano Banana 2 resolution (75% Master-yearly margin). */
+export const IMAGE_TOKENS_BY_RESOLUTION = {
+  "1K": tokensForFalUsd(IMAGE_FAL_USD["1K"]), // 65
+  "2K": tokensForFalUsd(IMAGE_FAL_USD["2K"]), // 98
+  "4K": tokensForFalUsd(IMAGE_FAL_USD["4K"]), // 130
+} as const;
+
+export function parseImageBillingResolution(
+  resolution?: string | null,
+): ImageBillingResolution {
+  const t = (resolution ?? "").trim().toUpperCase();
+  if (t === "4K") return "4K";
+  if (t === "2K") return "2K";
+  return "1K";
+}
+
+/** Per-still tokens for the resolution we actually send to fal. */
+export function imageTokensForResolution(resolution?: string | null): number {
+  return IMAGE_TOKENS_BY_RESOLUTION[parseImageBillingResolution(resolution)];
+}
+
+/** Flat action costs (tokens). Image rates are 1K baseline — use imageTokensForResolution for 2K/4K. */
 export const TOKEN_COST = {
-  image: 65, // Nano Banana 2 1K $0.08
-  image_ab: 130, // 2 images
-  campaign: 200, // 3×65 + plan
-  teaching_carousel: 265, // plan + 4×65; prefer estimateTeachingCarouselTokens(n)
-  storyboard_scene: 65, // same 1K still as image
-  storyboard_batch: 260, // typical 4 scenes
+  image: IMAGE_TOKENS_BY_RESOLUTION["1K"], // Nano Banana 2 1K $0.08
+  image_ab: IMAGE_TOKENS_BY_RESOLUTION["1K"] * 2, // 2× 1K stills
+  campaign: 5 + IMAGE_TOKENS_BY_RESOLUTION["1K"] * 3, // plan + 3×1K
+  teaching_carousel: 5 + IMAGE_TOKENS_BY_RESOLUTION["1K"] * 4, // plan + 4×1K; prefer estimateTeachingCarouselTokens(n)
+  storyboard_scene: IMAGE_TOKENS_BY_RESOLUTION["1K"], // same 1K still as image
+  storyboard_batch: IMAGE_TOKENS_BY_RESOLUTION["1K"] * 4, // typical 4 scenes
   music: 82, // ~$0.10
   voiceover: 13, // ~$0.015
   bgm: 5, // local ffmpeg mix — small operator cost
@@ -310,14 +343,28 @@ export function clampGenerateImageCount(n: number | undefined | null): number {
   return Math.min(MAX_GENERATE_IMAGE_COUNT, Math.max(1, raw));
 }
 
-/** 65 tokens per still — 2 → 130, 3 → 195, 4 → 260. */
-export function imageCountTokenCost(numImages?: number | null): number {
-  return TOKEN_COST.image * clampGenerateImageCount(numImages);
+/** Tokens per still × count — 1K: 65/130/195/260; 2K: 98/196/294/392. */
+export function imageCountTokenCost(
+  numImages?: number | null,
+  resolution?: string | null,
+): number {
+  return imageTokensForResolution(resolution) * clampGenerateImageCount(numImages);
 }
 
-export function estimateTeachingCarouselTokens(slideCount: number): number {
+export function estimateAbImageTokens(resolution?: string | null): number {
+  return imageTokensForResolution(resolution) * 2;
+}
+
+export function estimateCampaignTokens(resolution?: string | null): number {
+  return TOKEN_COST.plan + imageTokensForResolution(resolution) * 3;
+}
+
+export function estimateTeachingCarouselTokens(
+  slideCount: number,
+  resolution?: string | null,
+): number {
   const n = Math.min(7, Math.max(3, Math.round(slideCount) || 5));
-  return TOKEN_COST.plan + TOKEN_COST.image * n;
+  return TOKEN_COST.plan + imageTokensForResolution(resolution) * n;
 }
 
 export function estimateImageTokens(opts: {
@@ -326,19 +373,22 @@ export function estimateImageTokens(opts: {
   sceneCount?: number;
   /** Mode A logo edit = 2 fal image calls per scene. */
   passesPerScene?: number;
+  /** Resolution actually sent to fal (1K / 2K / 4K). */
+  resolution?: string | null;
 }): number {
   const mode = opts.mode ?? "single";
-  if (mode === "ab") return TOKEN_COST.image_ab;
-  if (mode === "campaign") return TOKEN_COST.campaign;
+  const res = opts.resolution;
+  if (mode === "ab") return estimateAbImageTokens(res);
+  if (mode === "campaign") return estimateCampaignTokens(res);
   if (mode === "teaching_carousel") {
-    return estimateTeachingCarouselTokens(opts.sceneCount ?? 5);
+    return estimateTeachingCarouselTokens(opts.sceneCount ?? 5, res);
   }
   if (mode === "storyboard") {
     const n = Math.max(1, opts.sceneCount ?? 4);
     const passes = Math.max(1, opts.passesPerScene ?? 1);
-    return TOKEN_COST.storyboard_scene * n * passes;
+    return imageTokensForResolution(res) * n * passes;
   }
-  return imageCountTokenCost(opts.numImages);
+  return imageCountTokenCost(opts.numImages, res);
 }
 
 /** Token cost to regenerate one still vs the full current image run. */
@@ -348,16 +398,17 @@ export function estimateImageRegenTokens(opts: {
   isStoryboard?: boolean;
   isCinematic?: boolean;
   sceneCount?: number;
+  resolution?: string | null;
 }): number {
+  const res = opts.resolution;
   if (opts.scope === "one") {
-    return opts.isStoryboard || opts.isCinematic
-      ? TOKEN_COST.storyboard_scene
-      : TOKEN_COST.image;
+    return imageTokensForResolution(res);
   }
   if (opts.isStoryboard || opts.isCinematic) {
     return estimateImageTokens({
       mode: "storyboard",
       sceneCount: opts.sceneCount ?? 4,
+      resolution: res,
     });
   }
   const mode = opts.outputMode ?? "single";
@@ -372,6 +423,7 @@ export function estimateImageRegenTokens(opts: {
             : "single",
     numImages: mode === "ab" ? 2 : 1,
     sceneCount: opts.sceneCount,
+    resolution: res,
   });
 }
 
