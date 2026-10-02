@@ -92,6 +92,8 @@ function cacheAttribution(props: Record<string, string>) {
       initial_utm_medium: prev.initial_utm_medium ?? props.utm_medium ?? props.initial_utm_medium,
       initial_utm_campaign:
         prev.initial_utm_campaign ?? props.utm_campaign ?? props.initial_utm_campaign,
+      initial_utm_content:
+        prev.initial_utm_content ?? props.utm_content ?? props.initial_utm_content,
       initial_traffic_source:
         prev.initial_traffic_source ?? props.traffic_source ?? props.initial_traffic_source,
       initial_landing_page:
