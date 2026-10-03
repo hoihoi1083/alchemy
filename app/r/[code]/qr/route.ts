@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import {
   findCampaignShortLink,
-  publicCampaignLandingUrl,
+  publicCampaignShortUrl,
 } from "@/lib/campaign-short-links";
 import { productSiteUrl } from "@/lib/brand";
 
@@ -12,8 +12,8 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ code: string }> };
 
 /**
- * PNG QR for a campaign landing URL (with UTMs — no /r/ hop needed).
- * Example: /r/xhs/qr → scans to https://www.alchemyailab.com/?utm_source=xiaohongshu&…
+ * PNG QR for a campaign short link.
+ * Example: /r/xhs-p1/qr → scans to https://www.alchemyailab.com/r/xhs-p1
  */
 export async function GET(request: Request, ctx: Ctx) {
   const { code } = await ctx.params;
@@ -28,7 +28,7 @@ export async function GET(request: Request, ctx: Ctx) {
     ? Math.min(1024, Math.max(128, Math.round(sizeRaw)))
     : 512;
 
-  const target = publicCampaignLandingUrl(link, productSiteUrl());
+  const target = publicCampaignShortUrl(link.code, productSiteUrl());
   const png = await QRCode.toBuffer(target, {
     type: "png",
     width: size,

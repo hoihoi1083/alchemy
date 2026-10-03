@@ -84,6 +84,82 @@ describe("ultra-canvas wave2", () => {
     assert.equal(nodeNeedsRun(withFp[0]!, edited, edges), true);
   });
 
+  it("does not mark image stale when only its own output URL changes", () => {
+    const nodes = [
+      node("up", "upload", {
+        alias: "Face",
+        previewUrl: "https://cdn.example.com/face.jpg",
+        fileName: "face.jpg",
+      }),
+      node("img", "image", {
+        prompt: "Use @Face",
+        aspectRatio: "9:16",
+        resolution: "1K",
+        artStyleId: "product_studio",
+        lightingPreset: "studio_soft",
+        backgroundPreset: "clean_studio",
+        imageUrl: "https://cdn.example.com/old-out.jpg",
+      }),
+    ];
+    const edges: Edge[] = [edge("e1", "up", "img")];
+    const fp = computeNodeInputFingerprint("img", nodes, edges);
+    const afterRun = [
+      nodes[0]!,
+      {
+        ...nodes[1]!,
+        data: {
+          ...(nodes[1]!.data as Record<string, unknown>),
+          imageUrl: "https://cdn.example.com/new-out.jpg",
+          outputInputFingerprint: fp,
+        },
+      },
+    ];
+    assert.equal(isNodeOutputStale(afterRun[1]!, afterRun, edges), false);
+  });
+
+  it("marks image stale when upstream upload preview URL changes", () => {
+    const nodes = [
+      node("up", "upload", {
+        alias: "Face",
+        previewUrl: "https://cdn.example.com/face-a.jpg",
+        fileName: "a.jpg",
+      }),
+      node("img", "image", {
+        prompt: "Use @Face",
+        aspectRatio: "9:16",
+        resolution: "1K",
+        artStyleId: "product_studio",
+        lightingPreset: "studio_soft",
+        backgroundPreset: "clean_studio",
+        imageUrl: "https://cdn.example.com/out.jpg",
+      }),
+    ];
+    const edges: Edge[] = [edge("e1", "up", "img")];
+    const fp = computeNodeInputFingerprint("img", nodes, edges);
+    const withFp = [
+      nodes[0]!,
+      {
+        ...nodes[1]!,
+        data: {
+          ...(nodes[1]!.data as Record<string, unknown>),
+          outputInputFingerprint: fp,
+        },
+      },
+    ];
+    const replacedUpload = [
+      {
+        ...nodes[0]!,
+        data: {
+          ...(nodes[0]!.data as Record<string, unknown>),
+          previewUrl: "https://cdn.example.com/face-b.jpg",
+          fileName: "b.jpg",
+        },
+      },
+      withFp[1]!,
+    ];
+    assert.equal(isNodeOutputStale(withFp[1]!, replacedUpload, edges), true);
+  });
+
   it("nodeNeedsRun is false for legacy outputs without fingerprint", () => {
     const nodes = [
       node("vid", "video", {

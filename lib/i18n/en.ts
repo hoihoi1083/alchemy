@@ -2727,6 +2727,10 @@ export const en = {
         title: "1:1 Square",
         description: "Square feed / carousel · ~1024×1024 px @ 1K",
       },
+      "16:9": {
+        title: "16:9 Landscape",
+        description: "YouTube / thumbnails · ~1365×768 px @ 1K",
+      },
     },
     imagePreflightAspect: "Size: {ratio} @ 1K",
 		imagePostflightTitle: "Quality check — your generated image",
@@ -9046,6 +9050,48 @@ export const en = {
 		changeStartConfirmTitle: "Open start picker?",
 		changeStartConfirm:
 			"Your current board stays until you pick a new start (that replaces the graph). Or use Clear board to wipe first.",
+		describe: {
+			badge: "Ultra · Describe",
+			pageTitle: "Ultra describe",
+			pageSubtitle:
+				"Upload refs (optional), describe the job. Alchemy analyzes assets and wires a board — you run when ready.",
+			backUltra: "Workflow Ultra →",
+			costHint:
+				"Planning uses free DeepSeek quota (+ vision on uploaded images). Image/video runs still charge tokens when you click Run.",
+			howTitle: "What do you want to make?",
+			howSubtitle:
+				"Upload any helpful images/videos first, then one job in plain language. We build nodes — we do not auto-run fal.",
+			placeholder:
+				"Example: NBA coaches thumbnail, 16:9 — keep the dark layout, swap in 5 coach headshots…",
+			qualityHint:
+				"Face likeness needs real face uploads. Pre-upload layout + faces for the best plan.",
+			planLabel: "Plan board →",
+			planningLabel: "Planning…",
+			planFailed: "Could not plan this board. Try a shorter, clearer job.",
+			defaultBoardName: "Described board",
+			changeStartConfirmTitle: "Describe a new job?",
+			changeStartConfirm:
+				"Opening the describe box again. Picking a new plan replaces the current graph.",
+			refsTitle: "Refs (optional)",
+			refsHint: "Images or videos — layout, faces, product, style. Up to 8. Analyzed before planning.",
+			refsAddLabel: "Add files",
+			refsUploadingLabel: "Uploading…",
+			templatesTitle: "Or start from a template",
+			templatesSubtitle:
+				"Same workflow cards as Ultra — pick one if you already know the pipeline.",
+			jobBriefTitle: "Job brief",
+			jobBriefHint:
+				"Tweak the job anytime. Update plan rebuilds nodes — outputs on the old graph may be replaced.",
+			jobBriefUpdate: "Update plan →",
+			jobBriefUpdating: "Updating…",
+			jobBriefExpand: "Edit",
+			jobBriefCollapse: "Done",
+			jobBriefUnchanged: "Edit the brief or refs to enable update.",
+			jobBriefDirtyBadge: "Edited",
+			jobBriefConfirmTitle: "Rebuild board from this brief?",
+			jobBriefConfirm:
+				"This replaces the current nodes with a new plan. Outputs and manual node edits on the old graph will not be kept.",
+		},
     textVideo: {
       useWhen:
         "Use this when you already know the scene and do not need a reference image.",

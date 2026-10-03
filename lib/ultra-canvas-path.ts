@@ -1,7 +1,7 @@
 /** Public URL and pricing deep-link for the Ultra canvas (node workflow). */
 export const ULTRA_CANVAS_PATH = "/ultra";
 
-/** Legacy beta path — redirects to `/ultra`. */
+/** Legacy beta path — now the describe-first Ultra lab (Master+). */
 export const ULTRA_CANVAS_2_PATH = "/ultra-2";
 
 export const ULTRA_CANVAS_FEATURE = "ultra-canvas";

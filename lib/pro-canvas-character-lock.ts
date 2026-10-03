@@ -69,15 +69,36 @@ function escapeRegexAlias(alias: string): string {
   return alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Planner placeholders / upload instructions are not identity — using them as
+ * lock text fights the attached face photo (e.g. "Describe the coach…" vs a girl ref).
+ */
+export function isUsableCharacterBiography(biography?: string): boolean {
+  const bio = biography?.trim() ?? "";
+  if (!bio) return false;
+  const lower = bio.toLowerCase();
+  if (
+    /^(describe|provide|upload|add|enter|write|include|give|create|generate)\b/.test(
+      lower,
+    )
+  ) {
+    return false;
+  }
+  if (/\b(face reference|reference image|upload (an? )?image)\b/.test(lower)) {
+    return false;
+  }
+  return true;
+}
+
 /** Identity lock clause for compose / still prompts. */
 export function characterIdentityClause(
   alias: string,
   biography?: string,
 ): string {
-  const bio = biography?.trim();
+  const bio = isUsableCharacterBiography(biography) ? biography!.trim() : "";
   return bio
-    ? `[角色锁定] @${alias} — ${bio}. Reuse EXACT face, hair, outfit from IMAGE ref — do NOT recast.`
-    : `[角色锁定] @${alias} — reuse EXACT person from IMAGE ref (face, hair, outfit). Do NOT recast.`;
+    ? `[角色锁定] @${alias} — ${bio}. Reuse EXACT face, age, gender, hair, outfit from IMAGE ref — do NOT recast or adult-wash.`
+    : `[角色锁定] @${alias} — reuse EXACT person from IMAGE ref (face, age, gender, hair, outfit). Do NOT recast or invent a different person.`;
 }
 
 /** Text-to-video: describe identity without IMAGE ref slot. */
@@ -85,10 +106,10 @@ export function characterIdentityClauseTextOnly(
   alias: string,
   biography?: string,
 ): string {
-  const bio = biography?.trim();
+  const bio = isUsableCharacterBiography(biography) ? biography!.trim() : "";
   return bio
-    ? `[角色锁定] @${alias} — ${bio}. Same person throughout — match face, hair, outfit.`
-    : `[角色锁定] @${alias} — same person throughout — consistent face, hair, outfit.`;
+    ? `[角色锁定] @${alias} — ${bio}. Same person throughout — match face, age, gender, hair, outfit.`
+    : `[角色锁定] @${alias} — same person throughout — consistent face, age, gender, hair, outfit.`;
 }
 
 /** Characters @mentioned or directly connected upstream — not via script-only paths. */

@@ -23,6 +23,9 @@ export const ULTRA2_WORKFLOW_IDS: Ultra2WorkflowId[] = [
 
 export const ULTRA2_WORKFLOW_SESSION_KEY = "ams-ultra2-workflow-chosen";
 export const ULTRA2_DRAFT_KEY = "ams-ultra2-draft-v1";
+/** Isolated local draft for /ultra-2 describe-first (never share with /ultra). */
+export const ULTRA2_DESCRIBE_DRAFT_KEY = "ams-ultra2-describe-draft-v1";
+export const ULTRA2_DESCRIBE_SESSION_KEY = "ams-ultra2-describe-chosen";
 
 export type Ultra2Graph = {
   nodes: Node[];

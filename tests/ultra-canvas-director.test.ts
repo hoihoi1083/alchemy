@@ -4,6 +4,7 @@ import {
   appendCharacterLockToPrompt,
   buildCharacterSheetPrompt,
   characterIdentityClause,
+  isUsableCharacterBiography,
   mergeCharacterSourcesInto,
 } from "../lib/pro-canvas-character-lock";
 import {
@@ -85,6 +86,22 @@ describe("ultra-canvas-director", () => {
     const prompt = appendCharacterLockToPrompt("Scene still", nodes);
     assert.match(prompt, /\[角色锁定\]/);
     assert.match(prompt, /@PersonA/);
+  });
+
+  it("skips instructional placeholder biographies in identity lock", () => {
+    assert.equal(isUsableCharacterBiography("28yo designer, navy blazer"), true);
+    assert.equal(
+      isUsableCharacterBiography(
+        "Describe the third Premier League coach. Include name, team, attire, and distinctive features. Provide a face reference image.",
+      ),
+      false,
+    );
+    const clause = characterIdentityClause(
+      "Coach3",
+      "Describe the third Premier League coach. Provide a face reference image.",
+    );
+    assert.doesNotMatch(clause, /Describe the third/);
+    assert.match(clause, /age, gender/);
   });
 
   it("appends text-only character lock for text-to-video", () => {

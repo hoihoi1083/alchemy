@@ -17,16 +17,21 @@ export function computeNodeInputFingerprint(
 ): string {
   const node = nodes.find((n) => n.id === nodeId);
   if (!node) return "";
-  const chunks = [stableNodeInputSlice(node)];
+  // Own slice excludes generated output — otherwise every successful run looks stale
+  // (fingerprint was hashed with the previous out: URL, live node has the new one).
+  const chunks = [stableNodeInputSlice(node, false)];
   for (const up of allUpstreamNodes(nodeId, nodes, edges)) {
-    chunks.push(stableNodeInputSlice(up));
+    // Upstream outputs matter: regenerating a source should mark dependents stale.
+    chunks.push(stableNodeInputSlice(up, true));
   }
   return chunks.sort().join("||");
 }
 
-function stableNodeInputSlice(node: Node): string {
+function stableNodeInputSlice(node: Node, includeOutput: boolean): string {
   const d = node.data as ProCanvasNodeData;
   const id = node.id;
+  const out = (url: string | undefined) =>
+    includeOutput ? `|out:${url ?? ""}` : "";
   switch (d.kind) {
     case "script": {
       const s = d as ScriptNodeData;
@@ -34,23 +39,23 @@ function stableNodeInputSlice(node: Node): string {
     }
     case "image": {
       const img = d as ImageNodeData;
-      return `${id}|image|${img.prompt}|${img.sceneIndex ?? ""}|${img.aspectRatio}|${img.resolution}|${img.artStyleId}|${img.lightingPreset}|${img.backgroundPreset}|out:${img.imageUrl ?? ""}`;
+      return `${id}|image|${img.prompt}|${img.sceneIndex ?? ""}|${img.aspectRatio}|${img.resolution}|${img.artStyleId}|${img.lightingPreset}|${img.backgroundPreset}${out(img.imageUrl)}`;
     }
     case "video": {
       const v = d as VideoNodeData;
-      return `${id}|video|${v.prompt}|${v.sceneIndex ?? ""}|${v.camera}|${v.duration}|${v.resolution}|${v.fast}|${v.motionStrength}|${v.generateAudio}|out:${v.videoUrl ?? ""}`;
+      return `${id}|video|${v.prompt}|${v.sceneIndex ?? ""}|${v.camera}|${v.duration}|${v.resolution}|${v.fast}|${v.motionStrength}|${v.generateAudio}${out(v.videoUrl)}`;
     }
     case "textVideo":
-      return `${id}|textVideo|${d.prompt}|${d.sceneIndex ?? ""}|${d.duration}|${d.resolution}|${d.fast}|${d.motionStrength}|${d.generateAudio}|out:${d.videoUrl ?? ""}`;
+      return `${id}|textVideo|${d.prompt}|${d.sceneIndex ?? ""}|${d.duration}|${d.resolution}|${d.fast}|${d.motionStrength}|${d.generateAudio}${out(d.videoUrl)}`;
     case "camera": {
       const c = d as CameraNodeData;
-      return `${id}|camera|${c.preset}|${c.spin}|${c.tilt}|${c.zoom}|${c.promptExtra}|out:${c.imageUrl ?? ""}`;
+      return `${id}|camera|${c.preset}|${c.spin}|${c.tilt}|${c.zoom}|${c.promptExtra}${out(c.imageUrl)}`;
     }
     case "upload":
       return `${id}|upload|${d.previewUrl ?? ""}|${d.fileName ?? ""}`;
     case "character": {
       const c = d as CharacterNodeData;
-      return `${id}|character|${c.previewUrl ?? ""}|${c.fileName ?? ""}|${c.biography ?? ""}|${c.generatePrompt ?? ""}`;
+      return `${id}|character|${c.previewUrl ?? ""}|${c.fileName ?? ""}|${c.biography ?? ""}|${c.generatePrompt ?? ""}|${c.angleSheetUrl ?? ""}`;
     }
     case "research":
       return `${id}|research|${d.summary}`;
@@ -59,7 +64,7 @@ function stableNodeInputSlice(node: Node): string {
     case "audio":
       return `${id}|audio|${d.audioUrl ?? ""}|${d.fileName ?? ""}`;
     case "voice":
-      return `${id}|voice|${d.script}|${d.locale}|${d.voicePresetId}|out:${d.audioUrl ?? ""}`;
+      return `${id}|voice|${d.script}|${d.locale}|${d.voicePresetId}${out(d.audioUrl)}`;
     case "world":
       return `${id}|world|${d.description}|${d.previewUrl ?? ""}|${d.fileName ?? ""}`;
     case "storyboard":

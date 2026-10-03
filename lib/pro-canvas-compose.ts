@@ -66,7 +66,7 @@ export function buildCanvasComposePrompt(userPrompt: string, aliasesInOrder: str
       : aliasesInOrder
           .map(
             (alias, i) =>
-              `IMAGE ${i + 1} = exact reference from @${alias} — preserve its subject, product, and appearance faithfully`,
+              `IMAGE ${i + 1} = exact reference from @${alias} — preserve its subject, product, face, age, and gender faithfully; do not swap in a different person`,
           )
           .join(". ") + ".";
 
@@ -74,7 +74,7 @@ export function buildCanvasComposePrompt(userPrompt: string, aliasesInOrder: str
     count === 1 ? "One reference image attached." : `${count} reference images attached.`,
     slotDefs,
     rewritten || note,
-    "Composite faithfully using the reference image(s). Do not invent unrelated subjects or products.",
+    "Composite faithfully using every attached reference. When a slot is a person photo, keep that exact identity (age/gender/face) even if the scene text says coach/model/celebrity. Do not invent unrelated subjects, double one face across slots, or fall back to faces only present in a layout/base collage.",
   ];
   return parts.join(" ");
 }

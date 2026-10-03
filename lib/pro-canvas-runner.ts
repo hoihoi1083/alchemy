@@ -142,7 +142,9 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
       mode: "compose",
       prompt: composePrompt,
       endpoint: BANANA2_EDIT_ENDPOINT,
-      aspect_ratio: urls.length > 1 ? "auto" : pro.aspectRatio,
+      // Honor explicit node aspect for multi-ref compose (thumbnails / group edits).
+      // Fall back to auto only when the node left aspect unset.
+      aspect_ratio: pro.aspectRatio?.trim() || (urls.length > 1 ? "auto" : "9:16"),
       image_urls: urls,
     }),
   });

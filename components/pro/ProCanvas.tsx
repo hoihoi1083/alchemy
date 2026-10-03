@@ -125,9 +125,14 @@ import { computeCreativeBStepStatuses } from "@/lib/pro-canvas-creative-b-checkl
 import {
   createProCanvasStarter,
 } from "@/lib/pro-canvas-starter";
+import { Ultra2DescribeSelector } from "@/components/pro/Ultra2DescribeSelector";
+import { Ultra2JobBriefPanel } from "@/components/pro/Ultra2JobBriefPanel";
+import type { UltraDescribeAssetRef } from "@/lib/ultra-plan-board";
 import {
   buildUltra2Workflow,
   isUltra2WorkflowId,
+  ULTRA2_DESCRIBE_DRAFT_KEY,
+  ULTRA2_DESCRIBE_SESSION_KEY,
   ULTRA2_DRAFT_KEY,
   ULTRA2_WORKFLOW_SESSION_KEY,
   type Ultra2WorkflowId,
@@ -333,14 +338,20 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
 function ProCanvasBoard({
   initialTemplate,
   uxVariant = "v1",
+  startMode = "workflow",
 }: {
   initialTemplate?: string | null;
   uxVariant?: "v1" | "v2";
+  /** workflow = /ultra cards; describe = /ultra-2 job → plan board */
+  startMode?: "workflow" | "describe";
 }) {
   const { m } = useLocale();
   const { creditBalance, planReady } = useUserPlanEntitlements();
   const isV2 = uxVariant === "v2";
+  const isDescribe = isV2 && startMode === "describe";
+  const draftStorageKey = isDescribe ? ULTRA2_DESCRIBE_DRAFT_KEY : ULTRA2_DRAFT_KEY;
   const u2 = m.ultraCanvas2;
+  const describeCopy = u2.describe;
   const templateLoadedRef = useRef(false);
   const [dirtyTick, setDirtyTick] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
@@ -366,7 +377,19 @@ function ProCanvasBoard({
     () => !isV2 && !wasCreativeBHintDismissed(),
   );
   const [workflowId, setWorkflowId] = useState<Ultra2WorkflowId | null>(null);
-  const [workflowPickerOpen, setWorkflowPickerOpen] = useState(isV2);
+  const [workflowPickerOpen, setWorkflowPickerOpen] = useState(
+    isV2 && !isDescribe,
+  );
+  const [describePickerOpen, setDescribePickerOpen] = useState(isDescribe);
+  const [describePlanError, setDescribePlanError] = useState<string | null>(null);
+  const [describeQualityNote, setDescribeQualityNote] = useState<string | null>(
+    null,
+  );
+  const [jobBrief, setJobBrief] = useState("");
+  const [jobBriefRefs, setJobBriefRefs] = useState<UltraDescribeAssetRef[]>([]);
+  const [jobBriefPlanRevision, setJobBriefPlanRevision] = useState(0);
+  const [jobBriefPlanning, setJobBriefPlanning] = useState(false);
+  const [jobBriefError, setJobBriefError] = useState<string | null>(null);
   const [restoreBanner, setRestoreBanner] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
   const [fitViewToken, setFitViewToken] = useState(0);
@@ -665,8 +688,8 @@ function ProCanvasBoard({
   }, [isV2]);
 
   useEffect(() => {
-    if (isV2 && workflowPickerOpen) void refreshPickerBoards();
-  }, [isV2, workflowPickerOpen, refreshPickerBoards]);
+    if (isV2 && (workflowPickerOpen || describePickerOpen)) void refreshPickerBoards();
+  }, [isV2, workflowPickerOpen, describePickerOpen, refreshPickerBoards]);
 
   const applyUltra2Workflow = useCallback(
     (id: Ultra2WorkflowId) => {
@@ -685,6 +708,8 @@ function ProCanvasBoard({
       setIsDirty(false);
       setWorkflowId(id);
       setWorkflowPickerOpen(false);
+      setDescribePickerOpen(false);
+      setDescribeQualityNote(null);
       try {
         sessionStorage.setItem(ULTRA2_WORKFLOW_SESSION_KEY, id);
       } catch {
@@ -708,20 +733,156 @@ function ProCanvasBoard({
     ],
   );
 
+  const applyDescribedGraph = useCallback(
+    (opts: {
+      title: string;
+      qualityNote?: string;
+      snapshot: Parameters<typeof deserializeUltraCanvasSnapshot>[0];
+    }) => {
+      const restored = deserializeUltraCanvasSnapshot(opts.snapshot);
+      resetCanvasRuntime();
+      nodesRef.current = restored.nodes;
+      edgesRef.current = restored.edges;
+      setNodes(restored.nodes);
+      setEdges(restored.edges);
+      setBoardId(null);
+      setBoardName(opts.title || describeCopy.defaultBoardName);
+      setQueue([]);
+      nodeCounter = restored.nodeCounterSeed;
+      dirtyRef.current = false;
+      setIsDirty(false);
+      setWorkflowId(null);
+      setWorkflowPickerOpen(false);
+      setDescribePickerOpen(false);
+      setDescribePlanError(null);
+      setDescribeQualityNote(opts.qualityNote?.trim() || null);
+      try {
+        sessionStorage.setItem(ULTRA2_DESCRIBE_SESSION_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      resetHistory({ nodes: restored.nodes, edges: restored.edges });
+      openV2Workbench();
+      setDesktopPaletteOpen(true);
+      setMobilePaletteOpen(true);
+      setRailOpen(true);
+      setFitViewToken((n) => n + 1);
+    },
+    [
+      describeCopy.defaultBoardName,
+      openV2Workbench,
+      resetCanvasRuntime,
+      resetHistory,
+      setEdges,
+      setNodes,
+    ],
+  );
+
+  const planDescribeBoard = useCallback(
+    async (
+      description: string,
+      refs: UltraDescribeAssetRef[] = [],
+      opts?: { fromJobBrief?: boolean },
+    ) => {
+      const fromJobBrief = Boolean(opts?.fromJobBrief);
+      if (fromJobBrief) {
+        setJobBriefError(null);
+        setJobBriefPlanning(true);
+      } else {
+        setDescribePlanError(null);
+      }
+      try {
+        const res = await fetch("/api/ultra-plan-board", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            description,
+            labels: m.ultraCanvas.nodeLabels,
+            refs,
+          }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          title?: string;
+          qualityNote?: string;
+          snapshot?: Parameters<typeof deserializeUltraCanvasSnapshot>[0];
+        };
+        if (!res.ok || !data.snapshot) {
+          throw new Error(data.error || describeCopy.planFailed);
+        }
+        setJobBrief(description.trim());
+        setJobBriefRefs(refs);
+        setJobBriefPlanRevision((n) => n + 1);
+        setJobBriefError(null);
+        applyDescribedGraph({
+          title: data.title || describeCopy.defaultBoardName,
+          qualityNote: data.qualityNote,
+          snapshot: data.snapshot,
+        });
+      } catch (e: unknown) {
+        const msg =
+          e instanceof Error ? e.message : describeCopy.planFailed;
+        if (fromJobBrief) setJobBriefError(msg);
+        else setDescribePlanError(msg);
+      } finally {
+        if (fromJobBrief) setJobBriefPlanning(false);
+      }
+    },
+    [
+      applyDescribedGraph,
+      describeCopy.defaultBoardName,
+      describeCopy.planFailed,
+      m.ultraCanvas.nodeLabels,
+    ],
+  );
+
+  const requestJobBriefUpdate = useCallback(
+    (description: string, refs: UltraDescribeAssetRef[]) => {
+      if (!guardBusyNav()) return;
+      askConfirm(
+        describeCopy.jobBriefConfirmTitle,
+        describeCopy.jobBriefConfirm,
+        () => {
+          void planDescribeBoard(description, refs, { fromJobBrief: true });
+        },
+        true,
+      );
+    },
+    [
+      askConfirm,
+      describeCopy.jobBriefConfirm,
+      describeCopy.jobBriefConfirmTitle,
+      guardBusyNav,
+      planDescribeBoard,
+    ],
+  );
+
   const openStartPicker = useCallback(() => {
     if (!guardBusyNav()) return;
     askConfirm(
-      u2.changeStartConfirmTitle,
-      u2.changeStartConfirm,
+      isDescribe
+        ? describeCopy.changeStartConfirmTitle
+        : u2.changeStartConfirmTitle,
+      isDescribe ? describeCopy.changeStartConfirm : u2.changeStartConfirm,
       () => {
-        setWorkflowPickerOpen(true);
+        if (isDescribe) {
+          setDescribePickerOpen(true);
+          setWorkflowPickerOpen(false);
+        } else {
+          setWorkflowPickerOpen(true);
+          setDescribePickerOpen(false);
+        }
         void refreshPickerBoards();
       },
       false,
     );
   }, [
     askConfirm,
+    describeCopy.changeStartConfirm,
+    describeCopy.changeStartConfirmTitle,
     guardBusyNav,
+    isDescribe,
     refreshPickerBoards,
     u2.changeStartConfirm,
     u2.changeStartConfirmTitle,
@@ -799,11 +960,53 @@ function ProCanvasBoard({
     scheduleHistory();
   }, [markDirty, scheduleHistory]);
 
+  /**
+   * Local picks must become durable library URLs ASAP.
+   * Keeping only blob:+in-memory File meant compose could show a preview that never
+   * reached fal (File lost on remount / reset) — same path as library picks after promote.
+   */
   const onUploadFile = useCallback(
     (nodeId: string, file: File) => {
       uploadFiles.current.set(nodeId, file);
-      const previewUrl = URL.createObjectURL(file);
-      updateNodeData(nodeId, { fileName: file.name, previewUrl, error: undefined });
+      const blobUrl = URL.createObjectURL(file);
+      updateNodeData(nodeId, {
+        fileName: file.name,
+        previewUrl: blobUrl,
+        error: undefined,
+      });
+      const session = canvasSessionRef.current;
+      void (async () => {
+        try {
+          const url = await uploadCanvasAsset(file);
+          if (session !== canvasSessionRef.current) return;
+          // Only clear if this File is still the pending pick for the node.
+          if (uploadFiles.current.get(nodeId) === file) {
+            uploadFiles.current.delete(nodeId);
+          }
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch {
+            /* ignore */
+          }
+          updateNodeData(
+            nodeId,
+            { fileName: file.name, previewUrl: url, error: undefined },
+            session,
+          );
+        } catch (e: unknown) {
+          if (session !== canvasSessionRef.current) return;
+          updateNodeData(
+            nodeId,
+            {
+              error:
+                e instanceof Error
+                  ? e.message
+                  : "Upload failed — re-attach the image before running.",
+            },
+            session,
+          );
+        }
+      })();
     },
     [updateNodeData],
   );
@@ -811,8 +1014,44 @@ function ProCanvasBoard({
   const onUploadAudio = useCallback(
     (nodeId: string, file: File) => {
       audioFiles.current.set(nodeId, file);
-      const previewUrl = URL.createObjectURL(file);
-      updateNodeData(nodeId, { fileName: file.name, audioUrl: previewUrl, error: undefined });
+      const blobUrl = URL.createObjectURL(file);
+      updateNodeData(nodeId, {
+        fileName: file.name,
+        audioUrl: blobUrl,
+        error: undefined,
+      });
+      const session = canvasSessionRef.current;
+      void (async () => {
+        try {
+          const url = await uploadCanvasAsset(file);
+          if (session !== canvasSessionRef.current) return;
+          if (audioFiles.current.get(nodeId) === file) {
+            audioFiles.current.delete(nodeId);
+          }
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch {
+            /* ignore */
+          }
+          updateNodeData(
+            nodeId,
+            { fileName: file.name, audioUrl: url, error: undefined },
+            session,
+          );
+        } catch (e: unknown) {
+          if (session !== canvasSessionRef.current) return;
+          updateNodeData(
+            nodeId,
+            {
+              error:
+                e instanceof Error
+                  ? e.message
+                  : "Upload failed — re-attach the audio before running.",
+            },
+            session,
+          );
+        }
+      })();
     },
     [updateNodeData],
   );
@@ -953,12 +1192,15 @@ function ProCanvasBoard({
             backgroundCustom: data.backgroundCustom,
           },
         });
+        // Fingerprint after durable source URLs landed (blob → library), not the start snapshot.
+        const fpNodes = getLiveNodes();
+        const fpEdges = getLiveEdges();
         updateNodeData(
           nodeId,
           {
             imageUrl,
             busy: false,
-            ...{ outputInputFingerprint: computeNodeInputFingerprint(nodeId, allNodes, allEdges) },
+            outputInputFingerprint: computeNodeInputFingerprint(nodeId, fpNodes, fpEdges),
           },
           session,
         );
@@ -2906,11 +3148,15 @@ function ProCanvasBoard({
           dirtyRef.current = false;
           setIsDirty(false);
           setWorkflowId(null);
-          setWorkflowPickerOpen(true);
+          setWorkflowPickerOpen(!isDescribe);
+          setDescribePickerOpen(isDescribe);
+          setDescribeQualityNote(null);
+          setDescribePlanError(null);
           resetHistory({ nodes: [], edges: [] });
           try {
             sessionStorage.removeItem(ULTRA2_WORKFLOW_SESSION_KEY);
-            localStorage.removeItem(ULTRA2_DRAFT_KEY);
+            sessionStorage.removeItem(ULTRA2_DESCRIBE_SESSION_KEY);
+            localStorage.removeItem(draftStorageKey);
           } catch {
             /* ignore */
           }
@@ -2942,7 +3188,9 @@ function ProCanvasBoard({
     );
   }, [
     askConfirm,
+    draftStorageKey,
     guardBusyNav,
+    isDescribe,
     isV2,
     m.ultraCanvas.nodeLabels,
     m.ultraCanvas.toolbar.clearBoardConfirm,
@@ -2994,7 +3242,7 @@ function ProCanvasBoard({
       setIsDirty(false);
       if (isV2) {
         try {
-          localStorage.removeItem(ULTRA2_DRAFT_KEY);
+          localStorage.removeItem(draftStorageKey);
         } catch {
           /* ignore */
         }
@@ -3004,7 +3252,7 @@ function ProCanvasBoard({
     } finally {
       setSaving(false);
     }
-  }, [boardBusy, boardId, boardName, getLiveEdges, getLiveNodes, isV2, m.ultraCanvas.busyNavBlocked, persistLocalAssetsBeforeSave]);
+  }, [boardBusy, boardId, boardName, draftStorageKey, getLiveEdges, getLiveNodes, isV2, m.ultraCanvas.busyNavBlocked, persistLocalAssetsBeforeSave]);
 
   const deleteBoard = useCallback(
     (id: string) => {
@@ -3115,6 +3363,7 @@ function ProCanvasBoard({
             dirtyRef.current = false;
             setIsDirty(false);
             setWorkflowPickerOpen(false);
+            setDescribePickerOpen(false);
             resetHistory({ nodes: marked, edges: restored.edges });
             if (isV2) {
               setDesktopPaletteOpen(true);
@@ -3172,7 +3421,7 @@ function ProCanvasBoard({
           nodeCounter,
         );
         localStorage.setItem(
-          ULTRA2_DRAFT_KEY,
+          draftStorageKey,
           JSON.stringify({
             at: Date.now(),
             boardName,
@@ -3186,13 +3435,23 @@ function ProCanvasBoard({
       }
     }, 800);
     return () => window.clearTimeout(t);
-  }, [boardId, boardName, getLiveEdges, getLiveNodes, isDirty, isV2, dirtyTick, workflowId]);
+  }, [
+    boardId,
+    boardName,
+    draftStorageKey,
+    getLiveEdges,
+    getLiveNodes,
+    isDirty,
+    isV2,
+    dirtyTick,
+    workflowId,
+  ]);
 
   /** Ultra 2: offer restore of local draft once on mount. */
   useEffect(() => {
     if (!isV2) return;
     try {
-      const raw = localStorage.getItem(ULTRA2_DRAFT_KEY);
+      const raw = localStorage.getItem(draftStorageKey);
       if (!raw) return;
       const parsed = JSON.parse(raw) as {
         at?: number;
@@ -3203,7 +3462,7 @@ function ProCanvasBoard({
       };
       if (!parsed.snapshot || !parsed.at) return;
       if (Date.now() - parsed.at > 7 * 24 * 60 * 60 * 1000) {
-        localStorage.removeItem(ULTRA2_DRAFT_KEY);
+        localStorage.removeItem(draftStorageKey);
         return;
       }
       const restored = deserializeUltraCanvasSnapshot(parsed.snapshot);
@@ -3217,6 +3476,7 @@ function ProCanvasBoard({
       if (parsed.boardId) setBoardId(parsed.boardId);
       if (isUltra2WorkflowId(parsed.workflowId)) setWorkflowId(parsed.workflowId);
       setWorkflowPickerOpen(false);
+      setDescribePickerOpen(false);
       setRestoreBanner(true);
       dirtyRef.current = true;
       setIsDirty(true);
@@ -3228,9 +3488,9 @@ function ProCanvasBoard({
     } catch {
       /* ignore */
     }
-    // Mount-only restore for Ultra 2.
+    // Mount-only restore for Ultra 2 / describe (key isolated per startMode).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isV2]);
+  }, [isV2, draftStorageKey]);
 
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -3497,12 +3757,20 @@ function ProCanvasBoard({
       <div
         id="ultra-canvas-board"
         data-ultra-canvas-board
-        className={`relative min-h-[640px] h-[calc(100dvh-9.5rem)] w-full overflow-hidden rounded-2xl border shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5 ${
+        className={`relative w-full overflow-hidden rounded-2xl border shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5 ${
+          isDescribe
+            ? "h-full min-h-0"
+            : "min-h-[640px] h-[calc(100dvh-9.5rem)]"
+        } ${
           isV2
             ? "border-cyan-500/20 bg-[#070b14]"
             : "border-slate-200 bg-slate-950"
         }`}
-        style={{ minHeight: 640, height: "calc(100dvh - 9.5rem)" }}
+        style={
+          isDescribe
+            ? { height: "100%", minHeight: 0 }
+            : { minHeight: 640, height: "calc(100dvh - 9.5rem)" }
+        }
       >
         {boardBusy ? (
           <div
@@ -3533,6 +3801,47 @@ function ProCanvasBoard({
             >
               {u2.dismissRestore}
             </button>
+          </div>
+        ) : null}
+        {isDescribe && !describePickerOpen ? (
+          <div className="pointer-events-none absolute left-1/2 top-3 z-30 flex w-[min(calc(100%-1.5rem),28rem)] -translate-x-1/2 flex-col items-center gap-2">
+            {describeQualityNote ? (
+              <div className="pointer-events-auto flex w-full items-start gap-2 rounded-xl border border-amber-400/35 bg-amber-950/90 px-3 py-2 text-[11px] text-amber-50 shadow-lg">
+                <span className="min-w-0 flex-1">{describeQualityNote}</span>
+                <button
+                  type="button"
+                  className="shrink-0 underline"
+                  onClick={() => setDescribeQualityNote(null)}
+                >
+                  {u2.dismissRestore}
+                </button>
+              </div>
+            ) : null}
+            <Ultra2JobBriefPanel
+              visible={nodes.length > 0 || Boolean(jobBrief.trim())}
+              planRevision={jobBriefPlanRevision}
+              description={jobBrief}
+              refs={jobBriefRefs}
+              planning={jobBriefPlanning}
+              error={jobBriefError}
+              labels={{
+                title: describeCopy.jobBriefTitle,
+                hint: describeCopy.jobBriefHint,
+                placeholder: describeCopy.placeholder,
+                updateLabel: describeCopy.jobBriefUpdate,
+                updatingLabel: describeCopy.jobBriefUpdating,
+                expandLabel: describeCopy.jobBriefExpand,
+                collapseLabel: describeCopy.jobBriefCollapse,
+                unchangedHint: describeCopy.jobBriefUnchanged,
+                dirtyBadge: describeCopy.jobBriefDirtyBadge,
+                refsTitle: describeCopy.refsTitle,
+                refsHint: describeCopy.refsHint,
+                refsAddLabel: describeCopy.refsAddLabel,
+                refsUploadingLabel: describeCopy.refsUploadingLabel,
+                qualityHint: describeCopy.qualityHint,
+              }}
+              onRequestUpdate={requestJobBriefUpdate}
+            />
           </div>
         ) : null}
         <div className="pointer-events-none absolute inset-0 z-0">
@@ -3719,7 +4028,7 @@ function ProCanvasBoard({
             action?.();
           }}
         />
-        {isV2 ? (
+        {isV2 && !isDescribe ? (
           <Ultra2WorkflowSelector
             open={workflowPickerOpen}
             title={u2.howTitle}
@@ -3779,6 +4088,78 @@ function ProCanvasBoard({
             }
           />
         ) : null}
+        {isDescribe ? (
+          <Ultra2DescribeSelector
+            open={describePickerOpen}
+            title={describeCopy.howTitle}
+            subtitle={describeCopy.howSubtitle}
+            placeholder={describeCopy.placeholder}
+            qualityHint={describeCopy.qualityHint}
+            planLabel={describeCopy.planLabel}
+            planningLabel={describeCopy.planningLabel}
+            refsTitle={describeCopy.refsTitle}
+            refsHint={describeCopy.refsHint}
+            refsAddLabel={describeCopy.refsAddLabel}
+            refsUploadingLabel={describeCopy.refsUploadingLabel}
+            templatesTitle={describeCopy.templatesTitle}
+            templatesSubtitle={describeCopy.templatesSubtitle}
+            templateCards={[
+              {
+                id: "textToImage",
+                title: u2.cards.textToImage.title,
+                desc: u2.cards.textToImage.desc,
+                flow: u2.cards.textToImage.flow,
+              },
+              {
+                id: "refToImage",
+                title: u2.cards.refToImage.title,
+                desc: u2.cards.refToImage.desc,
+                flow: u2.cards.refToImage.flow,
+              },
+              {
+                id: "imagesToVideo",
+                title: u2.cards.imagesToVideo.title,
+                desc: u2.cards.imagesToVideo.desc,
+                flow: u2.cards.imagesToVideo.flow,
+              },
+              {
+                id: "storyboard",
+                title: u2.cards.storyboard.title,
+                desc: u2.cards.storyboard.desc,
+                flow: u2.cards.storyboard.flow,
+              },
+              {
+                id: "scratch",
+                title: u2.cards.scratch.title,
+                desc: u2.cards.scratch.desc,
+                flow: u2.cards.scratch.flow,
+              },
+            ]}
+            useWorkflowLabel={u2.useWorkflow}
+            recommendedLabel={u2.recommended}
+            loadTitle={u2.loadSavedTitle}
+            loadHint={u2.loadSavedHint}
+            loadEmpty={u2.loadSavedEmpty}
+            continueLabel={u2.continueBoard}
+            error={describePlanError}
+            boards={pickerBoards}
+            boardsLoading={pickerBoardsLoading}
+            onPlan={planDescribeBoard}
+            onPickTemplate={applyUltra2Workflow}
+            onLoadBoard={(id) => {
+              setDescribePickerOpen(false);
+              loadBoard(id);
+            }}
+            onContinue={
+              nodes.length > 0
+                ? () => {
+                    setDescribePickerOpen(false);
+                    openV2Workbench();
+                  }
+                : undefined
+            }
+          />
+        ) : null}
       </div>
     </ProCanvasActionsProvider>
   );
@@ -3788,13 +4169,19 @@ function ProCanvasBoard({
 export function ProCanvas({
   initialTemplate,
   uxVariant = "v1",
+  startMode = "workflow",
 }: {
   initialTemplate?: string | null;
   uxVariant?: "v1" | "v2";
+  startMode?: "workflow" | "describe";
 } = {}) {
   return (
     <ReactFlowProvider>
-      <ProCanvasBoard initialTemplate={initialTemplate} uxVariant={uxVariant} />
+      <ProCanvasBoard
+        initialTemplate={initialTemplate}
+        uxVariant={uxVariant}
+        startMode={startMode}
+      />
     </ReactFlowProvider>
   );
 }
