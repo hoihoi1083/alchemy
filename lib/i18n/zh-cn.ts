@@ -102,7 +102,7 @@ export const zhCn = {
       revoked: "已撤销",
       howtoTitle: "如何测试",
       howtoBody:
-        "不必只用 Grok。创建密钥后：(1) 用 curl 或 Cursor MCP ping 上面的 URL，(2) 带 Authorization: Bearer alk_… 调用 alchemy_whoami，(3) 可选 alchemy_generate_image。ChatGPT Developer Mode 支持 remote MCP；自定义 GPT 也可用 Actions 调用 Studio API。",
+        "不必只用 Grok。创建密钥后 ping → alchemy_whoami。工具：出图/改图、视频、storyboard（Pro）、list_library（签名 URL）、brand_kit + stamp_logo、generate_campaign（Standard+）。ChatGPT Developer Mode 支持 remote MCP。",
     },
     manageBilling: "管理账单",
     portalRedirecting: "正在打开 Stripe…",

@@ -169,7 +169,7 @@ export const en = {
 			revoked: "Revoked",
 			howtoTitle: "How to test",
 			howtoBody:
-				"You do not need Grok only. After creating a key: (1) ping with curl or Cursor MCP at the URL above, (2) call alchemy_whoami with Authorization: Bearer alk_…, (3) optionally alchemy_generate_image. ChatGPT supports remote MCP in Developer Mode; custom GPTs can also use Actions against Studio APIs.",
+				"You do not need Grok only. After creating a key: ping, then alchemy_whoami with Authorization: Bearer alk_…. Tools: generate/edit image, video, storyboard (Pro), list_library (signed URLs), brand_kit + stamp_logo, generate_campaign (Standard+).",
 		},
 		team: {
 			title: "Enterprise seats",

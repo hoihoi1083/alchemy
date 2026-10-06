@@ -3,7 +3,7 @@ import { alchemyGrokMcpHandler } from "@/lib/mcp/alchemy-grok-server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 /** Image generation via fal may exceed the default serverless window. */
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 /**
  * Public Alchemy MCP endpoint for Grok Bot, Cursor, ChatGPT MCP, etc.

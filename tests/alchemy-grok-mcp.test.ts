@@ -7,6 +7,10 @@ import {
   MCP_API_KEY_PREFIX,
 } from "../lib/mcp/api-keys";
 import { clerkIdFromMcpAuth, mcpAuthRequiredText } from "../lib/mcp/auth";
+import { estimateCampaignTokens } from "../lib/billing/token-costs";
+import { resolveMcpMediaUrl } from "../lib/mcp/library";
+import { parsePublicHttpsMediaUrl } from "../lib/mcp/public-media-url";
+import { libraryAssetIdFromUrl } from "../lib/storage/library-asset-url";
 
 describe("alchemy grok MCP", () => {
   it("exports a request handler", () => {
@@ -59,5 +63,45 @@ describe("alchemy grok MCP", () => {
       "user_123",
     );
     assert.match(mcpAuthRequiredText(), /Unauthorized|alk_/);
+  });
+});
+
+describe("mcp public media urls", () => {
+  it("accepts https and rejects localhost", () => {
+    assert.ok(parsePublicHttpsMediaUrl("https://cdn.example.com/car.png"));
+    assert.equal(parsePublicHttpsMediaUrl("http://cdn.example.com/car.png"), null);
+    assert.equal(parsePublicHttpsMediaUrl("https://localhost/x.png"), null);
+    assert.equal(parsePublicHttpsMediaUrl("/tmp/car.png"), null);
+  });
+});
+
+describe("mcp library + campaign", () => {
+  it("extracts library asset ids from durable URLs", () => {
+    const id = "507f1f77bcf86cd799439011";
+    assert.equal(libraryAssetIdFromUrl(`/api/library/download/${id}`), id);
+    assert.equal(
+      libraryAssetIdFromUrl(`https://www.alchemyailab.com/api/library/download/${id}?inline=1`),
+      id,
+    );
+  });
+
+  it("requires a public URL or library id", async () => {
+    const res = await resolveMcpMediaUrl({ clerkId: "user_x" });
+    assert.equal(res.ok, false);
+    if (!res.ok) assert.match(res.error, /image_url|library_asset_id/);
+  });
+
+  it("rejects localhost image_url", async () => {
+    const res = await resolveMcpMediaUrl({
+      clerkId: "user_x",
+      imageUrl: "https://localhost/x.png",
+    });
+    assert.equal(res.ok, false);
+  });
+
+  it("campaign token estimate is plan + 3 stills", () => {
+    const n = estimateCampaignTokens("1K");
+    assert.ok(n > 100);
+    assert.equal(n, estimateCampaignTokens("1K"));
   });
 });
