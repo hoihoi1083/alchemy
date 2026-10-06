@@ -29,6 +29,9 @@ const isPublicRoute = createRouteMatcher([
   "/api/sample-pack-download/(.*)",
   // First-party campaign short links (RedNote / social → UTM landing for Mixpanel).
   "/r(.*)",
+  // Grok Bot / remote MCP — public discovery + tools (auth added per-tool later).
+  "/api/grok-mcp",
+  "/api/grok-mcp/(.*)",
   // Vercel Cron — verified via CRON_SECRET in the route handler.
   "/api/cron/replay-pending-refunds(.*)",
 ]);

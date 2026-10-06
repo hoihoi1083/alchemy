@@ -146,6 +146,31 @@ export const en = {
 		cancelError: "Could not cancel. Try Manage billing or contact support.",
 		trialActiveNote: "Pro trial active — cancels or converts on {date}.",
 		tokenExpiryNote: "Tokens expire 6 months after they are granted. Oldest tokens are used first.",
+		mcpKeys: {
+			title: "Alchemy MCP API keys",
+			subtitle:
+				"Connect Grok Bot, Cursor, or ChatGPT MCP to your Alchemy wallet. Keys start with alk_ — treat them like passwords.",
+			endpointLabel: "MCP URL",
+			create: "Create key",
+			creating: "Creating…",
+			labelPlaceholder: "Label (optional)",
+			empty: "No keys yet.",
+			copySecret: "Copy secret",
+			copied: "Copied",
+			secretOnce:
+				"Copy this secret now. It will not be shown again.",
+			revoke: "Revoke",
+			revokeConfirm: "Revoke this MCP key? Clients using it will stop working.",
+			loadError: "Could not load MCP keys.",
+			createError: "Could not create MCP key.",
+			revokeError: "Could not revoke MCP key.",
+			lastUsed: "Last used {date}",
+			neverUsed: "Never used",
+			revoked: "Revoked",
+			howtoTitle: "How to test",
+			howtoBody:
+				"You do not need Grok only. After creating a key: (1) ping with curl or Cursor MCP at the URL above, (2) call alchemy_whoami with Authorization: Bearer alk_…, (3) optionally alchemy_generate_image. ChatGPT supports remote MCP in Developer Mode; custom GPTs can also use Actions against Studio APIs.",
+		},
 		team: {
 			title: "Enterprise seats",
 			seatsUsed: "Seats used: {held} / {limit}",

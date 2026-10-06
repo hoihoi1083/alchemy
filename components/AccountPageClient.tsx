@@ -70,6 +70,15 @@ type TeamMembershipSummary = {
   ownerLabel: string | null;
 };
 
+type McpKeyRow = {
+  keyId: string;
+  prefix: string;
+  label: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+};
+
 function formatDate(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -103,6 +112,30 @@ export function AccountPageClient() {
   const [teamNotice, setTeamNotice] = useState<string | null>(null);
   const [teamBusy, setTeamBusy] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [mcpKeys, setMcpKeys] = useState<McpKeyRow[]>([]);
+  const [mcpLabel, setMcpLabel] = useState("");
+  const [mcpBusy, setMcpBusy] = useState<string | null>(null);
+  const [mcpError, setMcpError] = useState<string | null>(null);
+  const [mcpSecret, setMcpSecret] = useState<string | null>(null);
+  const [mcpCopied, setMcpCopied] = useState(false);
+  const mcpCopy = a.mcpKeys;
+  const mcpEndpoint =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/api/grok-mcp`
+      : "https://www.alchemyailab.com/api/grok-mcp";
+
+  async function loadMcpKeys() {
+    setMcpError(null);
+    try {
+      const res = await fetch("/api/mcp-keys");
+      if (res.status === 401) return;
+      if (!res.ok) throw new Error(mcpCopy.loadError);
+      const data = (await res.json()) as { keys?: McpKeyRow[] };
+      setMcpKeys(data.keys ?? []);
+    } catch (e) {
+      setMcpError(e instanceof Error ? e.message : mcpCopy.loadError);
+    }
+  }
 
   async function load() {
     setError(null);
@@ -144,10 +177,69 @@ export function AccountPageClient() {
       } else {
         setTeam(null);
       }
+      await loadMcpKeys();
     } catch (e) {
       setError(e instanceof Error ? e.message : a.loadError);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function createMcpKey() {
+    setMcpBusy("create");
+    setMcpError(null);
+    setMcpSecret(null);
+    setMcpCopied(false);
+    try {
+      const res = await fetch("/api/mcp-keys", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ label: mcpLabel.trim() || undefined }),
+      });
+      const data = (await res.json()) as {
+        secret?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.secret) {
+        throw new Error(data.error ?? mcpCopy.createError);
+      }
+      setMcpSecret(data.secret);
+      setMcpLabel("");
+      await loadMcpKeys();
+    } catch (e) {
+      setMcpError(e instanceof Error ? e.message : mcpCopy.createError);
+    } finally {
+      setMcpBusy(null);
+    }
+  }
+
+  async function revokeMcpKey(keyId: string) {
+    if (!window.confirm(mcpCopy.revokeConfirm)) return;
+    setMcpBusy(keyId);
+    setMcpError(null);
+    try {
+      const res = await fetch("/api/mcp-keys", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ keyId }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? mcpCopy.revokeError);
+      await loadMcpKeys();
+    } catch (e) {
+      setMcpError(e instanceof Error ? e.message : mcpCopy.revokeError);
+    } finally {
+      setMcpBusy(null);
+    }
+  }
+
+  async function copyMcpSecret() {
+    if (!mcpSecret) return;
+    try {
+      await navigator.clipboard.writeText(mcpSecret);
+      setMcpCopied(true);
+    } catch {
+      setMcpError(mcpCopy.createError);
     }
   }
 
@@ -514,6 +606,104 @@ export function AccountPageClient() {
               {!user?.stripeCustomerId ? (
                 <p className="mt-3 text-xs text-slate-500">{a.portalNeedSubscribe}</p>
               ) : null}
+            </section>
+
+            <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+              <h2 className="text-xl font-semibold tracking-tight">{mcpCopy.title}</h2>
+              <p className="mt-2 text-sm text-slate-600">{mcpCopy.subtitle}</p>
+              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                {mcpCopy.endpointLabel}
+              </p>
+              <code className="mt-1 block break-all rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-800">
+                {mcpEndpoint}
+              </code>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  value={mcpLabel}
+                  onChange={(e) => setMcpLabel(e.target.value)}
+                  placeholder={mcpCopy.labelPlaceholder}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
+                />
+                <button
+                  type="button"
+                  disabled={Boolean(mcpBusy)}
+                  onClick={() => void createMcpKey()}
+                  className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {mcpBusy === "create" ? mcpCopy.creating : mcpCopy.create}
+                </button>
+              </div>
+
+              {mcpSecret ? (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  <p className="font-medium">{mcpCopy.secretOnce}</p>
+                  <code className="mt-2 block break-all text-xs">{mcpSecret}</code>
+                  <button
+                    type="button"
+                    onClick={() => void copyMcpSecret()}
+                    className="mt-3 rounded-full border border-amber-300 bg-white px-4 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                  >
+                    {mcpCopied ? mcpCopy.copied : mcpCopy.copySecret}
+                  </button>
+                </div>
+              ) : null}
+
+              {mcpError ? (
+                <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {mcpError}
+                </p>
+              ) : null}
+
+              <ul className="mt-6 space-y-3">
+                {mcpKeys.length === 0 ? (
+                  <li className="text-sm text-slate-500">{mcpCopy.empty}</li>
+                ) : (
+                  mcpKeys.map((key) => {
+                    const revoked = Boolean(key.revokedAt);
+                    return (
+                      <li
+                        key={key.keyId}
+                        className="flex flex-col gap-2 rounded-xl border border-slate-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <p className="font-mono text-sm text-slate-900">
+                            {key.prefix}…
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {key.label}
+                            {" · "}
+                            {revoked
+                              ? mcpCopy.revoked
+                              : key.lastUsedAt
+                                ? mcpCopy.lastUsed.replace(
+                                    "{date}",
+                                    formatDate(key.lastUsedAt, locale),
+                                  )
+                                : mcpCopy.neverUsed}
+                          </p>
+                        </div>
+                        {!revoked ? (
+                          <button
+                            type="button"
+                            disabled={Boolean(mcpBusy)}
+                            onClick={() => void revokeMcpKey(key.keyId)}
+                            className="rounded-full border border-red-200 px-4 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            {mcpBusy === key.keyId ? "…" : mcpCopy.revoke}
+                          </button>
+                        ) : null}
+                      </li>
+                    );
+                  })
+                )}
+              </ul>
+
+              <div className="mt-6 rounded-xl bg-slate-50 px-4 py-3">
+                <p className="text-sm font-medium text-slate-800">{mcpCopy.howtoTitle}</p>
+                <p className="mt-1 text-sm text-slate-600">{mcpCopy.howtoBody}</p>
+              </div>
             </section>
 
             {teamMembership?.role === "member" && !team ? (

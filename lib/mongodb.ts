@@ -114,6 +114,10 @@ async function createAllIndexes(db: Db): Promise<void> {
     { unique: true, partialFilterExpression: { revokedAt: null, acceptedAt: null } },
   );
   await db.collection("team_invites").createIndex({ expiresAt: 1 });
+  // Alchemy MCP personal API keys (Grok / Cursor / ChatGPT).
+  await db.collection("mcp_api_keys").createIndex({ keyHash: 1 }, { unique: true });
+  await db.collection("mcp_api_keys").createIndex({ keyId: 1 }, { unique: true });
+  await db.collection("mcp_api_keys").createIndex({ clerkId: 1, createdAt: -1 });
 }
 
 /** Idempotent index ensure — shared by getDb (fire-and-forget) and /api/db-health. */
