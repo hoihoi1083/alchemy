@@ -32,10 +32,11 @@ export function buildWizardImageExpectation(input: {
   const product = input.product.trim() || "the promoted product";
   const headline = input.headline?.trim();
   if (input.imageTextMode === "textless") {
+    // Do not quote headline/offer words — listing them biases the vision model.
     return join(
-      `Clean product/scene ad still for ${product}.`,
-      headline ? `Campaign mood (not rendered as text): ${headline}.` : "",
-      "No on-image text, logos, or watermarks — copy is added later in the editor.",
+      `Clean TEXTLESS product/scene plate for ${product}.`,
+      "ZERO overlaid marketing typography — no headlines, slogans, CTAs, captions, title bars, speech bubbles, or gibberish letters in any language.",
+      "Only real product packaging labels printed on the physical product may remain.",
       "Product should be recognizable and well lit.",
     );
   }
@@ -49,9 +50,37 @@ export function buildWizardImageExpectation(input: {
 
 export function wizardImageMustAvoid(imageTextMode?: "integrated" | "textless"): string[] {
   if (imageTextMode === "textless") {
-    return ["garbled on-image text", "random watermarks", "wrong product category"];
+    return [
+      "any overlaid campaign headline, slogan, CTA, caption, or title bar",
+      "English or Chinese marketing lettering painted onto the frame",
+      "garbled or gibberish on-image text",
+      "random watermarks or invented logos",
+      "wrong product category",
+    ];
   }
   return ["garbled or misspelled on-image text", "wrong product category", "unreadable typography"];
+}
+
+const TEXTLESS_TEXT_MARKERS =
+  /headline|slogan|caption|typography|on-image text|lettering|title\s*bar|cta|watermark|garbled|gibberish|masthead|readable text|painted text|marketing copy|writing on|overlaid text|文字|标题|標題|口號|口号|標語|标语/i;
+
+/** True when vision says a Textless still still has campaign typography. */
+export function hasTextlessTypographyViolation(
+  review: ImageVisionReview | null | undefined,
+): boolean {
+  if (!review || review.skipped) return false;
+  const blob = [review.summary, ...(review.issues ?? [])].join(" ");
+  if ((review.issues ?? []).some((issue) => TEXTLESS_TEXT_MARKERS.test(issue))) {
+    return true;
+  }
+  if (!review.matchesExpectation && TEXTLESS_TEXT_MARKERS.test(blob)) {
+    return true;
+  }
+  // Soft fail: expectation miss + text-ish summary at mid score.
+  if (!review.matchesExpectation && review.score < 75 && /text|type|copy|letter/i.test(blob)) {
+    return true;
+  }
+  return false;
 }
 
 /** Warn in UI when score is low or issues mention garbled text. */

@@ -164,7 +164,16 @@ import {
 } from "@/lib/reference-strategy";
 import { ensureOptimizedSceneEssay } from "@/lib/optimize-reference-scene-prompt";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
-import { enforceTextlessPrompt } from "@/lib/image-text-mode";
+import {
+  enforceTextlessPrompt,
+  TEXTLESS_RETRY_SUFFIX,
+} from "@/lib/image-text-mode";
+import {
+  buildWizardImageExpectation,
+  hasTextlessTypographyViolation,
+  wizardImageMustAvoid,
+} from "@/lib/image-vision-gate";
+import { reviewPipelineOutput } from "@/lib/pipeline-smoke-review";
 import { resolveCompositionPresetId } from "@/lib/composition-presets";
 import {
   planSingleImageAd,
@@ -173,7 +182,8 @@ import {
 } from "@/lib/single-image-plan";
 
 export const runtime = "nodejs";
-export const maxDuration = 180;
+/** A/B textless may need vision QA + one free remake per variant. */
+export const maxDuration = 240;
 
 function extractImageUrls(resultData: unknown): string[] {
   if (!resultData || typeof resultData !== "object") return [];
@@ -1628,16 +1638,17 @@ export async function POST(request: Request) {
         imageTextMode === "textless" ||
         (motionPoster && posterFrame !== "end") ||
         (impactPoster && impactPosterFrame !== "end");
+      const styleSystem = artStyleSystemPrompt(artStyleId, {
+        textless: wantTextlessSystem,
+      });
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {
-          systemPrompt: artStyleSystemPrompt(artStyleId, {
-            textless: wantTextlessSystem,
-          }),
+          systemPrompt: styleSystem,
           resolution: imageResolution,
         }),
         logs: true,
       });
-      const outUrls = extractImageUrls(result.data);
+      let outUrls = extractImageUrls(result.data);
       if (!outUrls.length) {
         await refundTokens(auth.user.userId, tokenCost, {
           kind: "image",
@@ -1651,6 +1662,55 @@ export async function POST(request: Request) {
           },
           { status: 502 },
         );
+      }
+
+      // Textless: Nano Banana still paints type ~sometimes (esp. A/B). Vision-QA
+      // each still and remake offenders once (no extra token charge).
+      let textlessRetries = 0;
+      if (imageTextMode === "textless") {
+        const repaired: string[] = [];
+        for (const url of outUrls) {
+          let needsRetry = false;
+          try {
+            const review = await reviewPipelineOutput({
+              imageUrl: url,
+              mediaKind: "image",
+              label: "textless-still-qa",
+              product: productName || "product",
+              expectation: buildWizardImageExpectation({
+                product: productName || "product",
+                imageTextMode: "textless",
+              }),
+              mustAvoid: wizardImageMustAvoid("textless"),
+            });
+            needsRetry = hasTextlessTypographyViolation(review);
+          } catch {
+            needsRetry = false;
+          }
+          if (!needsRetry) {
+            repaired.push(url);
+            continue;
+          }
+          try {
+            const retryPrompt = enforceTextlessPrompt(
+              [finalPrompt, TEXTLESS_RETRY_SUFFIX].filter(Boolean).join(" "),
+              "textless",
+            );
+            const retry = await fal.subscribe(endpoint, {
+              input: banana2Input(retryPrompt, imageUrls, aspectRatio, 1, {
+                systemPrompt: styleSystem,
+                resolution: imageResolution,
+              }),
+              logs: true,
+            });
+            const retryUrls = extractImageUrls(retry.data);
+            repaired.push(retryUrls[0] || url);
+            if (retryUrls[0]) textlessRetries += 1;
+          } catch {
+            repaired.push(url);
+          }
+        }
+        outUrls = repaired;
       }
 
       await trackUsage(auth.user.userId, "image");
@@ -1678,6 +1738,7 @@ export async function POST(request: Request) {
         creativeMode: useReferenceConcept ? "reference-concept" : "promo-ai",
         imageCount: imageUrls.length,
         variantCount: durable.length,
+        textlessRetries,
         tokensCharged: tokenCost,
         creditBalance: balanceAfter,
       });

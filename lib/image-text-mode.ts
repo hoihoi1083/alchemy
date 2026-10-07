@@ -59,3 +59,10 @@ export function enforceTextlessPrompt(
   const parts = [prompt.trim(), TEXTLESS_IMAGE_GUARD, TEXTLESS_IMAGE_AVOID, TEXTLESS_IMAGE_OVERRIDE];
   return parts.filter(Boolean).join(" ");
 }
+
+/** Extra lock for a one-shot regenerate after vision catches painted campaign type. */
+export const TEXTLESS_RETRY_SUFFIX =
+  "RETRY (textless QA failed): The previous still had campaign headlines, slogans, or gibberish letters. " +
+  "This remake must be a TEXTLESS background plate — ZERO overlaid characters in any language. " +
+  "Keep only real packaging labels already printed on the product in IMAGE 1 if attached. " +
+  "Leave clean empty margin for Captions later.";
