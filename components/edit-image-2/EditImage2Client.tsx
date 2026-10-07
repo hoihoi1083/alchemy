@@ -243,6 +243,12 @@ async function resolveLogoDisplayUrl(url: string): Promise<{ displayUrl: string;
   return { displayUrl: url, revoke: null };
 }
 
+/**
+ * Alignment guides + optional soft snap.
+ * Edge snap is guides-only (never force-move): layers that sit flush on the
+ * poster edge used to rubber-band back when nudged past the frame, so hanging
+ * a cutout off the right/bottom felt impossible. Center snap stays for layout.
+ */
 function snapRect(
   x: number,
   y: number,
@@ -250,6 +256,7 @@ function snapRect(
   h: number,
   stageW: number,
   stageH: number,
+  opts?: { forceCenterSnap?: boolean },
 ): { x: number; y: number; guides: GuideLine[] } {
   const guides: GuideLine[] = [];
   let nx = x;
@@ -258,26 +265,23 @@ function snapRect(
   const cy = y + h / 2;
   const midX = stageW / 2;
   const midY = stageH / 2;
+  const forceCenter = opts?.forceCenterSnap !== false;
 
   if (Math.abs(cx - midX) <= SNAP_PX) {
-    nx = midX - w / 2;
+    if (forceCenter) nx = midX - w / 2;
     guides.push({ orientation: "v", pos: midX });
   } else if (Math.abs(x) <= SNAP_PX) {
-    nx = 0;
     guides.push({ orientation: "v", pos: 0 });
   } else if (Math.abs(x + w - stageW) <= SNAP_PX) {
-    nx = stageW - w;
     guides.push({ orientation: "v", pos: stageW });
   }
 
   if (Math.abs(cy - midY) <= SNAP_PX) {
-    ny = midY - h / 2;
+    if (forceCenter) ny = midY - h / 2;
     guides.push({ orientation: "h", pos: midY });
   } else if (Math.abs(y) <= SNAP_PX) {
-    ny = 0;
     guides.push({ orientation: "h", pos: 0 });
   } else if (Math.abs(y + h - stageH) <= SNAP_PX) {
-    ny = stageH - h;
     guides.push({ orientation: "h", pos: stageH });
   }
 
@@ -395,12 +399,15 @@ function LayerSprite({
   };
 
   const onDragMoveBox = (node: Konva.Node, bw: number, bh: number) => {
-    // Show guides near edges/center, but don't force-snap mid-drag (feels stuck).
-    const probe = snapRect(node.x(), node.y(), bw, bh, stageW, stageH);
+    // Guides only mid-drag — never rewrite position (edge snap felt like a wall).
+    const probe = snapRect(node.x(), node.y(), bw, bh, stageW, stageH, {
+      forceCenterSnap: false,
+    });
     publishGuides(probe.guides);
   };
 
   const onDragEndBox = (node: Konva.Node, bw: number, bh: number) => {
+    // Soft center snap only; keep free overhang past poster edges.
     const snapped = snapRect(node.x(), node.y(), bw, bh, stageW, stageH);
     node.position({ x: snapped.x, y: snapped.y });
     draggingRef.current = false;
@@ -426,11 +433,24 @@ function LayerSprite({
     onAfterMove?.();
   };
 
-  // Free placement across / around the photo — no hard wall at the poster edge.
-  const dragBound = (pos: { x: number; y: number }) => ({
-    x: Math.min(stageW * 1.35, Math.max(-stageW * 0.85 - w, pos.x)),
-    y: Math.min(stageH * 1.35, Math.max(-stageH * 0.85 - h, pos.y)),
-  });
+  /**
+   * Konva dragBoundFunc gets/returns ABSOLUTE stage position, but layers live
+   * inside #image-plane (offset when the poster is centered). Clamping absolute
+   * x against stageW made flush-right cutouts already past the max — drag
+   * yanked them left and blocked moving further right. Clamp in parent-local
+   * space, then convert back.
+   */
+  const dragBound = function (this: Konva.Node, absPos: { x: number; y: number }) {
+    const parent = this.getParent();
+    if (!parent) return absPos;
+    const parentAbs = parent.getAbsoluteTransform().copy();
+    const local = parentAbs.copy().invert().point(absPos);
+    const clamped = {
+      x: Math.min(stageW * 1.35, Math.max(-stageW * 0.85 - w, local.x)),
+      y: Math.min(stageH * 1.35, Math.max(-stageH * 0.85 - h, local.y)),
+    };
+    return parentAbs.point(clamped);
+  };
 
   const common = {
     id: layer.id,
@@ -490,10 +510,17 @@ function LayerSprite({
           id={layer.id}
           draggable={draggable}
           listening={interactive}
-          dragBoundFunc={(pos) => ({
-            x: Math.min(stageW * 1.35, Math.max(-stageW * 0.85, pos.x)),
-            y: Math.min(stageH * 1.35, Math.max(-stageH * 0.85, pos.y)),
-          })}
+          dragBoundFunc={function (this: Konva.Node, absPos) {
+            const parent = this.getParent();
+            if (!parent) return absPos;
+            const parentAbs = parent.getAbsoluteTransform().copy();
+            const local = parentAbs.copy().invert().point(absPos);
+            const clamped = {
+              x: Math.min(stageW * 1.35, Math.max(-stageW * 0.85, local.x)),
+              y: Math.min(stageH * 1.35, Math.max(-stageH * 0.85, local.y)),
+            };
+            return parentAbs.point(clamped);
+          }}
           onClick={common.onClick}
           onTap={common.onTap}
           onDragStart={common.onDragStart}
@@ -502,7 +529,9 @@ function LayerSprite({
           onDragMove={(e) => {
             const n = e.target as Konva.Circle;
             const r = n.radius();
-            const probe = snapRect(n.x() - r, n.y() - r, r * 2, r * 2, stageW, stageH);
+            const probe = snapRect(n.x() - r, n.y() - r, r * 2, r * 2, stageW, stageH, {
+              forceCenterSnap: false,
+            });
             publishGuides(probe.guides);
           }}
           onDragEnd={(e) => {
@@ -1333,9 +1362,11 @@ export function EditImage2Client() {
         const tip = historyRef.current[historyIndexRef.current] ?? [];
         const cur = tip.find((l) => l.id === selectedId);
         if (!cur) return;
+        // Match dragBound overhang (~±35% past the poster) — old 98/-5 capped
+        // arrow nudges so cutouts flush on the right felt stuck.
         patchLayer(selectedId, {
-          xPct: Math.min(98, Math.max(-5, cur.xPct + dx)),
-          yPct: Math.min(98, Math.max(-5, cur.yPct + dy)),
+          xPct: Math.min(135, Math.max(-85, cur.xPct + dx)),
+          yPct: Math.min(135, Math.max(-85, cur.yPct + dy)),
         });
       }
     }

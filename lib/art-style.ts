@@ -346,7 +346,7 @@ export function artStyleSystemPrompt(
   const styleId = resolveArtStyleId(id);
   if (styleId === "realistic") {
     return opts?.textless
-      ? "Photoreal scene only. No written characters in any language. No title bars, captions, logos, or buttons."
+      ? "Photoreal marketing plate only. TEXTLESS HARD LOCK: ZERO campaign typography — no headlines, sublines, CTAs, captions, title bars, watermarks, badges, speech bubbles, or invented logos. No Chinese or English campaign lettering. KEEP only real product packaging labels already printed on a reference product photo. Output a clean background plate; typography is added later in Captions / canvas."
       : undefined;
   }
   const style = getArtStyle(styleId);

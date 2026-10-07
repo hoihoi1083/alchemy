@@ -164,6 +164,7 @@ import {
 } from "@/lib/reference-strategy";
 import { ensureOptimizedSceneEssay } from "@/lib/optimize-reference-scene-prompt";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
+import { enforceTextlessPrompt } from "@/lib/image-text-mode";
 import { resolveCompositionPresetId } from "@/lib/composition-presets";
 import {
   planSingleImageAd,
@@ -1592,8 +1593,10 @@ export async function POST(request: Request) {
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
       // Composition remap / layout-transfer: server has dual shell+SKU strategy — never trust a
       // stale client prompt that was rebuilt without compositionRemapDual / product lock.
+      // Textless: always prefer server-built prompt — client imagePrompt may still demand typography.
       // Honor explicit client prompts (e.g. storyboard scene regenerate) for other paths.
-      const finalPrompt = [
+      const preferBuiltPrompt =
+        imageTextMode === "textless" ||
         socialDrip ||
         motionPoster ||
         impactPoster ||
@@ -1609,25 +1612,26 @@ export async function POST(request: Request) {
         magazineCoverMorph ||
         productExplode ||
         bulletProductElevate ||
-        posterDialectStyle
-          ? builtPrompt
-          : singleImagePlan
-            ? builtPrompt
-            : strategy.kind === "composition-remap" ||
-                strategy.kind === "layout-transfer"
-              ? builtPrompt
-              : clientPrompt
-                ? clientPrompt
-                : builtPrompt,
+        posterDialectStyle ||
+        Boolean(singleImagePlan) ||
+        strategy.kind === "composition-remap" ||
+        strategy.kind === "layout-transfer";
+      const baseFinalPrompt = [
+        preferBuiltPrompt ? builtPrompt : clientPrompt || builtPrompt,
         angleHint,
       ]
         .filter(Boolean)
         .join(" ");
+      const finalPrompt = enforceTextlessPrompt(baseFinalPrompt, imageTextMode);
 
+      const wantTextlessSystem =
+        imageTextMode === "textless" ||
+        (motionPoster && posterFrame !== "end") ||
+        (impactPoster && impactPosterFrame !== "end");
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {
           systemPrompt: artStyleSystemPrompt(artStyleId, {
-            textless: motionPoster && posterFrame !== "end",
+            textless: wantTextlessSystem,
           }),
           resolution: imageResolution,
         }),

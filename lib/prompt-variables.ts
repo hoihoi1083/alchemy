@@ -12,7 +12,11 @@ import {
 	MOTION_POSTER_DIALECTS,
 	type MotionPosterDialectId,
 } from "@/lib/motion-poster-dialects";
-import { TEXTLESS_IMAGE_GUARD } from "@/lib/image-text-mode";
+import {
+	enforceTextlessPrompt,
+	TEXTLESS_IMAGE_AVOID,
+	TEXTLESS_IMAGE_GUARD,
+} from "@/lib/image-text-mode";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import {
@@ -2105,17 +2109,58 @@ export function buildWizardImagePrompt(
 ): string {
 	const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
 	const plan = promptOptions?.singleImagePlan ?? null;
+	/** Textless must never receive "paint EXACTLY ONCE" single-plan typography blocks. */
+	const planForType = vars.imageTextMode === "textless" ? null : plan;
 	const hasReferenceImage = promptOptions?.hasReferenceImage !== false;
 	const referenceImageMode =
 		promptOptions?.referenceImageMode ??
 		(hasReferenceImage ? "clone" : "none");
-	const withLogo = (prompt: string) =>
-		brandLogoImageIndex != null
-			? joinParts(
-					prompt,
-					brandKitLogoImagePromptBlock(brandLogoImageIndex),
-				)
-			: prompt;
+	const withLogo = (prompt: string) => {
+		const withBrandLogo =
+			brandLogoImageIndex != null
+				? joinParts(
+						prompt,
+						brandKitLogoImagePromptBlock(brandLogoImageIndex),
+					)
+				: prompt;
+		// Hard-enforce textless on EVERY wizard mode (type-force, reference-concept, etc.).
+		return enforceTextlessPrompt(withBrandLogo, vars.imageTextMode);
+	};
+
+	// Typography-first modes quote headlines ("paint EXACTLY ONCE") — under Textless,
+	// never send those builders; use the promo textless plate instead.
+	const typographyHeavyModes = new Set([
+		"info-poster",
+		"designed-poster",
+		"parts-poster",
+		"sports-big-words",
+		"type-force",
+		"material-letters",
+		"type-interaction",
+		"mold-word-poster",
+		"orbit-type-poster",
+		"deconstruct-archive-poster",
+		"concept-social",
+		"brand-fit",
+	]);
+	if (
+		vars.imageTextMode === "textless" &&
+		typographyHeavyModes.has(mode)
+	) {
+		const styleHint =
+			visualStyleId && getVisualStyle(visualStyleId).promptHint
+				? `Visual style direction: ${getVisualStyle(visualStyleId).promptHint}`
+				: "";
+		return withLogo(
+			joinParts(
+				buildPromoImagePrompt(vars, brandProfile, brandKit, null, {
+					hasReferenceImage,
+					referenceImageMode,
+				}),
+				styleHint,
+			),
+		);
+	}
 
   if (mode === "reference-concept") {
 		const shopHint = visualStyleId
@@ -2130,7 +2175,7 @@ export function buildWizardImagePrompt(
 						promptOptions?.structuredReferenceBrief,
 					aspectRatio: promptOptions?.aspectRatio,
 				}),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2146,7 +2191,7 @@ export function buildWizardImagePrompt(
 					dualProduct: Boolean(promptOptions?.compositionRemapDual),
 					keepHero: Boolean(promptOptions?.compositionRemapKeepHero),
 				}),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2158,7 +2203,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildInfoPosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2170,7 +2215,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildDesignedPosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2182,7 +2227,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildPartsPosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2194,7 +2239,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildGamingCoverImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2206,7 +2251,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildSportsBigWordsImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2230,7 +2275,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildTypeForceImagePrompt(vars, dialect),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2243,7 +2288,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildSpatialLayoutImagePrompt(vars, dialect),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2256,7 +2301,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildPhotoDoodleImagePrompt(vars, dialect),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2269,7 +2314,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildLightTrailImagePrompt(vars, dialect),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2284,7 +2329,7 @@ export function buildWizardImagePrompt(
 				buildScreenBreakImagePrompt(vars, dialect, {
 					conceptMode: promptOptions?.conceptMode,
 				}),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2297,7 +2342,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildMaterialLettersImagePrompt(vars, dialect),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2310,7 +2355,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildTypeInteractionImagePrompt(vars, dialect),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2322,7 +2367,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildProductLifestyleImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2334,7 +2379,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildProductHoldPosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				"Avoid: product-only catalog cutout, empty table still life with no person, floating SKU with no hand, rainbow prism lifestyle clutter.",
 			),
 		);
@@ -2343,7 +2388,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildMoldWordPosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				"Avoid: tiny flat type, product catalog with no hero words, Canva collage, missing wordplay focus.",
 			),
 		);
@@ -2352,7 +2397,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildDeconstructArchivePosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				"Avoid: missing top photo, missing bottom explode, different product in bottom half, smash debris, neon cyberpunk.",
 			),
 		);
@@ -2361,7 +2406,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildOrbitTypePosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				"Avoid: flat caption-only type, no behind-subject layering, Canva collage, neon cyberpunk.",
 			),
 		);
@@ -2370,7 +2415,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildClocheRevealPosterImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				"Avoid: missing silver tray/dome, kitchen chaos dump, neon cyberpunk, swapped product identity.",
 			),
 		);
@@ -2391,7 +2436,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildServicePromoImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2403,7 +2448,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildPricingOfferImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2415,7 +2460,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildWebsiteLaunchImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2427,7 +2472,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildConceptCinematicImagePrompt(vars),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -2439,7 +2484,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildConceptSocialImagePrompt(vars, brandProfile, {
-					singleImagePlan: plan,
+					singleImagePlan: planForType,
 					referenceImageMode,
 				}),
 				brandPromptExtras(null, brandKit),
@@ -2450,7 +2495,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildBrandFitImagePrompt(vars, brandProfile),
-				plan ? singlePlanBlock(plan) : "",
+				planForType ? singlePlanBlock(planForType) : "",
 				brandPromptExtras(null, brandKit),
 				carouselSlideAvoidClause(
 					vars.framing,
@@ -2464,7 +2509,7 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildConceptSocialImagePrompt(vars, brandProfile, {
-					singleImagePlan: plan,
+					singleImagePlan: planForType,
 					referenceImageMode,
 				}),
 				"BRAND-FIT LAYOUT: unified brand palette and typography mood — analyze website/social when available; do not invent a random product packshot.",
@@ -2478,7 +2523,7 @@ export function buildWizardImagePrompt(
 			: "";
 	return withLogo(
 		joinParts(
-			buildPromoImagePrompt(vars, brandProfile, brandKit, plan, {
+			buildPromoImagePrompt(vars, brandProfile, brandKit, planForType, {
 				hasReferenceImage,
 				referenceImageMode,
 			}),
@@ -2848,16 +2893,17 @@ export function buildPromoImagePrompt(
 			textlessLead,
 			brandPromptExtras(brandProfile, brandKit),
 			vars.business ? `Brand / shop: ${vars.business}.` : "",
-			theme
-				? `Campaign mood only (do NOT render as text): ${theme}.`
-				: "",
+			// Do NOT quote headline/subline/offer here — listing the words trains Nano Banana to paint them.
+			"Campaign mood only — lighting, props, color, atmosphere. Do not paint any campaign headline, subline, CTA, or slogan.",
 			illustrated || isLookGradeArtStyle(vars.artStyle)
 				? artStylePlannerHint(vars.artStyle)
 				: promoArtDirectionHint(vars),
 			artStyleImageClause(vars.artStyle),
 			TEXTLESS_IMAGE_GUARD,
 			FRAMING_IMAGE[vars.framing],
-			MARKET_HINTS[vars.market],
+			// Never use MARKET_HINTS here — those demand "on-image marketing copy in Chinese/English".
+			MARKET_HINTS_TEXTLESS[vars.market],
+			TEXTLESS_IMAGE_AVOID,
 			artStyleAvoidTail(vars.artStyle),
 			composition.blocks?.avoid
 				? `Avoid: ${composition.blocks.avoid}.`
@@ -3510,11 +3556,13 @@ export function buildStoryboardSceneImagePrompt(
 					brandProfile: options?.brandProfile ?? undefined,
 				}),
 				"Subject upright, head at top of frame — never rotate 90°.",
-				MARKET_HINTS[sceneVars.market],
+				sceneCopy
+					? MARKET_HINTS[sceneVars.market]
+					: MARKET_HINTS_TEXTLESS[sceneVars.market],
 				FRAMING_IMAGE[sceneVars.framing],
 				sceneCopy
 					? "Integrate ON-IMAGE COPY text with reference typography style — consumer words only."
-					: joinParts(textlessRule, REFERENCE_ERASE_TEXT_LINE),
+					: joinParts(textlessRule, REFERENCE_ERASE_TEXT_LINE, TEXTLESS_IMAGE_AVOID),
 				"9:16 vertical social ad still — no watermark, no social UI.",
 			),
 		);
@@ -3616,7 +3664,7 @@ export function buildStoryboardSceneImagePrompt(
     artStyleImageClause(vars.artStyle),
     artStyleAvoidTail(vars.artStyle),
     "Subject upright, head at top of frame, correct vertical orientation — never rotate person or product 90°.",
-    MARKET_HINTS[vars.market],
+			sceneCopy ? MARKET_HINTS[vars.market] : MARKET_HINTS_TEXTLESS[vars.market],
     FRAMING_IMAGE[vars.framing],
 			sceneVars.extra,
 			brandPromptExtras(options?.brandProfile, brandKit),
@@ -3626,7 +3674,7 @@ export function buildStoryboardSceneImagePrompt(
 						"Integrate ON-IMAGE COPY as designed poster type — exact consumer words, no production labels.",
 						promoTypographyHint(sceneVars, false),
 					)
-				: textlessRule,
+				: joinParts(textlessRule, TEXTLESS_IMAGE_AVOID),
 			"9:16 vertical, no watermark, no social UI.",
 		),
   );

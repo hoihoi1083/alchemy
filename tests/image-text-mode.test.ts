@@ -4,8 +4,15 @@ import {
   buildMotionPosterEndStillPrompt,
   buildMotionPosterStillPrompt,
   buildPromoImagePrompt,
+  buildWizardImagePrompt,
 } from "../lib/prompt-variables";
-import { parseImageTextMode, TEXTLESS_IMAGE_GUARD } from "../lib/image-text-mode";
+import {
+  enforceTextlessPrompt,
+  parseImageTextMode,
+  TEXTLESS_IMAGE_AVOID,
+  TEXTLESS_IMAGE_GUARD,
+  TEXTLESS_IMAGE_OVERRIDE,
+} from "../lib/image-text-mode";
 
 describe("parseImageTextMode", () => {
   it("defaults storyboard APIs to textless", () => {
@@ -31,7 +38,14 @@ describe("buildPromoImagePrompt textless mode", () => {
       imageTextMode: "textless",
     });
     assert.ok(prompt.includes(TEXTLESS_IMAGE_GUARD));
-    assert.ok(prompt.includes("do NOT render as text"));
+    assert.ok(prompt.includes(TEXTLESS_IMAGE_AVOID));
+    assert.ok(prompt.includes("Campaign mood only"));
+    assert.ok(prompt.includes("Atmosphere only — no writing"));
+    // Must not quote campaign copy — that trains the model to paint those words.
+    assert.ok(!prompt.includes("Summer Sale"));
+    assert.ok(!prompt.includes("20% off today"));
+    assert.ok(!prompt.includes("NEVER paint these words"));
+    assert.ok(!prompt.includes("All on-image marketing copy"));
     assert.ok(!prompt.includes("headline typography"));
   });
 
@@ -41,7 +55,41 @@ describe("buildPromoImagePrompt textless mode", () => {
       imageTextMode: "integrated",
     });
     assert.ok(!prompt.includes(TEXTLESS_IMAGE_GUARD));
+    assert.ok(!prompt.includes(TEXTLESS_IMAGE_AVOID));
     assert.ok(prompt.includes("marketing typography"));
+    assert.ok(prompt.includes("All on-image marketing copy"));
+  });
+});
+
+describe("enforceTextlessPrompt + wizard typography modes", () => {
+  it("appends OVERRIDE after a type-heavy prompt", () => {
+    const locked = enforceTextlessPrompt(
+      'Main hook line on image (paint EXACTLY ONCE): "Summer Sale".',
+      "textless",
+    );
+    assert.ok(locked.includes(TEXTLESS_IMAGE_GUARD));
+    assert.ok(locked.includes(TEXTLESS_IMAGE_OVERRIDE));
+    assert.ok(locked.indexOf(TEXTLESS_IMAGE_OVERRIDE) > locked.indexOf("Summer Sale"));
+  });
+
+  it("routes designed-poster to textless promo plate (no paint EXACTLY ONCE)", () => {
+    const prompt = buildWizardImagePrompt(
+      {
+        product: "Power station",
+        headline: "What Can You Actually Run?",
+        subline: "TV, fridge, or a whole camping trip",
+        offer: "Comment your most creative use.",
+        framing: "product-only",
+        market: "en",
+        artStyle: "realistic",
+        imageTextMode: "textless",
+      },
+      "designed-poster",
+    );
+    assert.ok(prompt.includes(TEXTLESS_IMAGE_GUARD));
+    assert.ok(prompt.includes(TEXTLESS_IMAGE_OVERRIDE));
+    assert.ok(!prompt.includes("paint EXACTLY ONCE"));
+    assert.ok(!prompt.includes("What Can You Actually Run?"));
   });
 });
 
