@@ -147,16 +147,23 @@ export const en = {
 		trialActiveNote: "Pro trial active — cancels or converts on {date}.",
 		tokenExpiryNote: "Tokens expire 6 months after they are granted. Oldest tokens are used first.",
 		mcpKeys: {
-			title: "Alchemy MCP API keys",
+			title: "Connect Grok Bot (MCP)",
 			subtitle:
-				"Connect Grok Bot, Cursor, or ChatGPT MCP to your Alchemy wallet. Keys start with alk_ — treat them like passwords.",
+				"Paste the MCP URL in Grok → Sign in with Alchemy in the browser. Personal alk_ keys remain for Cursor / CLI.",
 			endpointLabel: "MCP URL",
+			oauthTitle: "Connect Grok Bot",
+			oauthSteps:
+				"1. Open Grok Bot → Connect apps / Custom MCP.\n2. Paste the MCP URL below (no API key).\n3. Browser opens → sign in at Alchemy AI Lab → Allow.\n4. Ask Grok to generate a marketing still with Alchemy.",
+			apiKeysTitle: "Personal API keys (fallback)",
+			apiKeysSubtitle:
+				"For Cursor, CLI, or clients that still need a pasted Bearer token. Keys start with alk_ — treat them like passwords.",
 			create: "Create key",
 			creating: "Creating…",
 			labelPlaceholder: "Label (optional)",
 			empty: "No keys yet.",
 			copySecret: "Copy secret",
 			copied: "Copied",
+			copyEndpoint: "Copy URL",
 			secretOnce:
 				"Copy this secret now. It will not be shown again.",
 			revoke: "Revoke",
@@ -169,7 +176,7 @@ export const en = {
 			revoked: "Revoked",
 			howtoTitle: "How to test",
 			howtoBody:
-				"You do not need Grok only. After creating a key: ping, then alchemy_whoami with Authorization: Bearer alk_…. Tools: generate/edit image, video, storyboard (Pro), list_library (signed URLs), brand_kit + stamp_logo, generate_campaign (Standard+).",
+				"Preferred: Grok Custom MCP + browser Sign in. Fallback: create alk_ key → alchemy_whoami with Authorization: Bearer alk_…. Tools: generate/edit image, video, storyboard (Pro), list_library, brand_kit + stamp_logo, generate_campaign (Standard+).",
 		},
 		team: {
 			title: "Enterprise seats",

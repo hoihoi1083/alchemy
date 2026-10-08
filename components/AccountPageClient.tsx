@@ -118,6 +118,7 @@ export function AccountPageClient() {
   const [mcpError, setMcpError] = useState<string | null>(null);
   const [mcpSecret, setMcpSecret] = useState<string | null>(null);
   const [mcpCopied, setMcpCopied] = useState(false);
+  const [mcpEndpointCopied, setMcpEndpointCopied] = useState(false);
   const mcpCopy = a.mcpKeys;
   const mcpEndpoint =
     typeof window !== "undefined"
@@ -238,6 +239,16 @@ export function AccountPageClient() {
     try {
       await navigator.clipboard.writeText(mcpSecret);
       setMcpCopied(true);
+    } catch {
+      setMcpError(mcpCopy.createError);
+    }
+  }
+
+  async function copyMcpEndpoint() {
+    try {
+      await navigator.clipboard.writeText(mcpEndpoint);
+      setMcpEndpointCopied(true);
+      window.setTimeout(() => setMcpEndpointCopied(false), 2000);
     } catch {
       setMcpError(mcpCopy.createError);
     }
@@ -611,94 +622,115 @@ export function AccountPageClient() {
             <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
               <h2 className="text-xl font-semibold tracking-tight">{mcpCopy.title}</h2>
               <p className="mt-2 text-sm text-slate-600">{mcpCopy.subtitle}</p>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                {mcpCopy.endpointLabel}
-              </p>
-              <code className="mt-1 block break-all rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-800">
-                {mcpEndpoint}
-              </code>
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  value={mcpLabel}
-                  onChange={(e) => setMcpLabel(e.target.value)}
-                  placeholder={mcpCopy.labelPlaceholder}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
-                />
+              <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-4">
+                <p className="text-sm font-semibold text-emerald-950">{mcpCopy.oauthTitle}</p>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-emerald-900/90">
+                  {mcpCopy.oauthSteps}
+                </p>
+                <p className="mt-4 text-xs font-medium uppercase tracking-wide text-emerald-800/80">
+                  {mcpCopy.endpointLabel}
+                </p>
+                <code className="mt-1 block break-all rounded-lg bg-white/80 px-3 py-2 text-xs text-slate-800">
+                  {mcpEndpoint}
+                </code>
                 <button
                   type="button"
-                  disabled={Boolean(mcpBusy)}
-                  onClick={() => void createMcpKey()}
-                  className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                  onClick={() => void copyMcpEndpoint()}
+                  className="mt-3 rounded-full border border-emerald-300 bg-white px-4 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-100"
                 >
-                  {mcpBusy === "create" ? mcpCopy.creating : mcpCopy.create}
+                  {mcpEndpointCopied ? mcpCopy.copied : mcpCopy.copyEndpoint}
                 </button>
               </div>
 
-              {mcpSecret ? (
-                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                  <p className="font-medium">{mcpCopy.secretOnce}</p>
-                  <code className="mt-2 block break-all text-xs">{mcpSecret}</code>
+              <div className="mt-8 border-t border-slate-100 pt-6">
+                <h3 className="text-base font-semibold tracking-tight text-slate-900">
+                  {mcpCopy.apiKeysTitle}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">{mcpCopy.apiKeysSubtitle}</p>
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    value={mcpLabel}
+                    onChange={(e) => setMcpLabel(e.target.value)}
+                    placeholder={mcpCopy.labelPlaceholder}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
+                  />
                   <button
                     type="button"
-                    onClick={() => void copyMcpSecret()}
-                    className="mt-3 rounded-full border border-amber-300 bg-white px-4 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                    disabled={Boolean(mcpBusy)}
+                    onClick={() => void createMcpKey()}
+                    className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
                   >
-                    {mcpCopied ? mcpCopy.copied : mcpCopy.copySecret}
+                    {mcpBusy === "create" ? mcpCopy.creating : mcpCopy.create}
                   </button>
                 </div>
-              ) : null}
 
-              {mcpError ? (
-                <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {mcpError}
-                </p>
-              ) : null}
+                {mcpSecret ? (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                    <p className="font-medium">{mcpCopy.secretOnce}</p>
+                    <code className="mt-2 block break-all text-xs">{mcpSecret}</code>
+                    <button
+                      type="button"
+                      onClick={() => void copyMcpSecret()}
+                      className="mt-3 rounded-full border border-amber-300 bg-white px-4 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                    >
+                      {mcpCopied ? mcpCopy.copied : mcpCopy.copySecret}
+                    </button>
+                  </div>
+                ) : null}
 
-              <ul className="mt-6 space-y-3">
-                {mcpKeys.length === 0 ? (
-                  <li className="text-sm text-slate-500">{mcpCopy.empty}</li>
-                ) : (
-                  mcpKeys.map((key) => {
-                    const revoked = Boolean(key.revokedAt);
-                    return (
-                      <li
-                        key={key.keyId}
-                        className="flex flex-col gap-2 rounded-xl border border-slate-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <p className="font-mono text-sm text-slate-900">
-                            {key.prefix}…
-                          </p>
-                          <p className="mt-0.5 text-xs text-slate-500">
-                            {key.label}
-                            {" · "}
-                            {revoked
-                              ? mcpCopy.revoked
-                              : key.lastUsedAt
-                                ? mcpCopy.lastUsed.replace(
-                                    "{date}",
-                                    formatDate(key.lastUsedAt, locale),
-                                  )
-                                : mcpCopy.neverUsed}
-                          </p>
-                        </div>
-                        {!revoked ? (
-                          <button
-                            type="button"
-                            disabled={Boolean(mcpBusy)}
-                            onClick={() => void revokeMcpKey(key.keyId)}
-                            className="rounded-full border border-red-200 px-4 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
-                          >
-                            {mcpBusy === key.keyId ? "…" : mcpCopy.revoke}
-                          </button>
-                        ) : null}
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
+                {mcpError ? (
+                  <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {mcpError}
+                  </p>
+                ) : null}
+
+                <ul className="mt-6 space-y-3">
+                  {mcpKeys.length === 0 ? (
+                    <li className="text-sm text-slate-500">{mcpCopy.empty}</li>
+                  ) : (
+                    mcpKeys.map((key) => {
+                      const revoked = Boolean(key.revokedAt);
+                      return (
+                        <li
+                          key={key.keyId}
+                          className="flex flex-col gap-2 rounded-xl border border-slate-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div>
+                            <p className="font-mono text-sm text-slate-900">
+                              {key.prefix}…
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {key.label}
+                              {" · "}
+                              {revoked
+                                ? mcpCopy.revoked
+                                : key.lastUsedAt
+                                  ? mcpCopy.lastUsed.replace(
+                                      "{date}",
+                                      formatDate(key.lastUsedAt, locale),
+                                    )
+                                  : mcpCopy.neverUsed}
+                            </p>
+                          </div>
+                          {!revoked ? (
+                            <button
+                              type="button"
+                              disabled={Boolean(mcpBusy)}
+                              onClick={() => void revokeMcpKey(key.keyId)}
+                              className="rounded-full border border-red-200 px-4 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              {mcpBusy === key.keyId ? "…" : mcpCopy.revoke}
+                            </button>
+                          ) : null}
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+              </div>
 
               <div className="mt-6 rounded-xl bg-slate-50 px-4 py-3">
                 <p className="text-sm font-medium text-slate-800">{mcpCopy.howtoTitle}</p>

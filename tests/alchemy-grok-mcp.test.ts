@@ -17,7 +17,7 @@ describe("alchemy grok MCP", () => {
     assert.equal(typeof alchemyGrokMcpHandler, "function");
   });
 
-  it("answers initialize over streamable HTTP without a key", async () => {
+  it("challenges unauthenticated initialize with OAuth metadata", async () => {
     const req = new Request("http://localhost/api/grok-mcp", {
       method: "POST",
       headers: {
@@ -36,9 +36,8 @@ describe("alchemy grok MCP", () => {
       }),
     });
     const res = await alchemyGrokMcpHandler(req);
-    assert.ok(res.status >= 200 && res.status < 500, `status ${res.status}`);
-    const text = await res.text();
-    assert.match(text, /alchemy-grok|Alchemy|serverInfo|protocolVersion/i);
+    assert.equal(res.status, 401);
+    assert.match(res.headers.get("www-authenticate") || "", /resource_metadata=/i);
   });
 
   it("recognizes alk_ key shape and hashes deterministically", () => {
@@ -62,7 +61,7 @@ describe("alchemy grok MCP", () => {
       }),
       "user_123",
     );
-    assert.match(mcpAuthRequiredText(), /Unauthorized|alk_/);
+    assert.match(mcpAuthRequiredText(), /Unauthorized|OAuth|alk_/);
   });
 });
 

@@ -15,6 +15,10 @@ import { editStillForMcp, generateStillForMcp } from "@/lib/mcp/generate-still";
 import { generateVideoForMcp } from "@/lib/mcp/generate-video";
 import { listLibraryForMcp } from "@/lib/mcp/library";
 import { brandKitForMcp, stampLogoForMcp } from "@/lib/mcp/logo";
+import {
+  mcpIssuerUrl,
+  mcpProtectedResourceMetadataPath,
+} from "@/lib/mcp/oauth/config";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 
 const MCP_VIDEO_5S_FAST = videoTokenCostFromRequest({
@@ -71,7 +75,7 @@ const baseHandler = createMcpHandler(
           site: PRODUCT_SITE_URL,
           mcp: "alchemy-grok",
           phase: 4,
-          auth: "Bearer alk_… required for whoami, generate, library, logo, campaign",
+          auth: "OAuth (Sign in with Alchemy) or Bearer alk_… required",
         }),
     );
 
@@ -103,8 +107,9 @@ const baseHandler = createMcpHandler(
             "alchemy_generate_campaign",
           ],
           auth: {
-            type: "Bearer",
-            keyPrefix: "alk_",
+            type: "oauth2",
+            oauth: "MCP OAuth 2.1 — Custom MCP URL opens Sign in with Alchemy",
+            apiKeyFallback: "Bearer alk_… from Account (CLI / Cursor)",
             createAt: `${PRODUCT_SITE_URL.replace(/\/$/, "")}/account`,
           },
           pricing: {
@@ -124,8 +129,10 @@ const baseHandler = createMcpHandler(
               "When the user asks for Alchemy, use these tools — not the built-in Grok image generator.",
           },
           clients: {
-            grok: "Grok Bot → Add custom MCP → URL + Authorization Bearer alk_…",
-            cursor: "MCP settings → URL http(s)://…/api/grok-mcp + header Authorization",
+            grok:
+              "Grok Bot → Add custom MCP → paste MCP URL only → Sign in with Alchemy in the browser",
+            cursor:
+              "MCP settings → URL http(s)://…/api/grok-mcp (OAuth) or Authorization: Bearer alk_…",
             chatgpt:
               "ChatGPT Developer Mode / custom GPT Actions can call the same tools; prefer MCP when available, else OpenAPI Actions against Studio APIs.",
           },
@@ -499,10 +506,17 @@ const baseHandler = createMcpHandler(
 );
 
 /**
- * Public MCP handler: ping/info work anonymously; whoami + generate need Bearer alk_….
+ * Public MCP handler. Unauthenticated requests get 401 + WWW-Authenticate
+ * (RFC 9728) so Grok/Cursor can open Sign in with Alchemy. Authenticated via
+ * OAuth access token (ato_…) or personal API key (alk_…).
  */
 export const alchemyGrokMcpHandler = withMcpAuth(
   baseHandler,
   verifyAlchemyMcpBearer,
-  { required: false },
+  {
+    required: true,
+    resourceMetadataPath: mcpProtectedResourceMetadataPath(),
+    resourceUrl: mcpIssuerUrl(),
+    requiredScopes: ["alchemy:generate"],
+  },
 );

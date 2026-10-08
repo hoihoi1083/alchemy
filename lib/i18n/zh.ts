@@ -83,16 +83,23 @@ export const zh = {
 		trialActiveNote: "Pro 試用中 — {date} 結束或轉為付費。",
 		tokenExpiryNote: "Token 自發放日起 6 個月有效，先用較早獲得的 Token。",
 		mcpKeys: {
-			title: "Alchemy MCP API 金鑰",
+			title: "連接 Grok Bot（MCP）",
 			subtitle:
-				"用 Grok Bot、Cursor 或 ChatGPT MCP 連接你的 Alchemy 錢包。金鑰以 alk_ 開頭，請當密碼保管。",
+				"喺 Grok 貼 MCP URL → 瀏覽器「Sign in with Alchemy」。alk_ 金鑰仍可用於 Cursor / CLI。",
 			endpointLabel: "MCP URL",
+			oauthTitle: "連接 Grok Bot",
+			oauthSteps:
+				"1. 打開 Grok Bot → 連接應用 / Custom MCP。\n2. 貼下方 MCP URL（唔使填金鑰）。\n3. 瀏覽器打開 → 登入 Alchemy AI Lab → 允許。\n4. 叫 Grok 用 Alchemy 出營銷圖。",
+			apiKeysTitle: "個人 API 金鑰（備用）",
+			apiKeysSubtitle:
+				"畀 Cursor、CLI 或者仍要貼 Bearer 嘅客戶端。金鑰以 alk_ 開頭，請當密碼保管。",
 			create: "建立金鑰",
 			creating: "建立中…",
 			labelPlaceholder: "標籤（可選）",
 			empty: "尚未建立金鑰。",
 			copySecret: "複製密鑰",
 			copied: "已複製",
+			copyEndpoint: "複製 URL",
 			secretOnce: "請立即複製此密鑰，之後不會再顯示。",
 			revoke: "撤銷",
 			revokeConfirm: "撤銷此 MCP 金鑰？使用中的客戶端會立刻失效。",
@@ -104,7 +111,7 @@ export const zh = {
 			revoked: "已撤銷",
 			howtoTitle: "點樣測試",
 			howtoBody:
-				"唔一定要用 Grok。建立金鑰後 ping → alchemy_whoami。工具：出圖/改圖、影片、storyboard（Pro）、list_library（簽名 URL）、brand_kit + stamp_logo、generate_campaign（Standard+）。ChatGPT Developer Mode 支援 remote MCP。",
+				"推薦：Grok Custom MCP + 瀏覽器登入。備用：建立 alk_ → alchemy_whoami。工具：出圖/改圖、影片、storyboard（Pro）、list_library、brand_kit + stamp_logo、generate_campaign（Standard+）。",
 		},
 		manageBilling: "管理帳單",
 		portalRedirecting: "正開啟 Stripe…",

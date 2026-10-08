@@ -7,7 +7,8 @@ export const maxDuration = 300;
 
 /**
  * Public Alchemy MCP endpoint for Grok Bot, Cursor, ChatGPT MCP, etc.
- * Auth: optional Bearer `alk_…` personal API key (required for whoami + generate).
+ * Auth: MCP OAuth 2.1 (Sign in with Alchemy) or Bearer `alk_…` personal API key.
+ * Unauthenticated → 401 + WWW-Authenticate (RFC 9728 protected-resource metadata).
  *
  * Local:  http://localhost:3000/api/grok-mcp
  * Prod:   https://www.alchemyailab.com/api/grok-mcp
