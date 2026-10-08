@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "alchemy": {
+      "url": "https://www.alchemyailab.com/api/grok-mcp"
+    }
+  }
+}

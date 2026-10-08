@@ -1,0 +1,21 @@
+{
+  "name": "alchemy-ai-lab",
+  "version": "0.5.0",
+  "description": "Alchemy AI Lab hosted MCP: billed marketing stills, edits, short video, storyboard, campaign slides, library, and brand-logo stamp. Sign in with Alchemy (OAuth); alk_ keys optional for CLI.",
+  "author": {
+    "name": "Alchemy AI Lab",
+    "email": "hello@alchemyailab.com"
+  },
+  "homepage": "https://www.alchemyailab.com",
+  "repository": "https://github.com/hoihoi1083/alchemy",
+  "license": "MIT",
+  "keywords": [
+    "alchemy",
+    "alchemy ai lab",
+    "alchemyailab",
+    "alchemy mcp",
+    "marketing",
+    "image generation"
+  ],
+  "logo": "assets/logo.png"
+}
