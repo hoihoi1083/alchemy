@@ -39,13 +39,53 @@ function textResult(payload: unknown, isError = false) {
   };
 }
 
-function jobFail(result: { error: string; code?: string; status?: number }) {
+function jobFail(result: {
+  error: string;
+  code?: string;
+  status?: number;
+  balance?: number;
+  required?: number;
+  pricingUrl?: string;
+  hint?: string;
+}) {
+  const pricingUrl =
+    result.pricingUrl ?? `${PRODUCT_SITE_URL.replace(/\/$/, "")}/pricing`;
+  const isInsufficientTokens =
+    result.status === 402 || result.code === "INSUFFICIENT_TOKENS";
+  const isPlanGated =
+    result.status === 403 ||
+    result.code === "storyboard_needs_pro" ||
+    result.code === "PLAN_ENTITLEMENT";
+
+  let hint = result.hint;
+  if (!hint) {
+    if (isInsufficientTokens) {
+      hint = `Top up tokens or upgrade your subscription at ${pricingUrl}`;
+    } else if (result.code === "storyboard_needs_pro") {
+      hint = `Storyboard requires a Pro plan or higher. Upgrade at ${pricingUrl}`;
+    } else if (result.code === "PLAN_ENTITLEMENT") {
+      hint = `Campaign generation requires a Standard plan or higher. Upgrade at ${pricingUrl}`;
+    } else if (isPlanGated) {
+      hint = `This feature requires a plan upgrade. Visit ${pricingUrl}`;
+    }
+  }
+
   return textResult(
     {
       ok: false,
       error: result.error,
       code: result.code ?? null,
       status: result.status ?? null,
+      ...(typeof result.balance === "number" ? { balance: result.balance } : {}),
+      ...(typeof result.required === "number" ? { required: result.required } : {}),
+      ...(isInsufficientTokens || isPlanGated
+        ? {
+            pricing_url: pricingUrl,
+            hint,
+          }
+        : hint
+        ? { hint }
+        : {}),
     },
     true,
   );
@@ -120,6 +160,7 @@ const baseHandler = createMcpHandler(
             alchemy_generate_campaign_tokens: estimateCampaignTokens("1K"),
             alchemy_stamp_logo_tokens: 0,
             alchemy_list_library_tokens: 0,
+            pricing_url: `${PRODUCT_SITE_URL.replace(/\/$/, "")}/pricing`,
             note: "Stills = Nano Banana 2 1K. Video = Seedance Fast 720p (4–8s). Storyboard = 2–4 stills (Pro+). Campaign = 3 slides (Standard+). Library URLs are signed (1h).",
           },
           grokHints: {
@@ -127,6 +168,8 @@ const baseHandler = createMcpHandler(
               "For user photos: public https URL or alchemy_list_library → library_asset_id (we mint a signed URL). Never pass Clerk-gated /api/library/download links or localhost paths.",
             preferAlchemy:
               "When the user asks for Alchemy, use these tools — not the built-in Grok image generator.",
+            billing:
+              "If user token balance is insufficient or a feature requires a higher tier (Storyboard needs Pro+, Campaign needs Standard+), explain what is required and share the pricing link: https://www.alchemyailab.com/pricing.",
           },
           clients: {
             grok:
@@ -177,6 +220,7 @@ const baseHandler = createMcpHandler(
           email,
           name,
           imageTokenCost: TOKEN_COST.image,
+          pricingUrl: `${PRODUCT_SITE_URL.replace(/\/$/, "")}/pricing`,
         });
       },
     );
