@@ -82,8 +82,14 @@ export function LandingHero() {
 								{isSignedIn ? L.startCreating : L.ctaPrimary}
 							</Link>
 							<Link
-								href="/get-sample"
+								href="/create"
 								className="landing-hero-cta-sample inline-flex w-full items-center justify-center rounded-full border border-violet-300/50 bg-violet-500/20 px-4 py-2.5 text-sm font-semibold text-violet-100 backdrop-blur-sm hover:bg-violet-500/30 sm:w-auto sm:px-5 sm:py-3"
+							>
+								{L.ctaSocialPack}
+							</Link>
+							<Link
+								href="/get-sample"
+								className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/5 sm:w-auto sm:px-5 sm:py-3"
 							>
 								{L.ctaSamplePack}
 							</Link>
