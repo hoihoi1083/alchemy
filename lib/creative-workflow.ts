@@ -159,9 +159,10 @@ export function videoModeHidesAutoDuration(
 
 /**
  * Dual-frame FX run MiniMax H3 first, then usually mix library BGM (H3 start→end is
- * often near-silent because adaptScript enforces no speech). Torn-paper opts out via
- * keepNativeAudio to preserve fal tear foley. Seedance fallback is silent — mixes BGM
- * unless also opted out. Always false here so generateVideo does not double-mix BGM.
+ * often near-silent because adaptScript enforces no speech). Torn-paper / hand-throw /
+ * social-frame / swift-chroma opt out via keepNativeAudio to preserve fal native audio.
+ * Seedance fallback is silent — mixes BGM unless also opted out. Always false here so
+ * generateVideo does not double-mix BGM.
  */
 export function recipeUsesSilentSeedance(
   mode: string | null | undefined,

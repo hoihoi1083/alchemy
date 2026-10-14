@@ -150,12 +150,7 @@ export function LandingFinalCta() {
 								>
 									{isSignedIn ? L.startCreating : L.ctaPrimary}
 								</Link>
-								<Link
-									href="/create"
-									className="inline-flex w-full items-center justify-center rounded-full border border-violet-300/40 bg-violet-500/20 px-5 py-2.5 text-sm font-semibold text-violet-100 hover:bg-violet-500/30 sm:w-auto"
-								>
-									{L.ctaSocialPack}
-								</Link>
+								{/* Create social content CTA hidden for now — /create still exists */}
 								<Link
 									href="/get-sample"
 									className="inline-flex w-full items-center justify-center rounded-full border border-white/25 bg-transparent px-5 py-2.5 text-sm font-semibold text-violet-100 hover:bg-white/10 sm:w-auto"

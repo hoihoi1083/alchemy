@@ -2432,7 +2432,9 @@ export function PreVideoSetupPanel({
                     placeholder={
                       isMotionPoster
                         ? pv.motionPosterCopyFocus.extraPlaceholder
-                        : m.wizard.requirementsPlaceholder
+                        : isHandThrow
+                          ? m.wizard.handThrowExtraPlaceholder
+                          : m.wizard.requirementsPlaceholder
                     }
                   />
                 </label>

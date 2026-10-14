@@ -1373,6 +1373,7 @@ export async function POST(request: Request) {
             conceptMode: promotionMode === "concept",
             aspectRatio: aspectRatioRaw,
             frame: handThrowFrame,
+            promptExtra,
           })
         : webBoundaryBreak
         ? buildWebBoundaryBreakStillPrompt({

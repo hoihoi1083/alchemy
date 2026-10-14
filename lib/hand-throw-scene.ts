@@ -1,8 +1,8 @@
 /**
  * Hand-throw → real scene (手抛万物变实景) — MiniMax H3 start→end (Seedance fallback).
  * Start: palm holding miniature of @Image1.
- * End: full real scenic hero of the same @Image1 object.
- * Video: throw morphs miniature into the real scene (~6s).
+ * End: oversized scenic hero of the same @Image1 object (monumental, not palm/life-size).
+ * Video: energetic throw morphs miniature into the giant real scene (~6s).
  */
 
 import { nameIsClaimImage1IsObjectLine } from "@/lib/prompt-balance-contract";
@@ -16,6 +16,8 @@ export type HandThrowScenePromptInput = {
   conceptMode?: boolean;
   aspectRatio?: string;
   frame: HandThrowSceneFrame;
+  /** Optional motion / scale notes from the wizard (e.g. “giant ball”). */
+  promptExtra?: string;
 };
 
 const NO_TEXT =
@@ -40,13 +42,19 @@ function photoIdentityLock(productName: string): string {
   ].join(" ");
 }
 
-/** Nano Banana still — start = palm + miniature, end = real scene. */
+function extraBit(promptExtra?: string): string {
+  const note = (promptExtra || "").trim();
+  return note ? ` Extra creative note: ${note}.` : "";
+}
+
+/** Nano Banana still — start = palm + miniature, end = giant real scene. */
 export function buildHandThrowSceneStillPrompt(
   input: HandThrowScenePromptInput,
 ): string {
   const hero = subject(input);
   const ar = input.aspectRatio?.trim() || "16:9";
   const lock = photoIdentityLock(hero);
+  const extra = extraBit(input.promptExtra);
 
   if (input.frame === "start") {
     return [
@@ -57,17 +65,19 @@ export function buildHandThrowSceneStillPrompt(
       "If @Image1 is a car, show a miniature car. If a phone, miniature phone. If a bottle, miniature bottle — never swap category to match the product name field.",
       "Background: soft blurred park / sky — no competing landmarks. Natural skin texture, commercial photography, 8k feel.",
       NO_TEXT,
+      extra,
     ].join(" ");
   }
 
   return [
     `Photoreal cinematic landscape still, ${ar}, clear blue sky, soft clouds.`,
     lock,
-    "END frame: the FULL-SCALE real-world hero of the SAME @Image1 object — wide establishing shot, lush foreground grass/trees if outdoor.",
-    "The end scene must depict the real object from @Image1 at life scale in a scenic environment (not a miniature, not a hand in frame).",
-    "Match the start plate miniature when present — same category, silhouette family, colors, and materials as @Image1. No morph into a different product or landmark.",
-    "Same design language as the miniature start plate. No people in foreground. Hero scenic postcard quality.",
+    "END frame: the SAME @Image1 object as a MONUMENTAL oversized scenic hero — not life-size, not palm-size, not a prop on grass.",
+    "The object must dominate the frame: roughly building / landmark scale, filling most of the width or height, with tiny trees/grass/people only as scale cues if needed.",
+    "Wide establishing shot, lush outdoor environment. Hero sits firmly in the landscape — same category, silhouette family, colors, and materials as @Image1.",
+    "No hand in frame. No miniature. No morph into a different product. Hero scenic postcard quality.",
     NO_TEXT,
+    extra,
   ].join(" ");
 }
 
@@ -76,16 +86,21 @@ export function buildHandThrowSceneVideoPrompt(input: {
   product: string;
   conceptMode?: boolean;
   durationSec?: number;
+  promptExtra?: string;
 }): string {
   const hero =
     input.product.trim() ||
     (input.conceptMode ? "brand landmark" : "product landmark");
   const sec = input.durationSec ?? HAND_THROW_SCENE_DURATION_SEC;
+  const extra = extraBit(input.promptExtra);
   return [
-    `Hand-throw-to-real-scene effect, ${sec}s, continuous morph from Image 1 (palm holding miniature @Image1 object) to Image 2 (full real scenic @Image1 object).`,
+    `Hand-throw-to-real-scene effect, ${sec}s, continuous morph from Image 1 (palm holding miniature @Image1 object) to Image 2 (monumental oversized scenic @Image1 object).`,
     nameIsClaimImage1IsObjectLine(hero),
-    "The hand gently tosses / releases the miniature upward; it grows and transforms into the real scenic hero until the hand leaves frame and only the real scene remains.",
+    "ACTION: the hand winds up and THROWS the miniature upward with clear force and follow-through — not a gentle place or soft release.",
+    "The miniature rockets up and away, rapidly SCALING UP during flight until it becomes a GIANT real-world hero that fills most of the frame; the hand exits frame as the landscape takes over.",
+    "Final beat must match Image 2: oversized landmark scale of the same @Image1 object (huge vs palm), not a small life-size prop sitting on the ground.",
     "Keep Image 1 identity locked across the morph — same category, silhouette family, and colors as the uploaded photo; only scale and setting change.",
     "Smooth cinematic motion, afternoon light, no hard cuts, no on-screen text, no morph into a different building/product than Image 1.",
+    extra,
   ].join(" ");
 }

@@ -110,7 +110,7 @@ describe("creative-motion Seedance recipe", () => {
 });
 
 describe("hand-throw-scene Seedance recipe", () => {
-  it("builds palm miniature → real scene stills and a 6s video prompt", () => {
+  it("builds palm miniature → giant scenic stills and a forceful 6s throw prompt", () => {
     const start = buildHandThrowSceneStillPrompt({
       product: "ARC tower",
       frame: "start",
@@ -120,7 +120,8 @@ describe("hand-throw-scene Seedance recipe", () => {
       frame: "end",
     });
     assert.match(start, /palm|miniature|MINIATURE/i);
-    assert.match(end, /FULL-SCALE|real-world|scenic/i);
+    assert.match(end, /MONUMENTAL|oversized|landmark scale|scenic/i);
+    assert.match(end, /not life-size|not palm-size/i);
     assert.match(start, /IMAGE 1 pixels are the ONLY identity/i);
     assert.match(start, /never swap category/i);
     const nameVsPhoto = buildHandThrowSceneStillPrompt({
@@ -131,10 +132,15 @@ describe("hand-throw-scene Seedance recipe", () => {
     assert.match(nameVsPhoto, /Vitamin C serum/);
     assert.match(nameVsPhoto, /@Image1/);
     assert.doesNotMatch(nameVsPhoto, /MINIATURE model of Vitamin C serum/i);
-    const video = buildHandThrowSceneVideoPrompt({ product: "Vitamin C serum" });
+    const video = buildHandThrowSceneVideoPrompt({
+      product: "Vitamin C serum",
+      promptExtra: "giant Poké Ball fills the frame",
+    });
     assert.match(video, /NAME VS PHOTO/);
     assert.match(video, /Image 1/);
     assert.match(video, /Image 2/);
+    assert.match(video, /THROWS|force|SCALING UP|GIANT/i);
+    assert.match(video, /giant Poké Ball fills the frame/);
     assert.match(video, new RegExp(String(HAND_THROW_SCENE_DURATION_SEC)));
   });
 });

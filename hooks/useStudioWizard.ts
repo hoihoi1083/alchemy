@@ -9934,6 +9934,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			product: subject || "the landmark",
 			conceptMode: promotionMode === "concept",
 			durationSec: HAND_THROW_SCENE_DURATION_SEC,
+			promptExtra: effectivePromptExtra(),
 		});
 		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
 
@@ -9944,7 +9945,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("resolution", "480p");
 		fd.set("duration", String(HAND_THROW_SCENE_DURATION_SEC));
 		fd.set("aspect_ratio", "16:9");
-		fd.set("motion_strength", "72");
+		fd.set("motion_strength", "85");
 		fd.set("negative_prompt", negativePrompt);
 		fd.set("avoid_on_screen_text", "true");
 		fd.set("hand_throw_scene", "1");
@@ -9956,7 +9957,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const fx = await generateStartEndFxVideo({
 			fd,
 			recipeDurationSec: HAND_THROW_SCENE_DURATION_SEC,
+			// Keep MiniMax H3 native audio from fal — do not overwrite with library BGM.
+			keepNativeAudio: true,
 		});
+		if (!fx.usedSeedanceFallback) {
+			setBgmNote(m.wizard.handThrowKeepNativeAudioNote);
+		}
 		const pathNote = wizardVideoReadyExtraNote(fx.data);
 		const h3Reason =
 			typeof fx.data.h3FallbackReason === "string"
@@ -9969,7 +9975,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
 							.filter(Boolean)
 							.join(" — ")
-					: m.wizard.videoEngineMinimaxH3,
+					: [
+							m.wizard.videoEngineMinimaxH3,
+							m.wizard.handThrowKeepNativeAudioNote,
+						]
+							.filter(Boolean)
+							.join(" — "),
 				pathNote,
 				typeof fx.data.note === "string" ? fx.data.note : undefined,
 			]

@@ -5062,12 +5062,16 @@ export const en = {
 		creativeMotionNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		handThrowHint:
-			"Palm + miniature start, real scenic end, then a ~6s throw morph. Needs a clear product or landmark photo.",
+			"Palm + miniature start, giant scenic end, then a ~6s throw morph. Needs a clear product or landmark photo.",
 		handThrowBuildingStill: "Step 1/3: palm + miniature start still…",
-		handThrowBuildingEnd: "Step 2/3: real scenic end still…",
+		handThrowBuildingEnd: "Step 2/3: giant scenic end still…",
 		handThrowAnimatingCard: "Step 3/3: throw → real scene morph…",
 		handThrowNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
+		handThrowKeepNativeAudioNote:
+			"Keeping MiniMax H3 native audio from fal (no library BGM overwrite). Add BGM later in Captions if you want.",
+		handThrowExtraPlaceholder:
+			"e.g. hard underhand throw; final ball building-sized, fills most of the frame",
 		webBoundaryHint:
 			"Web boundary break — model reaches through a fake shopping UI to grab your product. ~8–10s · Shelf reach / Hold through. Fill Business for the nav brand name (e.g. SOCIAL DRIP).",
 		webBoundarySchemeTitle: "Boundary-break style",

@@ -73,10 +73,10 @@ export function VisualStylePicker({ value, onChange, workflowMode, promotionMode
               <img src={s.previewSrc} alt="" className="aspect-square w-full object-cover" />
               <span className="block px-2 py-2">
                 <span className="block text-xs font-semibold leading-tight text-slate-900">
-                  {copy.title}
+                  {copy?.title ?? s.id}
                 </span>
                 <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">
-                  {copy.description}
+                  {copy?.description ?? ""}
                 </span>
               </span>
             </button>

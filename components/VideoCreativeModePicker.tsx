@@ -71,12 +71,12 @@ export function VideoCreativeModePicker({
                 <span
                   className={`block text-sm font-semibold ${isDark ? "text-white" : "text-slate-900"}`}
                 >
-                  {copy.title}
+                  {copy?.title ?? id}
                 </span>
                 <span
                   className={`mt-0.5 block text-xs leading-snug ${isDark ? "text-slate-300" : "text-slate-600"}`}
                 >
-                  {copy.description}
+                  {copy?.description ?? ""}
                 </span>
               </span>
             </button>

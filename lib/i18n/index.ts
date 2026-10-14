@@ -1,3 +1,4 @@
+import { deepFillMissing } from "./deep-fill";
 import { en } from "./en";
 import { zh } from "./zh";
 import { zhCn } from "./zh-cn";
@@ -7,11 +8,16 @@ export type Locale = "en" | "zh" | "zh-cn" | "zh-tw";
 
 export type Messages = typeof en;
 
+/**
+ * Locale catalogs may lag en. Fill holes at read time so studio paths
+ * (image / video / storyboard) never crash on undefined `.title` etc.
+ * Chinese locales prefer zh (HK) copy before falling back to English.
+ */
 const catalogs = {
   en,
-  zh: zh as unknown as Messages,
-  "zh-cn": zhCn as unknown as Messages,
-  "zh-tw": zhTw as unknown as Messages,
+  zh: deepFillMissing(zh, en) as Messages,
+  "zh-cn": deepFillMissing(deepFillMissing(zhCn, zh), en) as Messages,
+  "zh-tw": deepFillMissing(deepFillMissing(zhTw, zh), en) as Messages,
 } satisfies Record<Locale, Messages>;
 
 export function getMessages(locale: Locale): Messages {

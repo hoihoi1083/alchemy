@@ -1,6 +1,12 @@
 import type { TemplateId } from "@/lib/templates";
+import { deepFillMissing } from "./deep-fill";
+import { zh } from "./zh";
 
-export const zhCn = {
+/**
+ * CN catalog may lag en/zh. Export is deep-filled from HK zh so studio
+ * image/video/storyboard paths never crash on a missing `.title` leaf.
+ */
+const zhCnPartial = {
   meta: {
     title: "Alchemy AI Lab",
     description: "上传产品照片，制作带背景音乐的广告短视频",
@@ -3084,6 +3090,11 @@ export const zhCn = {
 				description:
 					"人像抠图 · 巨型大字在身后（两侧可读）· 夜街底板。产品：展示者手持 SKU。城市奔跑／极简奔跑／冲击收尾。约 8–10 秒。",
 			},
+			"social-frame-break": {
+				title: "社交框突破",
+				description:
+					"角色从假 Instagram 帖弹出到白色 UI。可改品牌与文案。上传任意角色。约 8–10 秒。",
+			},
 			"wet-glass-reveal": {
 				title: "湿玻璃揭示",
 				description:
@@ -3093,6 +3104,16 @@ export const zhCn = {
 				title: "撕纸揭示",
 				description:
 					"半透明雪梨纸盖住主体 → 细纤维横撕露出 Logo。细条撕／掀卷／阔撕。约 6–8 秒。",
+			},
+			"orbit-type": {
+				title: "环绕字",
+				description:
+					"主体锁在画面中央，粗体字环绕、穿隧道、从身后掠过。产品或概念。约 6 秒。",
+			},
+			"cloche-reveal": {
+				title: "餐罩揭晓",
+				description:
+					"银盘 + 白手套掀罩。产品：食材变 SKU。概念：隐喻变品牌。约 6 秒。",
 			},
 			"swift-chroma-run": {
 				title: "疾行幻彩",
@@ -3875,6 +3896,51 @@ export const zhCn = {
 				],
 				output: ["生活方式产品静图（单张或轮播）"],
 			},
+			"product-hold-poster": {
+				need: ["产品图（手持）", "标题（痛点？态度）"],
+				attention: [
+					"必须有人用手持／递出产品对镜头",
+					"白棚 + 手写 slogan + 底部品类胶囊",
+					"只限实体产品路径 — 单张静图",
+				],
+				output: ["一张手持产品会说话海报"],
+			},
+			"mold-word-poster": {
+				need: ["趣味字／昵称／字梗（标题）", "可选产品图（与大字置中）"],
+				attention: [
+					"立体粘土／公仔风大字是主角",
+					"有产品：产品放中间，大字压上／围绕",
+					"概念：虚构一个配合字梗的趣味场景",
+				],
+				output: ["一张捏字趣味海报"],
+			},
+			"deconstruct-archive-poster": {
+				need: ["产品图（必须）", "标题（STUDY / DECONSTRUCTED 风格）"],
+				attention: [
+					"严格上下各半：上半实拍，下半同一产品拆解",
+					"暖纸档案风 + 编号标注 + 色票",
+					"只限实体产品路径 — 单张静图",
+				],
+				output: ["一张解构档案海报"],
+			},
+			"orbit-type-poster": {
+				need: ["环绕字／标题（必须）", "可选产品／模特／Logo 图（置中主体）"],
+				attention: [
+					"主体锁死画面中央、白棚",
+					"粗体动能字环绕／穿隧／穿过主体后方",
+					"产品与概念都可用",
+				],
+				output: ["一张环绕字海报"],
+			},
+			"cloche-reveal-poster": {
+				need: ["标题／揭晓主题", "可选产品图（产品路径）或 Logo（概念路径）"],
+				attention: [
+					"银盘 + 白手套餐罩半揭",
+					"产品：成分／结构 → SKU；概念：隐喻道具 → 品牌锁图",
+					"产品与概念都可用",
+				],
+				output: ["一张餐罩揭晓海报"],
+			},
 			"vacuum-inflate": {
 				need: ["产品图（概念可用 Logo／吉祥物静图）", "清晰主体 — 单靠文字／主题不够"],
 				attention: ["你的产品是主角 — 包膜充气，不会掉包", "手机就是手机，不会变成虚构袋装"],
@@ -3921,6 +3987,24 @@ export const zhCn = {
 					"起止静图 morph：抠图主体 · 巨型大字在身后",
 				],
 			},
+			"social-frame-break": {
+				need: [
+					"角色照 — 人物、吉祥物或形象（必填）",
+					"产品模式：另上传产品 SKU（角色手持）",
+					"商家名（品牌）+ 标题（文案短句）做画面文字",
+				],
+				attention: [
+					"整段影片锁定角色脸／衣着",
+					"脚要踏出到白色 Instagram UI — 不是贴平贴纸",
+					"产品 SKU 只是手持道具 — 绝不是单独破框主角",
+					"可选品牌套件 Logo 印在气球／徽章",
+					"保留原生音轨（不覆盖曲库 BGM）",
+				],
+				output: [
+					"~8–10秒 16:9 社交框突破广告",
+					"参考影片：跳出弹出 + 品牌气球",
+				],
+			},
 			"wet-glass-reveal": {
 				need: [
 					"产品图 — 或人像／品牌静图（概念）+ 上传图上需有清晰标签／标志",
@@ -3948,6 +4032,16 @@ export const zhCn = {
 					"~6–8秒竖版撕纸揭示",
 					"起止静图 morph：雪梨纸覆盖 → 纤维撕口露出 Logo／标志",
 				],
+			},
+			"orbit-type": {
+				need: ["产品／模特图，或概念 Logo／吉祥物静图", "环绕字（标题）"],
+				attention: ["主体锁在画面中央", "字环绕并从身后掠过，不是字幕条"],
+				output: ["约 6 秒竖版环绕字影片"],
+			},
+			"cloche-reveal": {
+				need: ["产品图，或概念 Logo／品牌静图", "短揭晓主题"],
+				attention: ["银盘 + 白手套掀罩", "产品：食材变 SKU。概念：隐喻变品牌"],
+				output: ["约 6 秒竖版餐罩揭晓影片"],
 			},
 			"swift-chroma-run": {
 				need: [
@@ -4107,11 +4201,15 @@ socialDripHint:
 		creativeMotionAnimatingCard: "第 3/3 步：方案过渡中…",
 		creativeMotionNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		handThrowHint:
-			"手抛万物变实景：AI 生成掌心+微缩开头与真实场景结尾，再由约 6 秒视频过渡。最好有清晰产品／地标图。",
+			"手抛万物变实景：掌心微缩开头 → 巨型实景结尾，约 6 秒用力抛出过渡。最好有清晰产品／地标图。",
 		handThrowBuildingStill: "第 1/3 步：掌心微缩开头静图…",
-		handThrowBuildingEnd: "第 2/3 步：真实场景结尾静图…",
+		handThrowBuildingEnd: "第 2/3 步：巨型实景结尾静图…",
 		handThrowAnimatingCard: "第 3/3 步：抛出→实景过渡中…",
 		handThrowNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
+		handThrowKeepNativeAudioNote:
+			"保留 fal MiniMax H3 原生音轨（不覆盖曲库 BGM）。如需配乐可稍后再到字幕页添加。",
+		handThrowExtraPlaceholder:
+			"例如：用力上手抛出；结尾球体如建筑般巨大、占满画面",
 		webBoundaryHint:
 			"打破网页边界 — 模特穿过假想购物网页拿起产品。~8–10秒 · 货架伸手／穿栏手持。填写「品牌/商家」可控制导航栏品牌名（如 SOCIAL DRIP）。",
 		webBoundarySchemeTitle: "边界突破风格",
@@ -4158,6 +4256,28 @@ socialDripHint:
 		typeBehindAnimatingCard: "正在生成字夹主体…",
 		typeBehindNeedKeyframe:
 			"请先上传产品图（概念用人像／品牌形象／吉祥物静图 — 单靠文字不够）。",
+		socialFrameHint:
+			"社交框突破 — 上传角色（人物／吉祥物／形象），不要只上传产品特写。商家名＋标题做品牌＋文案。脚踏在桌面版 Instagram 白色 UI。可选品牌套件 Logo 印气球。约 8–10 秒 · 16:9。",
+		socialFrameSchemeTitle: "弹出挥手",
+		socialFrameSchemeHint:
+			"桌面版 Instagram 布局：方形风景帖、下面白色文案、右边留言栏。挥手＋心形气球。脚在白色 UI — 不要从顶边插手。",
+		socialFrameSchemes: {
+			"popout-wave": {
+				title: "弹出挥手",
+				desc: "挥手 + 品牌气球 · 脚在 Instagram UI 上",
+			},
+		},
+		socialFrameBuildingStill: "步骤 1/2：社交框起始静帧…",
+		socialFrameBuildingEnd: "步骤 2/2：社交框结束静帧…",
+		socialFrameAnimatingCard: "正在生成社交框突破…",
+		socialFrameNeedKeyframe:
+			"请先上传角色照（人物／吉祥物／形象 — 只有产品特写不够）。",
+		socialFrameNeedProductSku:
+			"产品模式还要上传产品照（SKU）— 角色手持；角色才是弹出主体。",
+		socialFrameNeedMotionRef:
+			"缺少弹出动作参考片。请重新整理再试。",
+		socialFrameKeepNativeAudioNote:
+			"保留原生音讯／配乐（不覆盖曲库 BGM）。",
 		wetGlassHint:
 			"湿玻璃揭示 — 起雾湿玻璃 → 水珠划痕／指抹清晰 → Logo 变锐。~6–8秒 · 水珠划痕／指抹清晰／黑白微距。Logo 来自上传图透过玻璃显现。",
 		wetGlassDialectTitle: "湿玻璃风格",
@@ -6986,6 +7106,18 @@ stylePickerModelLabel: "模特佩戴／使用",
       productPhotoHint: "清晰产品照 — 必须。会做短视频里的主体。",
       productPhotoWithRefHint:
         "必须 — 你的产品做 @Image1。参考 MP4 只提供运镜／剪辑感觉。",
+      socialFrameCopyFocus: {
+        title: "品牌 + 文案由你改",
+        body: "商家名变成气球/徽章品牌。标题变成 Instagram 文案。生成前随时可改。",
+        hookLabel: "文案短句",
+        hookPlaceholder: "例如：用 Alchemy AI Lab 创作",
+      },
+      socialFrameCharacterTitle: "角色照",
+      socialFrameCharacterHint:
+        "必填 — 人物、吉祥物或形象（不要只有产品包）。整段弹出影片会锁这张脸/衣着。Logo 经品牌套件印在气球。",
+      socialFrameProductSkuTitle: "产品照（SKU）",
+      socialFrameProductSkuHint:
+        "产品模式必填 — 清晰产品照。角色手持这个 SKU；角色才是破框主角。",
       neonIdentityPhotoTitle: "Logo／吉祥物（霓虹身份）",
       neonIdentityPhotoHint:
         "选填 — 把 Logo 或吉祥物放这里，锁定霓虹外形。也可用品牌包 Logo。不上传则用通用霓虹符号。",
@@ -7726,3 +7858,5 @@ stylePickerModelLabel: "模特佩戴／使用",
   },
 
 } as const;
+
+export const zhCn = deepFillMissing(zhCnPartial, zh) as typeof zhCnPartial;

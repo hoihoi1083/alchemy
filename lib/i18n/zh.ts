@@ -4377,16 +4377,19 @@ export const zh = {
 			"social-frame-break": {
 				need: [
 					"角色相 — 人物、吉祥物或形象（必填）",
+					"產品模式：另上傳產品 SKU（角色手持）",
 					"商家名（品牌）+ 標題（文案短句）做畫面文字",
 				],
 				attention: [
 					"成段影片鎖角色臉／衫",
 					"腳要踏出到白色 Instagram UI — 唔係貼平貼紙",
+					"產品 SKU 只係手持道具 — 絕唔係單獨破框主角",
 					"可選品牌套件 Logo 印喺氣球／徽章",
+					"保留原生音軌（唔會蓋過曲庫 BGM）",
 				],
 				output: [
-					"~8–10秒豎版社交框突破廣告",
-					"起止靜圖 morph：風景帖框 → 彈出揮手 + 品牌氣球",
+					"~8–10秒 16:9 社交框突破廣告",
+					"參考影片：跳出彈出 + 品牌氣球",
 				],
 			},
 			"wet-glass-reveal": {
@@ -4585,11 +4588,15 @@ export const zh = {
 		creativeMotionAnimatingCard: "第 3/3 步：方案過渡中…",
 		creativeMotionNeedKeyframe: "請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字唔夠）。",
 		handThrowHint:
-			"手拋萬物變實景：AI 生成掌心+微縮開頭同真實場景結尾，再由約 6 秒影片過渡。最好有清晰產品／地標圖。",
+			"手拋萬物變實景：掌心微縮開頭 → 巨型實景結尾，約 6 秒用力拋出過渡。最好有清晰產品／地標圖。",
 		handThrowBuildingStill: "第 1/3 步：掌心微縮開頭靜圖…",
-		handThrowBuildingEnd: "第 2/3 步：真實場景結尾靜圖…",
+		handThrowBuildingEnd: "第 2/3 步：巨型實景結尾靜圖…",
 		handThrowAnimatingCard: "第 3/3 步：拋出→實景過渡中…",
 		handThrowNeedKeyframe: "請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字唔夠）。",
+		handThrowKeepNativeAudioNote:
+			"保留 fal MiniMax H3 原生音軌（唔會蓋過曲庫 BGM）。要配樂可以稍後再去字幕頁加。",
+		handThrowExtraPlaceholder:
+			"例如：用力上手拋出；結尾球體如建築般巨大、佔滿畫面",
 		webBoundaryHint:
 			"打破網頁邊界 — 模特穿過假想購物網頁拿起產品。~8–10秒 · 貨架伸手／穿欄手持。填寫「品牌/商家」可控制導航欄品牌名（如 SOCIAL DRIP）。",
 		webBoundarySchemeTitle: "邊界突破風格",
