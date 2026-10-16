@@ -82,7 +82,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@clerk/testing": "^2.2.2",
+    "@clerk/testing": "^2.2.24",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/ffmpeg-static": "^3.0.3",
