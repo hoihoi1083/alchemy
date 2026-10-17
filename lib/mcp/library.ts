@@ -180,7 +180,7 @@ export function decodeMcpImageBase64(
 
   let contentType = (contentTypeHint ?? "").trim().toLowerCase() || "";
   let b64 = trimmed;
-  const dataUrl = /^data:([^;]+);base64,(.+)$/is.exec(trimmed);
+  const dataUrl = /^data:([^;]+);base64,([\s\S]+)$/i.exec(trimmed);
   if (dataUrl) {
     contentType = dataUrl[1].trim().toLowerCase() || contentType;
     b64 = dataUrl[2].replace(/\s+/g, "");
