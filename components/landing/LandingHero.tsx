@@ -81,6 +81,7 @@ export function LandingHero() {
 							>
 								{isSignedIn ? L.startCreating : L.ctaPrimary}
 							</Link>
+							{/* Try this style CTA hidden for now — /try/style still exists */}
 							{/* Create social content CTA hidden for now — /create still exists */}
 							<Link
 								href="/get-sample"

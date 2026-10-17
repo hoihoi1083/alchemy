@@ -60,6 +60,39 @@ export const CAMPAIGN_SHORT_LINKS: readonly CampaignShortLink[] = [
     utmCampaign: "noprompt_week1",
     utmContent: "sample",
   },
+  // Instagram / Facebook → golden-path style pack try page
+  {
+    code: "ig",
+    path: "/try/style?pack=milk-tea-p1",
+    utmSource: "instagram",
+    utmMedium: "social",
+    utmCampaign: "noprompt_week1",
+    utmContent: "unspecified",
+  },
+  {
+    code: "ig-p1",
+    path: "/try/style?pack=milk-tea-p1",
+    utmSource: "instagram",
+    utmMedium: "social",
+    utmCampaign: "noprompt_week1",
+    utmContent: "post1",
+  },
+  {
+    code: "fb",
+    path: "/try/style?pack=milk-tea-p1",
+    utmSource: "facebook",
+    utmMedium: "social",
+    utmCampaign: "noprompt_week1",
+    utmContent: "unspecified",
+  },
+  {
+    code: "fb-p1",
+    path: "/try/style?pack=milk-tea-p1",
+    utmSource: "facebook",
+    utmMedium: "social",
+    utmCampaign: "noprompt_week1",
+    utmContent: "post1",
+  },
 ] as const;
 
 const CODE_RE = /^[a-z0-9][a-z0-9-]{0,31}$/;
@@ -81,19 +114,23 @@ export function buildCampaignShortLinkTarget(
   link: CampaignShortLink,
   extraSearchParams?: URLSearchParams,
 ): string {
-  const path = link.path.trim() || "/";
-  if (!path.startsWith("/") || path.startsWith("//") || path.includes("://")) {
+  const raw = link.path.trim() || "/";
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) {
     throw new Error("Campaign short link path must be a same-origin absolute path.");
   }
 
-  const params = new URLSearchParams();
+  // Allow locked query on path (e.g. /try/style?pack=milk-tea-p1) then merge UTMs.
+  const parsed = new URL(raw, "https://alchemyailab.local");
+  const params = new URLSearchParams(parsed.search);
+
   params.set("utm_source", link.utmSource);
   if (link.utmMedium) params.set("utm_medium", link.utmMedium);
   params.set("utm_campaign", link.utmCampaign);
   if (link.utmContent) params.set("utm_content", link.utmContent);
   if (link.utmTerm) params.set("utm_term", link.utmTerm);
+  else params.delete("utm_term");
 
-  // Allow extra params from the short URL, but never override locked UTMs.
+  // Allow extra params from the short URL, but never override locked UTMs or pack.
   if (extraSearchParams) {
     for (const [key, value] of extraSearchParams.entries()) {
       if (key.toLowerCase().startsWith("utm_")) continue;
@@ -102,7 +139,7 @@ export function buildCampaignShortLinkTarget(
   }
 
   const q = params.toString();
-  return q ? `${path}?${q}` : path;
+  return q ? `${parsed.pathname}?${q}` : parsed.pathname;
 }
 
 export function publicCampaignShortUrl(code: string, siteOrigin?: string): string {

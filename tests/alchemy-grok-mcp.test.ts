@@ -8,7 +8,11 @@ import {
 } from "../lib/mcp/api-keys";
 import { clerkIdFromMcpAuth, mcpAuthRequiredText } from "../lib/mcp/auth";
 import { estimateCampaignTokens } from "../lib/billing/token-costs";
-import { resolveMcpMediaUrl } from "../lib/mcp/library";
+import {
+  decodeMcpImageBase64,
+  resolveMcpMediaUrl,
+  uploadImageForMcp,
+} from "../lib/mcp/library";
 import { parsePublicHttpsMediaUrl } from "../lib/mcp/public-media-url";
 import { libraryAssetIdFromUrl } from "../lib/storage/library-asset-url";
 
@@ -102,5 +106,36 @@ describe("mcp library + campaign", () => {
     const n = estimateCampaignTokens("1K");
     assert.ok(n > 100);
     assert.equal(n, estimateCampaignTokens("1K"));
+  });
+});
+
+describe("mcp upload image decode", () => {
+  it("decodes PNG data URLs and sniffs type", () => {
+    // 1x1 PNG
+    const pngB64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const decoded = decodeMcpImageBase64(`data:image/png;base64,${pngB64}`);
+    assert.ok(!("error" in decoded));
+    if (!("error" in decoded)) {
+      assert.equal(decoded.contentType, "image/png");
+      assert.equal(decoded.ext, "png");
+      assert.ok(decoded.bytes.length > 10);
+    }
+  });
+
+  it("rejects empty base64", () => {
+    const decoded = decodeMcpImageBase64("   ");
+    assert.ok("error" in decoded);
+  });
+
+  it("requires exactly one of base64 or url", async () => {
+    const both = await uploadImageForMcp({
+      clerkId: "user_x",
+      imageBase64: "abc",
+      imageUrl: "https://cdn.example.com/x.png",
+    });
+    assert.equal(both.ok, false);
+    const neither = await uploadImageForMcp({ clerkId: "user_x" });
+    assert.equal(neither.ok, false);
   });
 });

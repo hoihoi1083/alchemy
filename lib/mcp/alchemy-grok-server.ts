@@ -13,7 +13,7 @@ import { generateCampaignForMcp } from "@/lib/mcp/generate-campaign";
 import { generateStoryboardForMcp } from "@/lib/mcp/generate-storyboard";
 import { editStillForMcp, generateStillForMcp } from "@/lib/mcp/generate-still";
 import { generateVideoForMcp } from "@/lib/mcp/generate-video";
-import { listLibraryForMcp } from "@/lib/mcp/library";
+import { listLibraryForMcp, uploadImageForMcp } from "@/lib/mcp/library";
 import { brandKitForMcp, stampLogoForMcp } from "@/lib/mcp/logo";
 import {
   mcpIssuerUrl,
@@ -114,7 +114,7 @@ const baseHandler = createMcpHandler(
           product: PRODUCT_NAME,
           site: PRODUCT_SITE_URL,
           mcp: "alchemy-grok",
-          phase: 4,
+          phase: 5,
           auth: "OAuth (Sign in with Alchemy) or Bearer alk_… required",
         }),
     );
@@ -137,6 +137,7 @@ const baseHandler = createMcpHandler(
             "alchemy_ping",
             "alchemy_server_info",
             "alchemy_whoami",
+            "alchemy_upload_image",
             "alchemy_generate_image",
             "alchemy_edit_image",
             "alchemy_generate_video",
@@ -159,13 +160,14 @@ const baseHandler = createMcpHandler(
             alchemy_generate_storyboard_tokens_per_scene: TOKEN_COST.image,
             alchemy_generate_campaign_tokens: estimateCampaignTokens("1K"),
             alchemy_stamp_logo_tokens: 0,
+            alchemy_upload_image_tokens: 0,
             alchemy_list_library_tokens: 0,
             pricing_url: `${PRODUCT_SITE_URL.replace(/\/$/, "")}/pricing`,
-            note: "Stills = Nano Banana 2 1K. Video = Seedance Fast 720p (4–8s). Storyboard = 2–4 stills (Pro+). Campaign = 3 slides (Standard+). Library URLs are signed (1h).",
+            note: "Stills = Nano Banana 2 1K. Video = Seedance Fast 720p (4–8s). Storyboard = 2–4 stills (Pro+). Campaign = 3 slides (Standard+). Library URLs are signed (1h). Upload is free.",
           },
           grokHints: {
             media:
-              "For user photos: public https URL or alchemy_list_library → library_asset_id (we mint a signed URL). Never pass Clerk-gated /api/library/download links or localhost paths.",
+              "When the user attaches a photo in chat: call alchemy_upload_image with image_base64 (data URL or raw base64 from the attachment), then pass the returned library_asset_id to alchemy_edit_image / video / campaign. Or pass a public https image_url to upload. Never pass localhost paths or Clerk-gated /api/library/download links as image_url.",
             preferAlchemy:
               "When the user asks for Alchemy, use these tools — not the built-in Grok image generator.",
             billing:
@@ -271,7 +273,7 @@ const baseHandler = createMcpHandler(
       {
         title: "Alchemy edit image",
         description:
-          `Edit a reference photo with Nano Banana 2 (keep identity, change scene/style). Pass image_url (public https) or library_asset_id (~${TOKEN_COST.image} tokens).`,
+          `Edit a reference photo with Nano Banana 2 (keep identity, change scene/style). Prefer library_asset_id from alchemy_upload_image (chat attachments) or alchemy_list_library; or image_url (public https). ~${TOKEN_COST.image} tokens.`,
         inputSchema: z.object({
           prompt: z
             .string()
@@ -415,6 +417,61 @@ const baseHandler = createMcpHandler(
     );
 
     server.registerTool(
+      "alchemy_upload_image",
+      {
+        title: "Alchemy upload image",
+        description:
+          "Upload a user photo into Alchemy Library (free). Use when the user attaches an image in Grok chat: pass image_base64 (data:image/…;base64,… or raw base64). Or pass image_url (public https) to fetch and store. Returns library_asset_id for alchemy_edit_image / video / campaign. Max ~8MB.",
+        inputSchema: z.object({
+          image_base64: z
+            .string()
+            .min(1)
+            .optional()
+            .describe(
+              "Chat attachment as data URL or raw base64. Prefer this when the user uploaded a photo in Grok.",
+            ),
+          image_url: z
+            .string()
+            .max(2000)
+            .optional()
+            .describe("Public https image to download into the library."),
+          content_type: z
+            .string()
+            .max(100)
+            .optional()
+            .describe("Optional MIME hint, e.g. image/jpeg. Usually inferred."),
+          name: z
+            .string()
+            .max(200)
+            .optional()
+            .describe("Optional library display name."),
+        }),
+      },
+      async ({ image_base64, image_url, content_type, name }, ctx) => {
+        const clerkId = clerkIdFromMcpAuth(ctx.http?.authInfo);
+        if (!clerkId) return textResult(mcpAuthRequiredText(), true);
+        const result = await uploadImageForMcp({
+          clerkId,
+          imageBase64: image_base64,
+          imageUrl: image_url,
+          contentType: content_type,
+          name,
+        });
+        if (!result.ok) return jobFail(result);
+        return textResult({
+          ok: true,
+          library_asset_id: result.libraryAssetId,
+          url: result.url,
+          content_type: result.contentType,
+          url_expires_in_sec: result.urlExpiresInSec,
+          tokens_charged: 0,
+          next:
+            "Pass library_asset_id to alchemy_edit_image (or video/campaign/stamp). Do not re-upload the same photo.",
+        });
+      },
+    );
+
+    server.registerTool(
       "alchemy_list_library",
       {
         title: "Alchemy list library",
@@ -544,7 +601,7 @@ const baseHandler = createMcpHandler(
   {
     serverInfo: {
       name: "alchemy-grok",
-      version: "0.4.0",
+      version: "0.5.0",
     },
   },
 );

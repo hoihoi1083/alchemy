@@ -68,4 +68,16 @@ describe("campaign-short-links", () => {
     assert.equal(findCampaignShortLink("xhs-p2")?.utmContent, "post2");
     assert.equal(findCampaignShortLink("xhs-p3")?.utmContent, "post3");
   });
+
+  it("maps ig/fb short codes to style try page with pack query", () => {
+    const link = findCampaignShortLink("ig-p1")!;
+    assert.equal(link.utmSource, "instagram");
+    const target = buildCampaignShortLinkTarget(link);
+    assert.match(target, /^\/try\/style\?/);
+    assert.match(target, /pack=milk-tea-p1/);
+    assert.match(target, /utm_source=instagram/);
+    assert.match(target, /utm_content=post1/);
+    assert.equal(findCampaignShortLink("fb-p1")?.utmSource, "facebook");
+  });
 });
+
