@@ -228,11 +228,67 @@ const baseHandler = createMcpHandler(
     );
 
     server.registerTool(
+      "alchemy_upload_image",
+      {
+        title: "Alchemy upload image",
+        description:
+          "REQUIRED before editing a chat photo. Upload into Alchemy Library (free). Pass image_base64 (data URL or raw base64 from the Grok attachment) OR image_url (public https). Returns library_asset_id for alchemy_edit_image. Max ~8MB.",
+        inputSchema: z.object({
+          // Cap schema so MCP clients (Grok) do not drop an unbounded string field.
+          image_base64: z
+            .string()
+            .max(12_000_000)
+            .optional()
+            .describe(
+              "Chat attachment as data:image/...;base64,... or raw base64. Prefer this when the user attached a photo in Grok.",
+            ),
+          image_url: z
+            .string()
+            .max(2000)
+            .optional()
+            .describe("Public https image to download into the library."),
+          content_type: z
+            .string()
+            .max(100)
+            .optional()
+            .describe("Optional MIME hint, e.g. image/jpeg. Usually inferred."),
+          name: z
+            .string()
+            .max(200)
+            .optional()
+            .describe("Optional library display name."),
+        }),
+      },
+      async ({ image_base64, image_url, content_type, name }, ctx) => {
+        const clerkId = clerkIdFromMcpAuth(ctx.http?.authInfo);
+        if (!clerkId) return textResult(mcpAuthRequiredText(), true);
+        const result = await uploadImageForMcp({
+          clerkId,
+          imageBase64: image_base64,
+          imageUrl: image_url,
+          contentType: content_type,
+          name,
+        });
+        if (!result.ok) return jobFail(result);
+        return textResult({
+          ok: true,
+          library_asset_id: result.libraryAssetId,
+          url: result.url,
+          content_type: result.contentType,
+          url_expires_in_sec: result.urlExpiresInSec,
+          tokens_charged: 0,
+          next:
+            "Pass library_asset_id to alchemy_edit_image (or video/campaign/stamp). Do not re-upload the same photo.",
+        });
+      },
+    );
+
+    server.registerTool(
       "alchemy_generate_image",
       {
         title: "Alchemy generate image",
         description:
-          `Text-to-image only (no reference photo). Nano Banana 2, ~${TOKEN_COST.image} tokens. For an attached/reference photo use alchemy_edit_image. Requires Bearer alk_…`,
+          `Text-to-image only (no reference photo). Nano Banana 2, ~${TOKEN_COST.image} tokens. For an attached/reference photo: alchemy_upload_image then alchemy_edit_image. Requires Bearer alk_…`,
         inputSchema: z.object({
           prompt: z
             .string()
@@ -412,61 +468,6 @@ const baseHandler = createMcpHandler(
           balance_after: result.balanceAfter,
           aspect_ratio: result.aspectRatio,
           resolution: result.resolution,
-        });
-      },
-    );
-
-    server.registerTool(
-      "alchemy_upload_image",
-      {
-        title: "Alchemy upload image",
-        description:
-          "Upload a user photo into Alchemy Library (free). Use when the user attaches an image in Grok chat: pass image_base64 (data:image/…;base64,… or raw base64). Or pass image_url (public https) to fetch and store. Returns library_asset_id for alchemy_edit_image / video / campaign. Max ~8MB.",
-        inputSchema: z.object({
-          image_base64: z
-            .string()
-            .min(1)
-            .optional()
-            .describe(
-              "Chat attachment as data URL or raw base64. Prefer this when the user uploaded a photo in Grok.",
-            ),
-          image_url: z
-            .string()
-            .max(2000)
-            .optional()
-            .describe("Public https image to download into the library."),
-          content_type: z
-            .string()
-            .max(100)
-            .optional()
-            .describe("Optional MIME hint, e.g. image/jpeg. Usually inferred."),
-          name: z
-            .string()
-            .max(200)
-            .optional()
-            .describe("Optional library display name."),
-        }),
-      },
-      async ({ image_base64, image_url, content_type, name }, ctx) => {
-        const clerkId = clerkIdFromMcpAuth(ctx.http?.authInfo);
-        if (!clerkId) return textResult(mcpAuthRequiredText(), true);
-        const result = await uploadImageForMcp({
-          clerkId,
-          imageBase64: image_base64,
-          imageUrl: image_url,
-          contentType: content_type,
-          name,
-        });
-        if (!result.ok) return jobFail(result);
-        return textResult({
-          ok: true,
-          library_asset_id: result.libraryAssetId,
-          url: result.url,
-          content_type: result.contentType,
-          url_expires_in_sec: result.urlExpiresInSec,
-          tokens_charged: 0,
-          next:
-            "Pass library_asset_id to alchemy_edit_image (or video/campaign/stamp). Do not re-upload the same photo.",
         });
       },
     );
